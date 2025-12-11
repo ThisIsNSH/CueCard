@@ -217,8 +217,8 @@ async fn oauth_callback_handler(Query(params): Query<OAuthCallback>) -> Html<Str
                 r#"<!DOCTYPE html>
                 <html><head><title>Authentication Successful</title>
                 <style>
-                    body { font-family: system-ui; padding: 40px; text-align: center; background: #f0fdf4; }
-                    .success { color: #166534; }
+                    body { font-family: system-ui; padding: 40px; text-align: center; background: #fff; }
+                    .success { color: #000; }
                 </style>
                 </head><body>
                 <h1 class="success">Authentication Successful!</h1>
@@ -764,6 +764,16 @@ pub fn run() {
             // Enable screenshot protection and full-screen overlay by default
             #[cfg(target_os = "macos")]
             {
+                use cocoa::appkit::NSApplication;
+                use cocoa::base::{nil, NO};
+
+                // Set application activation policy to Accessory (non-activating)
+                // NSApplicationActivationPolicyAccessory = 1
+                unsafe {
+                    let ns_app = NSApplication::sharedApplication(nil);
+                    let _: () = msg_send![ns_app, setActivationPolicy: 1i64];
+                }
+
                 if let Some(window) = app.get_webview_window("main") {
                     use cocoa::base::id;
 
@@ -773,27 +783,50 @@ pub fn run() {
                             // NSWindowSharingNone = 0 prevents the window from being captured
                             let _: () = msg_send![ns_window, setSharingType: 0u64];
 
-                            // Set collection behavior to show over full-screen apps
+                            // Set collection behavior to show over full-screen apps and ignore activation cycle
                             // NSWindowCollectionBehaviorCanJoinAllSpaces = 1 << 0
                             // NSWindowCollectionBehaviorFullScreenAuxiliary = 1 << 8
-                            let collection_behavior: u64 = (1 << 0) | (1 << 8);
+                            // NSWindowCollectionBehaviorIgnoresCycle = 1 << 6 (prevents window from being activated by window cycling)
+                            let collection_behavior: u64 = (1 << 0) | (1 << 8) | (1 << 6);
                             let _: () = msg_send![ns_window, setCollectionBehavior: collection_behavior];
+
+                            // Set window level to floating to keep it on top without activation
+                            // NSFloatingWindowLevel = 3
+                            let _: () = msg_send![ns_window, setLevel: 3i32];
+
+                            // Prevent the window from hiding when it "deactivates"
+                            let _: () = msg_send![ns_window, setHidesOnDeactivate: NO];
+
+                            // Set style mask to include non-activating panel behavior
+                            // This prevents the window from becoming key when clicked
+                            let current_style: u64 = msg_send![ns_window, styleMask];
+                            // NSWindowStyleMaskNonactivatingPanel = 1 << 7
+                            let new_style = current_style | (1 << 7);
+                            let _: () = msg_send![ns_window, setStyleMask: new_style];
                         }
                     }
                 }
             }
 
-            // Enable screenshot protection by default on Windows
+            // Enable screenshot protection and non-activating style by default on Windows
             #[cfg(target_os = "windows")]
             {
                 if let Some(window) = app.get_webview_window("main") {
                     use windows::Win32::Foundation::HWND;
-                    use windows::Win32::UI::WindowsAndMessaging::{SetWindowDisplayAffinity, WDA_EXCLUDEFROMCAPTURE};
+                    use windows::Win32::UI::WindowsAndMessaging::{
+                        SetWindowDisplayAffinity, WDA_EXCLUDEFROMCAPTURE,
+                        GetWindowLongW, SetWindowLongW, GWL_EXSTYLE, WS_EX_NOACTIVATE
+                    };
 
                     if let Ok(hwnd_wrapper) = window.hwnd() {
                         let hwnd = HWND(hwnd_wrapper.0 as _);
                         unsafe {
+                            // Enable screenshot protection
                             let _ = SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE);
+
+                            // Set WS_EX_NOACTIVATE to prevent activation
+                            let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
+                            SetWindowLongW(hwnd, GWL_EXSTYLE, ex_style | WS_EX_NOACTIVATE.0 as i32);
                         }
                     }
                 }

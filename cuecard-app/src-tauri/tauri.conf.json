@@ -5,22 +5,26 @@
   "identifier": "com.cuecard.app",
   "build": {
     "frontendDist": "../src"
-  },
+  },  
   "app": {
     "withGlobalTauri": true,
     "windows": [
       {
         "title": "CueCard",
-        "width": 400,
+        "width": 450,
         "height": 300,
         "resizable": true,
-        "minWidth": 400,
+        "minWidth": 450,
         "minHeight": 300,
         "center": true,
         "alwaysOnTop": true,
         "transparent": true,
         "decorations": true,
-        "visibleOnAllWorkspaces": true
+        "visibleOnAllWorkspaces": true,
+        "skipTaskbar": true,
+        "focus": false,
+        "acceptFirstMouse": true,
+        "theme": "Dark"
       }
     ],
     "security": {
@@ -38,8 +42,8 @@
       "icons/icon.ico"
     ],
     "category": "Productivity",
-    "shortDescription": "Your hidden speaker notes for meetings, presentations, and even dates.",
-    "longDescription": "Your hidden speaker notes for meetings, presentations, and even dates.",
+    "shortDescription": "Speaker notes for presentations, meetings, and even dates — visible only to you.",
+    "longDescription": "Speaker notes for presentations, meetings, and even dates — visible only to you.",
     "macOS": {
       "minimumSystemVersion": "10.13"
     },

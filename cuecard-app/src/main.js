@@ -3,10 +3,10 @@ const { listen } = window.__TAURI__.event;
 
 // DOM Elements
 let authBtn;
-let welcomeHeading;
 let viewInitial, viewAddNotes, viewNotes;
-let linkPasteNotes, linkGoBack;
+let linkGoBack;
 let notesInput, notesContent;
+let welcomeSubtext;
 
 // State
 let isAuthenticated = false;
@@ -18,14 +18,13 @@ let manualNotes = ''; // Notes pasted by the user
 window.addEventListener("DOMContentLoaded", async () => {
   // Get DOM elements
   authBtn = document.getElementById("auth-btn");
-  welcomeHeading = document.getElementById("welcome-heading");
   viewInitial = document.getElementById("view-initial");
   viewAddNotes = document.getElementById("view-add-notes");
   viewNotes = document.getElementById("view-notes");
-  linkPasteNotes = document.getElementById("link-paste-notes");
   linkGoBack = document.getElementById("link-go-back");
   notesInput = document.getElementById("notes-input");
   notesContent = document.getElementById("notes-content");
+  welcomeSubtext = document.getElementById("welcome-subtext");
 
   // Set up navigation handlers
   setupNavigation();
@@ -54,7 +53,12 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 // Navigation Handlers
 function setupNavigation() {
-  linkPasteNotes.addEventListener("click", (e) => {
+  // Click anywhere on initial view to paste notes (only when authenticated)
+  viewInitial.addEventListener("click", (e) => {
+    // Don't trigger if clicking the auth button or not authenticated
+    if (e.target.closest('#auth-btn') || !isAuthenticated) {
+      return;
+    }
     e.preventDefault();
     showView('add-notes');
     notesInput.focus();
@@ -62,15 +66,9 @@ function setupNavigation() {
 
   linkGoBack.addEventListener("click", (e) => {
     e.preventDefault();
-    // If user has entered notes, show them
-    const notes = notesInput.value.trim();
-    if (notes) {
-      manualNotes = notes;
-      displayNotes(notes);
-      showView('notes');
-    } else {
-      showView('initial');
-    }
+    // Clear the input and go back to initial view
+    notesInput.value = '';
+    showView('initial');
   });
 
   // Handle Enter in notes input to submit
@@ -123,21 +121,25 @@ function updateAuthUI(authenticated, name = '') {
   isAuthenticated = authenticated;
   userName = name;
   
-  // Update welcome heading
-  if (authenticated && name) {
-    welcomeHeading.textContent = `Welcome ${name}!`;
-  } else {
-    welcomeHeading.textContent = 'Welcome Human!';
-  }
-  
-  // Update button text and icon visibility
   const buttonText = authBtn.querySelector('.gsi-material-button-contents');
   const buttonIcon = authBtn.querySelector('.gsi-material-button-icon');
-  if (buttonText) {
-    buttonText.textContent = authenticated ? "Sign Out" : "Sign in with Google";
-  }
-  if (buttonIcon) {
-    buttonIcon.style.display = authenticated ? 'none' : 'block';
+  
+  if (authenticated) {
+    // Update button to show "Sign out"
+    if (buttonText) buttonText.textContent = 'Sign out';
+    if (buttonIcon) buttonIcon.style.display = 'none';
+    // Update subtext to show click instruction
+    welcomeSubtext.innerHTML = 'Click anywhere to paste your notes or use with <a href="https://slides.google.com" target="_blank" rel="noopener noreferrer" class="slides-link">Google Slides</a> automatically...';
+    // Enable clickable view
+    viewInitial.classList.add('clickable-view');
+  } else {
+    // Update button to show "Sign in"
+    if (buttonText) buttonText.textContent = 'Sign in with Google';
+    if (buttonIcon) buttonIcon.style.display = 'block';
+    // Reset subtext
+    welcomeSubtext.innerHTML = 'Speaker notes for <span class="highlight-presentations">presentations</span>, <span class="highlight-meetings">meetings</span>, and even <span class="highlight-dates">dates</span> — visible only to you...';
+    // Disable clickable view
+    viewInitial.classList.remove('clickable-view');
   }
 }
 
