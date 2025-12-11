@@ -1,5 +1,6 @@
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
+const { getCurrentWindow } = window.__TAURI__.window;
 
 // DOM Elements
 let authBtn;
@@ -7,6 +8,7 @@ let welcomeHeading;
 let viewInitial, viewAddNotes, viewNotes;
 let linkPasteNotes, linkGoBack;
 let notesInput, notesContent;
+let btnClose, btnMinimize, btnMaximize;
 
 // State
 let isAuthenticated = false;
@@ -26,6 +28,12 @@ window.addEventListener("DOMContentLoaded", async () => {
   linkGoBack = document.getElementById("link-go-back");
   notesInput = document.getElementById("notes-input");
   notesContent = document.getElementById("notes-content");
+  btnClose = document.getElementById("btn-close");
+  btnMinimize = document.getElementById("btn-minimize");
+  btnMaximize = document.getElementById("btn-maximize");
+
+  // Set up window controls
+  setupWindowControls();
 
   // Set up navigation handlers
   setupNavigation();
@@ -51,6 +59,28 @@ window.addEventListener("DOMContentLoaded", async () => {
     updateAuthUI(event.payload.authenticated, event.payload.user_name);
   });
 });
+
+// Window Control Handlers
+function setupWindowControls() {
+  const appWindow = getCurrentWindow();
+
+  btnClose.addEventListener("click", () => {
+    appWindow.close();
+  });
+
+  btnMinimize.addEventListener("click", () => {
+    appWindow.minimize();
+  });
+
+  btnMaximize.addEventListener("click", async () => {
+    const isMaximized = await appWindow.isMaximized();
+    if (isMaximized) {
+      appWindow.unmaximize();
+    } else {
+      appWindow.maximize();
+    }
+  });
+}
 
 // Navigation Handlers
 function setupNavigation() {

@@ -11,15 +11,15 @@
     "windows": [
       {
         "title": "CueCard",
-        "width": 400,
+        "width": 500,
         "height": 300,
         "resizable": true,
-        "minWidth": 400,
+        "minWidth": 500,
         "minHeight": 300,
         "center": true,
         "alwaysOnTop": true,
         "transparent": true,
-        "decorations": true,
+        "decorations": false,
         "visibleOnAllWorkspaces": true
       }
     ],
