@@ -75,6 +75,7 @@ body {
   max-width: min-content;
   min-width: min-content;
   margin-top: 12px;
+  margin-bottom: 12px;
 }
 
 .gsi-material-button .gsi-material-button-icon {
@@ -194,7 +195,7 @@ body {
 }
 
 .welcome-heading {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1;
@@ -422,4 +423,38 @@ body {
 ::selection {
   background: rgba(254, 188, 46, 0.3);
   color: var(--text-primary);
+}
+
+/* Footer */
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 0 18px 18px 18px;
+  background: var(--bg-primary);
+}
+
+.footer-link {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+  letter-spacing: 0.25px;
+}
+
+.footer-link:hover {
+  opacity: 0.8;
+}
+
+.footer-separator {
+  font-size: 12px;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  user-select: none;
 }

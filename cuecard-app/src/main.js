@@ -1,5 +1,6 @@
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
+const { open } = window.__TAURI__.shell;
 
 // DOM Elements
 let authBtn;
@@ -7,6 +8,7 @@ let viewInitial, viewAddNotes, viewNotes;
 let linkGoBack;
 let notesInput, notesContent;
 let welcomeSubtext;
+let privacyLink, websiteLink;
 
 // State
 let isAuthenticated = false;
@@ -25,12 +27,17 @@ window.addEventListener("DOMContentLoaded", async () => {
   notesInput = document.getElementById("notes-input");
   notesContent = document.getElementById("notes-content");
   welcomeSubtext = document.getElementById("welcome-subtext");
+  privacyLink = document.getElementById("privacy-link");
+  websiteLink = document.getElementById("website-link");
 
   // Set up navigation handlers
   setupNavigation();
 
   // Set up auth handlers
   setupAuth();
+
+  // Set up footer handlers
+  setupFooter();
 
   // Check auth status on load
   await checkAuthStatus();
@@ -252,4 +259,23 @@ function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML;
+}
+
+// Footer Handlers
+function setupFooter() {
+  privacyLink.addEventListener("click", async () => {
+    try {
+      await open("https://cuecard.app/privacy");
+    } catch (error) {
+      console.error("Error opening privacy policy:", error);
+    }
+  });
+
+  websiteLink.addEventListener("click", async () => {
+    try {
+      await open("https://cuecard.app");
+    } catch (error) {
+      console.error("Error opening website:", error);
+    }
+  });
 }
