@@ -13,6 +13,8 @@ let logoutBtn;
 let authPrompt;
 let authPromptBtn;
 let slideInfo;
+let opacitySlider;
+let opacityValue;
 
 // Initialize the app
 window.addEventListener("DOMContentLoaded", async () => {
@@ -28,11 +30,16 @@ window.addEventListener("DOMContentLoaded", async () => {
   authPrompt = document.querySelector("#auth-prompt");
   authPromptBtn = document.querySelector("#auth-prompt-btn");
   slideInfo = document.querySelector("#slide-info");
+  opacitySlider = document.querySelector("#opacity-slider");
+  opacityValue = document.querySelector("#opacity-value");
 
   // Set up auth button handlers
   loginBtn.addEventListener("click", handleLogin);
   logoutBtn.addEventListener("click", handleLogout);
   authPromptBtn.addEventListener("click", handleLogin);
+
+  // Set up opacity slider handler
+  opacitySlider.addEventListener("input", handleOpacityChange);
 
   // Check auth status on load
   await checkAuthStatus();
@@ -150,4 +157,19 @@ function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML.replace(/\n/g, "<br>");
+}
+
+// Handle opacity slider change
+async function handleOpacityChange(event) {
+  const opacityPercent = parseInt(event.target.value);
+  const opacity = opacityPercent / 100;
+
+  // Update the display value
+  opacityValue.textContent = `${opacityPercent}%`;
+
+  try {
+    await invoke("set_window_opacity", { opacity });
+  } catch (error) {
+    console.error("Error setting window opacity:", error);
+  }
 }

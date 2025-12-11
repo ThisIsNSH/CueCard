@@ -12,13 +12,20 @@
     <main class="container">
       <header class="header">
         <h1>CueCard</h1>
-        <div class="auth-section" id="auth-section">
-          <button class="auth-btn login-btn" id="login-btn" style="display: none;">
-            Sign in with Nishant
-          </button>
-          <button class="auth-btn logout-btn" id="logout-btn" style="display: none;">
-            Sign out
-          </button>
+        <div class="header-controls">
+          <div class="transparency-control">
+            <label for="opacity-slider">Opacity:</label>
+            <input type="range" id="opacity-slider" min="10" max="100" value="100" step="5">
+            <span id="opacity-value">100%</span>
+          </div>
+          <div class="auth-section" id="auth-section">
+            <button class="auth-btn login-btn" id="login-btn" style="display: none;">
+              Sign in with Google
+            </button>
+            <button class="auth-btn logout-btn" id="logout-btn" style="display: none;">
+              Sign out
+            </button>
+          </div>
         </div>
       </header>
 

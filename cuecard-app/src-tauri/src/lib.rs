@@ -10,9 +10,13 @@ use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_opener::OpenerExt;
 use tower_http::cors::{Any, CorsLayer};
+
+#[cfg(target_os = "macos")]
+#[macro_use]
+extern crate objc;
 
 // OAuth2 Configuration - Set these via environment variables
 const GOOGLE_AUTH_URL: &str = "https://accounts.google.com/o/oauth2/v2/auth";
@@ -540,6 +544,157 @@ fn logout() {
     *tokens = None;
 }
 
+// Tauri command to set window opacity/transparency
+#[tauri::command]
+fn set_window_opacity(app: AppHandle, opacity: f64) -> Result<(), String> {
+    let window = app.get_webview_window("main").ok_or("Failed to get main window")?;
+
+    // Clamp opacity between 0.1 and 1.0
+    let clamped_opacity = opacity.max(0.1).min(1.0);
+
+    #[cfg(target_os = "macos")]
+    {
+        use cocoa::appkit::NSWindow;
+        use cocoa::base::id;
+
+        let ns_window = window.ns_window().map_err(|e| format!("Failed to get NSWindow: {}", e))? as id;
+        unsafe {
+            ns_window.setAlphaValue_(clamped_opacity);
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        use windows::Win32::Foundation::HWND;
+        use windows::Win32::Graphics::Gdi::UpdateWindow;
+        use windows::Win32::UI::WindowsAndMessaging::{
+            GetWindowLongW, SetLayeredWindowAttributes, SetWindowLongW, GWL_EXSTYLE, LWA_ALPHA,
+            WS_EX_LAYERED,
+        };
+
+        let hwnd = HWND(window.hwnd().map_err(|e| format!("Failed to get HWND: {}", e))?.0 as _);
+
+        unsafe {
+            // Get current extended style
+            let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
+
+            // Add WS_EX_LAYERED style if not present
+            SetWindowLongW(hwnd, GWL_EXSTYLE, ex_style | WS_EX_LAYERED.0 as i32);
+
+            // Set the opacity (0-255)
+            let alpha = (clamped_opacity * 255.0) as u8;
+            SetLayeredWindowAttributes(hwnd, None, alpha, LWA_ALPHA)
+                .map_err(|e| format!("Failed to set window opacity: {}", e))?;
+
+            let _ = UpdateWindow(hwnd);
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        // On Linux, transparency is handled by the compositor
+        // We can try to set the opacity hint, but it depends on the window manager
+        // For now, we'll just acknowledge the request
+        let _ = clamped_opacity;
+        println!("Note: Dynamic opacity control on Linux depends on your window manager/compositor");
+    }
+
+    Ok(())
+}
+
+// Tauri command to get current window opacity
+#[tauri::command]
+fn get_window_opacity(app: AppHandle) -> Result<f64, String> {
+    let window = app.get_webview_window("main").ok_or("Failed to get main window")?;
+
+    #[cfg(target_os = "macos")]
+    {
+        use cocoa::appkit::NSWindow;
+        use cocoa::base::id;
+
+        let ns_window = window.ns_window().map_err(|e| format!("Failed to get NSWindow: {}", e))? as id;
+        let opacity = unsafe { ns_window.alphaValue() };
+        Ok(opacity)
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        use windows::Win32::Foundation::HWND;
+        use windows::Win32::UI::WindowsAndMessaging::{GetLayeredWindowAttributes, GWL_EXSTYLE, GetWindowLongW, WS_EX_LAYERED};
+
+        let hwnd = HWND(window.hwnd().map_err(|e| format!("Failed to get HWND: {}", e))?.0 as _);
+
+        unsafe {
+            let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
+            if (ex_style & WS_EX_LAYERED.0 as i32) != 0 {
+                let mut alpha: u8 = 255;
+                let _ = GetLayeredWindowAttributes(hwnd, None, Some(&mut alpha), None);
+                Ok(alpha as f64 / 255.0)
+            } else {
+                Ok(1.0)
+            }
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let _ = window;
+        Ok(1.0) // Default to fully opaque on Linux
+    }
+}
+
+// Tauri command to enable/disable screenshot protection
+#[tauri::command]
+fn set_screenshot_protection(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let window = app.get_webview_window("main").ok_or("Failed to get main window")?;
+
+    #[cfg(target_os = "macos")]
+    {
+        use cocoa::base::id;
+
+        let ns_window = window.ns_window().map_err(|e| format!("Failed to get NSWindow: {}", e))? as id;
+        unsafe {
+            if enabled {
+                // NSWindowSharingNone = 0 prevents the window from being captured
+                let _: () = msg_send![ns_window, setSharingType: 0u64];
+            } else {
+                // NSWindowSharingReadOnly = 1 allows capturing
+                let _: () = msg_send![ns_window, setSharingType: 1u64];
+            }
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        use windows::Win32::Foundation::HWND;
+        use windows::Win32::UI::WindowsAndMessaging::{SetWindowDisplayAffinity, WDA_EXCLUDEFROMCAPTURE, WDA_NONE};
+
+        let hwnd = HWND(window.hwnd().map_err(|e| format!("Failed to get HWND: {}", e))?.0 as _);
+
+        unsafe {
+            let affinity = if enabled {
+                WDA_EXCLUDEFROMCAPTURE // Exclude from screen capture
+            } else {
+                WDA_NONE // Allow screen capture
+            };
+
+            SetWindowDisplayAffinity(hwnd, affinity)
+                .map_err(|e| format!("Failed to set display affinity: {}", e))?;
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let _ = (window, enabled);
+        println!("Warning: Screenshot protection is not reliably supported on Linux");
+        println!("Linux screenshot protection depends on compositor support and may not work");
+        // On Linux, there's no standard way to prevent screenshots across all desktop environments
+        // Some compositors might support _NET_WM_STATE_HIDDEN or similar, but it's not universal
+    }
+
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -549,6 +704,44 @@ pub fn run() {
             {
                 let mut handle = APP_HANDLE.write();
                 *handle = Some(app.handle().clone());
+            }
+
+            // Enable screenshot protection and full-screen overlay by default
+            #[cfg(target_os = "macos")]
+            {
+                if let Some(window) = app.get_webview_window("main") {
+                    use cocoa::base::id;
+
+                    if let Ok(ns_window) = window.ns_window() {
+                        let ns_window = ns_window as id;
+                        unsafe {
+                            // NSWindowSharingNone = 0 prevents the window from being captured
+                            let _: () = msg_send![ns_window, setSharingType: 0u64];
+
+                            // Set collection behavior to show over full-screen apps
+                            // NSWindowCollectionBehaviorCanJoinAllSpaces = 1 << 0
+                            // NSWindowCollectionBehaviorFullScreenAuxiliary = 1 << 8
+                            let collection_behavior: u64 = (1 << 0) | (1 << 8);
+                            let _: () = msg_send![ns_window, setCollectionBehavior: collection_behavior];
+                        }
+                    }
+                }
+            }
+
+            // Enable screenshot protection by default on Windows
+            #[cfg(target_os = "windows")]
+            {
+                if let Some(window) = app.get_webview_window("main") {
+                    use windows::Win32::Foundation::HWND;
+                    use windows::Win32::UI::WindowsAndMessaging::{SetWindowDisplayAffinity, WDA_EXCLUDEFROMCAPTURE};
+
+                    if let Ok(hwnd_wrapper) = window.hwnd() {
+                        let hwnd = HWND(hwnd_wrapper.0 as _);
+                        unsafe {
+                            let _ = SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE);
+                        }
+                    }
+                }
             }
 
             // Start the web server in a background thread
@@ -564,7 +757,10 @@ pub fn run() {
             get_current_notes,
             get_auth_status,
             start_login,
-            logout
+            logout,
+            set_window_opacity,
+            get_window_opacity,
+            set_screenshot_protection
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

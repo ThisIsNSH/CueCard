@@ -38,12 +38,73 @@ body {
   padding-bottom: 20px;
   border-bottom: 1px solid #e0e0e0;
   margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .header h1 {
   font-size: 1.5rem;
   font-weight: 600;
   color: #1a1a2e;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Transparency control */
+.transparency-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.transparency-control label {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.transparency-control input[type="range"] {
+  width: 100px;
+  height: 4px;
+  background: #e0e0e0;
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.transparency-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: #4285f4;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.transparency-control input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: #4285f4;
+  cursor: pointer;
+  border-radius: 50%;
+  border: none;
+}
+
+.transparency-control span {
+  font-size: 0.85rem;
+  color: #333;
+  font-weight: 500;
+  min-width: 40px;
 }
 
 /* Auth buttons */
@@ -305,6 +366,23 @@ body {
 
   .auth-btn.logout-btn:hover {
     background: #4a4a6a;
+  }
+
+  .transparency-control {
+    background: #252542;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+
+  .transparency-control label {
+    color: #aaa;
+  }
+
+  .transparency-control input[type="range"] {
+    background: #444;
+  }
+
+  .transparency-control span {
+    color: #d0d0d0;
   }
 }
 
