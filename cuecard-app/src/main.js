@@ -1,28 +1,24 @@
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
-const { getCurrentWindow } = window.__TAURI__.window;
 
 // DOM Elements
-let btnClose, btnMinimize, btnZoom;
 let authBtn;
-let slideIndicator;
+let welcomeHeading;
 let viewInitial, viewAddNotes, viewNotes;
 let linkPasteNotes, linkGoBack;
 let notesInput, notesContent;
 
 // State
 let isAuthenticated = false;
+let userName = '';
 let currentView = 'initial'; // 'initial', 'add-notes', 'notes'
 let manualNotes = ''; // Notes pasted by the user
 
 // Initialize the app
 window.addEventListener("DOMContentLoaded", async () => {
   // Get DOM elements
-  btnClose = document.getElementById("btn-close");
-  btnMinimize = document.getElementById("btn-minimize");
-  btnZoom = document.getElementById("btn-zoom");
   authBtn = document.getElementById("auth-btn");
-  slideIndicator = document.getElementById("slide-indicator");
+  welcomeHeading = document.getElementById("welcome-heading");
   viewInitial = document.getElementById("view-initial");
   viewAddNotes = document.getElementById("view-add-notes");
   viewNotes = document.getElementById("view-notes");
@@ -30,9 +26,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   linkGoBack = document.getElementById("link-go-back");
   notesInput = document.getElementById("notes-input");
   notesContent = document.getElementById("notes-content");
-
-  // Set up window control handlers
-  setupWindowControls();
 
   // Set up navigation handlers
   setupNavigation();
@@ -55,31 +48,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   // Listen for auth status changes
   await listen("auth-status", (event) => {
     console.log("Auth status changed:", event.payload);
-    updateAuthUI(event.payload.authenticated);
+    updateAuthUI(event.payload.authenticated, event.payload.user_name);
   });
 });
-
-// Window Control Handlers
-function setupWindowControls() {
-  const appWindow = getCurrentWindow();
-
-  btnClose.addEventListener("click", async () => {
-    await appWindow.close();
-  });
-
-  btnMinimize.addEventListener("click", async () => {
-    await appWindow.minimize();
-  });
-
-  btnZoom.addEventListener("click", async () => {
-    const isMaximized = await appWindow.isMaximized();
-    if (isMaximized) {
-      await appWindow.unmaximize();
-    } else {
-      await appWindow.maximize();
-    }
-  });
-}
 
 // Navigation Handlers
 function setupNavigation() {
@@ -130,17 +101,44 @@ function setupAuth() {
 async function checkAuthStatus() {
   try {
     const status = await invoke("get_auth_status");
-    updateAuthUI(status);
+    // Try to get user info if authenticated
+    let name = '';
+    if (status) {
+      try {
+        const userInfo = await invoke("get_user_info");
+        name = userInfo?.name || '';
+      } catch (e) {
+        console.log("Could not get user info:", e);
+      }
+    }
+    updateAuthUI(status, name);
   } catch (error) {
     console.error("Error checking auth status:", error);
-    updateAuthUI(false);
+    updateAuthUI(false, '');
   }
 }
 
 // Update UI based on auth status
-function updateAuthUI(authenticated) {
+function updateAuthUI(authenticated, name = '') {
   isAuthenticated = authenticated;
-  authBtn.textContent = authenticated ? "Sign Out" : "Sign in with Google";
+  userName = name;
+  
+  // Update welcome heading
+  if (authenticated && name) {
+    welcomeHeading.textContent = `Welcome ${name}!`;
+  } else {
+    welcomeHeading.textContent = 'Welcome Human!';
+  }
+  
+  // Update button text and icon visibility
+  const buttonText = authBtn.querySelector('.gsi-material-button-contents');
+  const buttonIcon = authBtn.querySelector('.gsi-material-button-icon');
+  if (buttonText) {
+    buttonText.textContent = authenticated ? "Sign Out" : "Sign in with Google";
+  }
+  if (buttonIcon) {
+    buttonIcon.style.display = authenticated ? 'none' : 'block';
+  }
 }
 
 // Handle login
@@ -156,9 +154,7 @@ async function handleLogin() {
 async function handleLogout() {
   try {
     await invoke("logout");
-    updateAuthUI(false);
-    // Clear slide indicator
-    slideIndicator.innerHTML = '';
+    updateAuthUI(false, '');
     // Reset to initial view if viewing slide notes
     if (currentView === 'notes' && !manualNotes) {
       showView('initial');
@@ -189,30 +185,11 @@ function handleSlideUpdate(data) {
     return;
   }
 
-  // Update slide indicator in title bar
-  updateSlideIndicator(slide_data);
-
   // Display the notes
   if (notes && notes.trim()) {
     displayNotes(notes);
     showView('notes');
   }
-}
-
-// Update slide indicator in title bar
-function updateSlideIndicator(slideData) {
-  const slideNum = slideData.slideNumber || slideData.slide_number || 1;
-  let title = slideData.title || "Untitled";
-  
-  // Truncate title if too long
-  if (title.length > 20) {
-    title = title.substring(0, 17) + " ...";
-  }
-
-  slideIndicator.innerHTML = `
-    <span class="slide-number">[Slide ${slideNum}]</span>
-    <span class="slide-name">${escapeHtml(title)}</span>
-  `;
 }
 
 // Show a specific view

@@ -22,7 +22,7 @@ extern crate objc;
 const GOOGLE_AUTH_URL: &str = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL: &str = "https://oauth2.googleapis.com/token";
 const REDIRECT_URI: &str = "http://127.0.0.1:3000/oauth/callback";
-const SCOPES: &str = "https://www.googleapis.com/auth/presentations.readonly";
+const SCOPES: &str = "https://www.googleapis.com/auth/presentations.readonly https://www.googleapis.com/auth/userinfo.profile";
 
 // Global state
 static CURRENT_SLIDE: Lazy<Arc<RwLock<Option<SlideData>>>> =
@@ -184,9 +184,33 @@ async fn oauth_callback_handler(Query(params): Query<OAuthCallback>) -> Html<Str
                 *oauth = Some(tokens);
             }
 
+            // Fetch user info to get the name
+            let user_name = if let Some(access_token) = get_valid_access_token().await {
+                let client = reqwest::Client::new();
+                if let Ok(response) = client
+                    .get("https://www.googleapis.com/oauth2/v2/userinfo")
+                    .header("Authorization", format!("Bearer {}", access_token))
+                    .send()
+                    .await
+                {
+                    if let Ok(user_info) = response.json::<serde_json::Value>().await {
+                        user_info.get("name").and_then(|n| n.as_str()).map(|s| s.to_string())
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            } else {
+                None
+            };
+
             // Notify frontend
             if let Some(app) = APP_HANDLE.read().as_ref() {
-                let _ = app.emit("auth-status", serde_json::json!({"authenticated": true}));
+                let _ = app.emit("auth-status", serde_json::json!({
+                    "authenticated": true,
+                    "user_name": user_name
+                }));
             }
 
             Html(
@@ -455,7 +479,10 @@ async fn logout_handler() -> Json<serde_json::Value> {
     }
 
     if let Some(app) = APP_HANDLE.read().as_ref() {
-        let _ = app.emit("auth-status", serde_json::json!({"authenticated": false}));
+        let _ = app.emit("auth-status", serde_json::json!({
+            "authenticated": false,
+            "user_name": null
+        }));
     }
 
     Json(serde_json::json!({
@@ -511,6 +538,34 @@ fn get_current_notes() -> Option<String> {
 #[tauri::command]
 fn get_auth_status() -> bool {
     OAUTH_TOKENS.read().is_some()
+}
+
+// Tauri command to get user info from Google
+#[tauri::command]
+async fn get_user_info() -> Result<serde_json::Value, String> {
+    let access_token = match get_valid_access_token().await {
+        Some(token) => token,
+        None => return Err("Not authenticated".to_string()),
+    };
+
+    let client = reqwest::Client::new();
+    let response = client
+        .get("https://www.googleapis.com/oauth2/v2/userinfo")
+        .header("Authorization", format!("Bearer {}", access_token))
+        .send()
+        .await
+        .map_err(|e| format!("Failed to fetch user info: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("Failed to fetch user info: {}", response.status()));
+    }
+
+    let user_info: serde_json::Value = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse user info: {}", e))?;
+
+    Ok(user_info)
 }
 
 // Tauri command to initiate login - opens browser directly
@@ -756,6 +811,7 @@ pub fn run() {
             get_current_slide,
             get_current_notes,
             get_auth_status,
+            get_user_info,
             start_login,
             logout,
             set_window_opacity,

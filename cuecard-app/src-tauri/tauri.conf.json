@@ -11,15 +11,15 @@
     "windows": [
       {
         "title": "CueCard",
-        "width": 488,
-        "height": 376,
+        "width": 400,
+        "height": 300,
         "resizable": true,
-        "minWidth": 300,
-        "minHeight": 200,
+        "minWidth": 400,
+        "minHeight": 300,
         "center": true,
         "alwaysOnTop": true,
         "transparent": true,
-        "decorations": false,
+        "decorations": true,
         "visibleOnAllWorkspaces": true
       }
     ],
@@ -38,16 +38,8 @@
       "icons/icon.ico"
     ],
     "category": "Productivity",
-    "shortDescription": "Display speaker notes from Google Slides",
-    "longDescription": "CueCard works with a browser extension to display speaker notes from your Google Slides presentations in a separate window.",
-    "linux": {
-      "appimage": {
-        "bundleMediaFramework": false
-      },
-      "deb": {
-        "depends": []
-      }
-    },
+    "shortDescription": "Your hidden speaker notes for meetings, presentations, and even dates.",
+    "longDescription": "Your hidden speaker notes for meetings, presentations, and even dates.",
     "macOS": {
       "minimumSystemVersion": "10.13"
     },
