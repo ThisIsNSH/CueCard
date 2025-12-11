@@ -162,7 +162,7 @@ function updateAuthUI(authenticated, name = '') {
     if (buttonText) buttonText.textContent = 'Sign out';
     if (buttonIcon) buttonIcon.style.display = 'none';
     // Update subtext to show click instruction
-    welcomeSubtext.innerHTML = 'Click anywhere to paste your notes or use with <a href="https://slides.google.com" target="_blank" rel="noopener noreferrer" class="slides-link">Google Slides</a> automatically...';
+    welcomeSubtext.innerHTML = 'Click anywhere to paste your notes or use with <a href="https://slides.google.com" target="_blank" rel="noopener noreferrer" class="slides-link">Google Slides</a> directly...';
     // Enable clickable view
     viewInitial.classList.add('clickable-view');
   } else {

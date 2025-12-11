@@ -412,7 +412,7 @@ body {
 .slides-link {
   position: relative;
   display: inline-block;
-  color: var(--text-secondary);
+  color: var(--accent-link);
   text-decoration: none;
   transition: color 0.2s ease;
 }
