@@ -572,6 +572,10 @@ function updateAuthUI(authenticated, name = '') {
     if (buttonText) buttonText.textContent = 'Sign out';
     if (buttonIcon) buttonIcon.style.display = 'none';
 
+    // Show settings link
+    settingsLink.classList.remove('hidden');
+    settingsSeparator.classList.remove('hidden');
+
     // Update welcome heading with greeting and first name
     const firstName = getFirstName(name);
     const greeting = getGreeting();
@@ -614,6 +618,10 @@ function updateAuthUI(authenticated, name = '') {
     // Update button to show "Sign in"
     if (buttonText) buttonText.textContent = 'Sign in with Google';
     if (buttonIcon) buttonIcon.style.display = 'block';
+
+    // Hide settings link
+    settingsLink.classList.add('hidden');
+    settingsSeparator.classList.add('hidden');
 
     // Reset welcome heading to default
     welcomeHeading.innerHTML = 'CueCard\n<span class="version-text">1.0.1</span>';
@@ -735,8 +743,10 @@ function showView(viewName) {
     privacyLink.classList.remove('hidden');
     websiteLink.classList.remove('hidden');
     websiteSeparator.classList.remove('hidden');
-    settingsLink.classList.remove('hidden');
-    settingsSeparator.classList.remove('hidden');
+    if (isAuthenticated) {
+      settingsLink.classList.remove('hidden');
+      settingsSeparator.classList.remove('hidden');
+    }
   } else if (viewName === 'settings') {
     // Settings view: show Visit Site, Privacy Policy (no Settings button)
     privacyLink.classList.remove('hidden');
