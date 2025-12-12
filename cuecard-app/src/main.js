@@ -7,6 +7,77 @@ const { invoke } = window.__TAURI__?.core || {};
 const { listen } = window.__TAURI__?.event || {};
 const { openUrl } = window.__TAURI__?.opener || {};
 
+// Store for persistent storage
+let appStore = null;
+
+// Storage keys
+const STORAGE_KEYS = {
+  SETTINGS_OPACITY: 'settings_opacity',
+  SETTINGS_SCREENSHOT_PROTECTION: 'settings_screenshot_protection',
+  ADD_NOTES_CONTENT: 'add_notes_content'
+};
+
+// Initialize the store
+async function initStore() {
+  try {
+    // Import store dynamically for Tauri 2
+    const Store = window.__TAURI__?.store?.Store;
+    if (Store) {
+      appStore = await Store.load('cuecard-store.json');
+      console.log("Store initialized successfully");
+    } else {
+      console.warn("Store plugin not available");
+    }
+  } catch (error) {
+    console.error("Error initializing store:", error);
+  }
+}
+
+// Get value from store
+async function getStoredValue(key) {
+  if (!appStore) return null;
+  try {
+    return await appStore.get(key);
+  } catch (error) {
+    console.error(`Error getting stored value for ${key}:`, error);
+    return null;
+  }
+}
+
+// Set value in store
+async function setStoredValue(key, value) {
+  if (!appStore) return;
+  try {
+    await appStore.set(key, value);
+    await appStore.save();
+  } catch (error) {
+    console.error(`Error setting stored value for ${key}:`, error);
+  }
+}
+
+// Load stored notes into the add-notes textarea
+async function loadStoredNotes() {
+  const storedNotes = await getStoredValue(STORAGE_KEYS.ADD_NOTES_CONTENT);
+  if (storedNotes && notesInput) {
+    notesInput.value = storedNotes;
+    // Trigger the highlight update
+    if (notesInputHighlight) {
+      const event = new Event('input', { bubbles: true });
+      notesInput.dispatchEvent(event);
+    }
+    console.log("Loaded stored notes");
+  }
+}
+
+// Save notes from add-notes textarea to storage
+async function saveNotesToStorage() {
+  if (notesInput) {
+    const notes = notesInput.value;
+    await setStoredValue(STORAGE_KEYS.ADD_NOTES_CONTENT, notes);
+    console.log("Saved notes to storage");
+  }
+}
+
 // DOM Elements
 let authBtn;
 let viewInitial, viewAddNotes, viewNotes, viewSettings;
@@ -38,6 +109,9 @@ let originalTimerValues = []; // Store original timer values for reset
 // Initialize the app
 window.addEventListener("DOMContentLoaded", async () => {
   console.log("App initializing...");
+
+  // Initialize the store for persistent storage
+  await initStore();
 
   // Get DOM elements
   authBtn = document.getElementById("auth-btn");
@@ -102,6 +176,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   // Set up settings handlers
   setupSettings();
 
+  // Load stored settings
+  await loadStoredSettings();
+
   // Check auth status on load
   await checkAuthStatus();
 
@@ -129,8 +206,14 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 // Navigation Handlers
 function setupNavigation() {
-  linkGoBack.addEventListener("click", (e) => {
+  linkGoBack.addEventListener("click", async (e) => {
     e.preventDefault();
+
+    // Save notes to storage if we're in add-notes view
+    if (currentView === 'add-notes') {
+      await saveNotesToStorage();
+    }
+
     // Reset all states
     resetAllStates();
     showView('initial');
@@ -786,6 +869,8 @@ function showView(viewName) {
       break;
     case 'add-notes':
       viewAddNotes.classList.remove('hidden');
+      // Load stored notes when entering add-notes view
+      loadStoredNotes();
       // In add-notes view, timer waits for Start button
       // Don't auto-start
       break;
@@ -973,6 +1058,39 @@ function setupFooter() {
   });
 }
 
+// Load stored settings from persistent storage
+async function loadStoredSettings() {
+  // Load stored opacity
+  const storedOpacity = await getStoredValue(STORAGE_KEYS.SETTINGS_OPACITY);
+  if (storedOpacity !== null && storedOpacity !== undefined) {
+    currentOpacity = storedOpacity;
+    // Apply the stored opacity
+    if (invoke) {
+      try {
+        await invoke("set_window_opacity", { opacity: storedOpacity / 100 });
+      } catch (error) {
+        console.error("Error applying stored opacity:", error);
+      }
+    }
+  }
+
+  // Load stored screenshot protection setting
+  const storedProtection = await getStoredValue(STORAGE_KEYS.SETTINGS_SCREENSHOT_PROTECTION);
+  if (storedProtection !== null && storedProtection !== undefined) {
+    screenshotProtectionEnabled = storedProtection;
+    // Apply the stored screenshot protection
+    if (invoke) {
+      try {
+        await invoke("set_screenshot_protection", { enabled: storedProtection });
+      } catch (error) {
+        console.error("Error applying stored screenshot protection:", error);
+      }
+    }
+  }
+
+  console.log("Loaded stored settings:", { opacity: currentOpacity, screenshotProtection: screenshotProtectionEnabled });
+}
+
 // Settings Handlers
 function setupSettings() {
   if (!opacitySlider || !screenCaptureToggle) return;
@@ -991,6 +1109,9 @@ function setupSettings() {
         console.error("Error setting window opacity:", error);
       }
     }
+
+    // Save to persistent storage
+    await setStoredValue(STORAGE_KEYS.SETTINGS_OPACITY, value);
   });
 
   // Screen capture toggle handler
@@ -1007,6 +1128,9 @@ function setupSettings() {
         console.error("Error setting screenshot protection:", error);
       }
     }
+
+    // Save to persistent storage
+    await setStoredValue(STORAGE_KEYS.SETTINGS_SCREENSHOT_PROTECTION, screenshotProtectionEnabled);
   });
 }
 

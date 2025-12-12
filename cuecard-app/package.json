@@ -6,6 +6,9 @@
   "scripts": {
     "tauri": "tauri"
   },
+  "dependencies": {
+    "@tauri-apps/plugin-store": "^2"
+  },
   "devDependencies": {
     "@tauri-apps/cli": "^2"
   }

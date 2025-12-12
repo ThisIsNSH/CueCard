@@ -12,6 +12,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_opener::OpenerExt;
+use tauri_plugin_store::StoreExt;
 use tower_http::cors::{Any, CorsLayer};
 
 #[cfg(target_os = "macos")]
@@ -222,6 +223,11 @@ async fn oauth_callback_handler(Query(params): Query<OAuthCallback>) -> Html<Str
                 *oauth = Some(tokens);
             }
 
+            // Save tokens to persistent storage
+            if let Some(app) = APP_HANDLE.read().as_ref() {
+                save_tokens_to_store(app);
+            }
+
             // Fetch user info to get the name
             let user_name = if let Some(access_token) = get_valid_access_token().await {
                 let client = reqwest::Client::new();
@@ -374,7 +380,35 @@ async fn refresh_access_token() -> Result<(), String> {
         }
     }
 
+    // Save updated tokens to persistent storage
+    if let Some(app) = APP_HANDLE.read().as_ref() {
+        save_tokens_to_store(app);
+    }
+
     Ok(())
+}
+
+// Save OAuth tokens to persistent storage
+fn save_tokens_to_store(app: &AppHandle) {
+    if let Ok(store) = app.store("cuecard-store.json") {
+        let tokens = OAUTH_TOKENS.read();
+        if let Some(ref t) = *tokens {
+            if let Ok(json) = serde_json::to_value(t) {
+                let _ = store.set("oauth_tokens", json);
+                let _ = store.save();
+                println!("Saved OAuth tokens to storage");
+            }
+        }
+    }
+}
+
+// Clear OAuth tokens from persistent storage
+fn clear_tokens_from_store(app: &AppHandle) {
+    if let Ok(store) = app.store("cuecard-store.json") {
+        let _ = store.delete("oauth_tokens");
+        let _ = store.save();
+        println!("Cleared OAuth tokens from storage");
+    }
 }
 
 // Get valid access token (refreshes if needed)
@@ -607,6 +641,9 @@ async fn logout_handler() -> Json<serde_json::Value> {
     }
 
     if let Some(app) = APP_HANDLE.read().as_ref() {
+        // Clear tokens from persistent storage
+        clear_tokens_from_store(app);
+
         let _ = app.emit("auth-status", serde_json::json!({
             "authenticated": false,
             "user_name": null
@@ -722,9 +759,13 @@ async fn start_login(app: AppHandle) -> Result<(), String> {
 
 // Tauri command to logout
 #[tauri::command]
-fn logout() {
+fn logout(app: AppHandle) {
     let mut tokens = OAUTH_TOKENS.write();
     *tokens = None;
+    drop(tokens); // Release lock before calling clear_tokens_from_store
+
+    // Clear tokens from persistent storage
+    clear_tokens_from_store(&app);
 }
 
 // Tauri command to refresh notes for current slide/presentation
@@ -921,11 +962,23 @@ fn set_screenshot_protection(app: AppHandle, enabled: bool) -> Result<(), String
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_store::Builder::default().build())
         .setup(|app| {
             // Store app handle for emitting events
             {
                 let mut handle = APP_HANDLE.write();
                 *handle = Some(app.handle().clone());
+            }
+
+            // Load stored OAuth tokens from persistent storage
+            if let Ok(store) = app.store("cuecard-store.json") {
+                if let Some(tokens_json) = store.get("oauth_tokens") {
+                    if let Ok(tokens) = serde_json::from_value::<OAuthTokens>(tokens_json.clone()) {
+                        println!("Loaded OAuth tokens from storage");
+                        let mut oauth = OAUTH_TOKENS.write();
+                        *oauth = Some(tokens);
+                    }
+                }
             }
 
             // Enable screenshot protection and full-screen overlay by default
