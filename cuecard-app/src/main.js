@@ -608,7 +608,7 @@ function updateAuthUI(authenticated, name = '') {
           showView('notes');
         } else {
           // Show notes view with default message when no slide is open
-          displayNotes('Open a Google Slides presentation to see your speaker notes here...');
+          displayNotes('Open a Google Slides presentation to see notes here...');
           slideInfo.textContent = 'No Slide Open';
           showView('notes');
         }
@@ -873,6 +873,9 @@ function highlightNotes(text) {
   // Pattern for [emotion ...] syntax - matches anything between [emotion and ]
   const emotionPattern = /\[emotion\s+([^\]]+)\]/gi;
 
+  // Pattern for "Google Slides" - replace with link
+  const slidesPattern = /Google Slides/gi;
+
   // Replace [time mm:ss] - add line break BEFORE it, time starts a new line
   safe = safe.replace(timePattern, (match, minutes, seconds) => {
     const timeInSeconds = parseInt(minutes) * 60 + parseInt(seconds);
@@ -888,6 +891,11 @@ function highlightNotes(text) {
   // Replace [emotion ...] with [...] inline (pink)
   safe = safe.replace(emotionPattern, (match, emotion) => {
     return `<span class="action-tag">[${emotion}]</span>`;
+  });
+
+  // Replace "Google Slides" with link
+  safe = safe.replace(slidesPattern, (match) => {
+    return `<a href="https://slides.google.com" class="slides-link" id="slides-link" target="_blank" rel="noopener noreferrer">${match}</a>`;
   });
 
   // Convert line breaks
