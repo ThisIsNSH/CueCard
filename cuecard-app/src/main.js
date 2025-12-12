@@ -7,6 +7,132 @@ const { invoke } = window.__TAURI__?.core || {};
 const { listen } = window.__TAURI__?.event || {};
 const { openUrl } = window.__TAURI__?.opener || {};
 
+// Firestore REST API Configuration
+const FIRESTORE_PROJECT_ID = 'YOUR_PROJECT_ID'; // Replace with your Firebase project ID
+const FIRESTORE_BASE_URL = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents`;
+
+// Get or create user profile in Firestore
+async function saveUserProfile(email, name) {
+  if (!email) return;
+
+  const documentPath = `Profiles/${encodeURIComponent(email)}`;
+  const url = `${FIRESTORE_BASE_URL}/${documentPath}`;
+
+  try {
+    // First, try to get the existing document
+    const getResponse = await fetch(url);
+
+    if (getResponse.ok) {
+      // Document exists, just update name and email (don't touch creationDate)
+      const existingDoc = await getResponse.json();
+      const updateUrl = `${url}?updateMask.fieldPaths=name&updateMask.fieldPaths=email`;
+
+      await fetch(updateUrl, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fields: {
+            name: { stringValue: name },
+            email: { stringValue: email }
+          }
+        })
+      });
+      console.log("User profile updated in Firestore");
+    } else if (getResponse.status === 404) {
+      // Document doesn't exist, create new one with all fields
+      const now = new Date().toISOString();
+
+      await fetch(url, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fields: {
+            name: { stringValue: name },
+            email: { stringValue: email },
+            creationDate: { timestampValue: now },
+            usage: {
+              mapValue: {
+                fields: {
+                  paste: { integerValue: '0' },
+                  slide: { integerValue: '0' }
+                }
+              }
+            }
+          }
+        })
+      });
+      console.log("New user profile created in Firestore");
+    }
+  } catch (error) {
+    console.error("Error saving user profile to Firestore:", error);
+  }
+}
+
+// Increment usage counter in Firestore
+async function incrementUsage(email, usageType) {
+  if (!email) return;
+
+  const documentPath = `Profiles/${encodeURIComponent(email)}`;
+  const url = `${FIRESTORE_BASE_URL}/${documentPath}`;
+
+  try {
+    // Get current document to read current usage values
+    const getResponse = await fetch(url);
+
+    if (getResponse.ok) {
+      const doc = await getResponse.json();
+      const currentUsage = doc.fields?.usage?.mapValue?.fields || {};
+      const currentPaste = parseInt(currentUsage.paste?.integerValue || '0');
+      const currentSlide = parseInt(currentUsage.slide?.integerValue || '0');
+
+      // Calculate new values
+      const newPaste = usageType === 'paste' ? currentPaste + 1 : currentPaste;
+      const newSlide = usageType === 'slide' ? currentSlide + 1 : currentSlide;
+
+      // Update only the usage field
+      const updateUrl = `${url}?updateMask.fieldPaths=usage`;
+
+      await fetch(updateUrl, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fields: {
+            usage: {
+              mapValue: {
+                fields: {
+                  paste: { integerValue: String(newPaste) },
+                  slide: { integerValue: String(newSlide) }
+                }
+              }
+            }
+          }
+        })
+      });
+      console.log(`Usage ${usageType} incremented in Firestore`);
+    }
+  } catch (error) {
+    console.error("Error incrementing usage in Firestore:", error);
+  }
+}
+
+// Get user email from stored user info
+async function getUserEmail() {
+  if (!invoke) return null;
+  try {
+    const userInfo = await invoke("get_user_info");
+    return userInfo?.email || null;
+  } catch (e) {
+    console.log("Could not get user email:", e);
+    return null;
+  }
+}
+
 // Store for persistent storage
 let appStore = null;
 
@@ -242,6 +368,14 @@ window.addEventListener("DOMContentLoaded", async () => {
       // Save granted scopes if provided
       if (event.payload.granted_scopes && Array.isArray(event.payload.granted_scopes)) {
         await saveGrantedScopes(event.payload.granted_scopes);
+      }
+
+      // Save user profile to Firestore when authenticated
+      if (event.payload.authenticated) {
+        const email = await getUserEmail();
+        if (email && event.payload.user_name) {
+          saveUserProfile(email, event.payload.user_name);
+        }
       }
 
       updateAuthUI(event.payload.authenticated, event.payload.user_name);
@@ -668,10 +802,12 @@ async function checkAuthStatus() {
     const status = await invoke("get_auth_status");
     // Try to get user info and granted scopes if authenticated
     let name = '';
+    let email = '';
     if (status) {
       try {
         const userInfo = await invoke("get_user_info");
         name = userInfo?.name || '';
+        email = userInfo?.email || '';
       } catch (e) {
         console.log("Could not get user info:", e);
       }
@@ -685,6 +821,11 @@ async function checkAuthStatus() {
         }
       } catch (e) {
         console.log("Could not get granted scopes:", e);
+      }
+
+      // Save user profile to Firestore
+      if (email && name) {
+        saveUserProfile(email, name);
       }
     }
     updateAuthUI(status, name);
@@ -745,9 +886,14 @@ function updateAuthUI(authenticated, name = '') {
     // Add click handler for Paste your notes link
     const pasteNotesLink = document.getElementById('paste-notes-link');
     if (pasteNotesLink) {
-      pasteNotesLink.addEventListener('click', (e) => {
+      pasteNotesLink.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
+        // Track paste usage in Firestore
+        const email = await getUserEmail();
+        if (email) {
+          incrementUsage(email, 'paste');
+        }
         showView('add-notes');
         notesInput.focus();
       });
@@ -759,6 +905,12 @@ function updateAuthUI(authenticated, name = '') {
       slidesLink.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
+
+        // Track slide usage in Firestore
+        const email = await getUserEmail();
+        if (email) {
+          incrementUsage(email, 'slide');
+        }
 
         // Check if we have slides scope
         const hasSlidesScope = await hasScope('slides');
