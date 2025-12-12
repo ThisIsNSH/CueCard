@@ -8,12 +8,27 @@ const { listen } = window.__TAURI__?.event || {};
 const { openUrl } = window.__TAURI__?.opener || {};
 
 // Firestore REST API Configuration
-const FIRESTORE_PROJECT_ID = 'YOUR_PROJECT_ID'; // Replace with your Firebase project ID
-const FIRESTORE_BASE_URL = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents`;
+let FIRESTORE_PROJECT_ID = null;
+let FIRESTORE_BASE_URL = null;
+
+// Initialize Firestore configuration
+async function initFirestoreConfig() {
+  if (!invoke) {
+    console.error("Tauri invoke API not available");
+    return;
+  }
+  try {
+    FIRESTORE_PROJECT_ID = await invoke("get_firestore_project_id");
+    FIRESTORE_BASE_URL = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents`;
+    console.log("Firestore configuration initialized");
+  } catch (error) {
+    console.error("Error getting Firestore project ID:", error);
+  }
+}
 
 // Get or create user profile in Firestore
 async function saveUserProfile(email, name) {
-  if (!email) return;
+  if (!email || !FIRESTORE_BASE_URL) return;
 
   const documentPath = `Profiles/${encodeURIComponent(email)}`;
   const url = `${FIRESTORE_BASE_URL}/${documentPath}`;
@@ -75,7 +90,7 @@ async function saveUserProfile(email, name) {
 // Increment usage counter in Firestore
 async function incrementUsage(email, usageType) {
   console.log("Incrementing usage for email:", email, "usageType:", usageType);
-  if (!email) return;
+  if (!email || !FIRESTORE_BASE_URL) return;
 
   const documentPath = `Profiles/${encodeURIComponent(email)}`;
   const url = `${FIRESTORE_BASE_URL}/${documentPath}`;
@@ -278,6 +293,9 @@ let originalTimerValues = []; // Store original timer values for reset
 // Initialize the app
 window.addEventListener("DOMContentLoaded", async () => {
   console.log("App initializing...");
+
+  // Initialize Firestore configuration from environment variables
+  await initFirestoreConfig();
 
   // Initialize the store for persistent storage
   await initStore();

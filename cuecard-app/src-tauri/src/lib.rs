@@ -172,10 +172,7 @@ async fn slides_handler(Json(slide_data): Json<SlideData>) -> Result<Json<ApiRes
 
 // OAuth2 login - redirects to Google
 async fn oauth_login_handler() -> Result<Redirect, StatusCode> {
-    let client_id = std::env::var("GOOGLE_CLIENT_ID").map_err(|_| {
-        eprintln!("GOOGLE_CLIENT_ID not set");
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let client_id = env!("GOOGLE_CLIENT_ID");
 
     // Get the pending scope or default to both
     let scope_url = {
@@ -331,9 +328,8 @@ async fn oauth_callback_handler(Query(params): Query<OAuthCallback>) -> Html<Str
 
 // Exchange authorization code for tokens
 async fn exchange_code_for_tokens(code: &str) -> Result<OAuthTokens, String> {
-    let client_id = std::env::var("GOOGLE_CLIENT_ID").map_err(|_| "GOOGLE_CLIENT_ID not set")?;
-    let client_secret =
-        std::env::var("GOOGLE_CLIENT_SECRET").map_err(|_| "GOOGLE_CLIENT_SECRET not set")?;
+    let client_id = env!("GOOGLE_CLIENT_ID");
+    let client_secret = env!("GOOGLE_CLIENT_SECRET");
 
     let client = reqwest::Client::new();
     let response = client
@@ -387,9 +383,8 @@ async fn refresh_access_token() -> Result<(), String> {
             .ok_or("No refresh token available")?
     };
 
-    let client_id = std::env::var("GOOGLE_CLIENT_ID").map_err(|_| "GOOGLE_CLIENT_ID not set")?;
-    let client_secret =
-        std::env::var("GOOGLE_CLIENT_SECRET").map_err(|_| "GOOGLE_CLIENT_SECRET not set")?;
+    let client_id = env!("GOOGLE_CLIENT_ID");
+    let client_secret = env!("GOOGLE_CLIENT_SECRET");
 
     let client = reqwest::Client::new();
     let response = client
@@ -769,6 +764,12 @@ fn get_auth_status() -> bool {
     OAUTH_TOKENS.read().is_some()
 }
 
+// Tauri command to get Firestore project ID (compile-time environment variable)
+#[tauri::command]
+fn get_firestore_project_id() -> String {
+    env!("FIRESTORE_PROJECT_ID").to_string()
+}
+
 // Tauri command to get granted scopes
 #[tauri::command]
 fn get_granted_scopes() -> Vec<String> {
@@ -828,7 +829,7 @@ async fn get_user_info() -> Result<serde_json::Value, String> {
 async fn start_login(app: AppHandle, scope: String) -> Result<(), String> {
     println!("Starting OAuth2 login flow for scope: {}", scope);
 
-    let client_id = std::env::var("GOOGLE_CLIENT_ID").map_err(|_| "GOOGLE_CLIENT_ID not set")?;
+    let client_id = env!("GOOGLE_CLIENT_ID");
     println!("Using Client ID: {}", client_id);
 
     // Determine which scope(s) to request
@@ -1168,6 +1169,7 @@ pub fn run() {
             get_current_slide,
             get_current_notes,
             get_auth_status,
+            get_firestore_project_id,
             get_granted_scopes,
             has_scope,
             get_user_info,
