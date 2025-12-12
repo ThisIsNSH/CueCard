@@ -11,7 +11,7 @@ const { open } = window.__TAURI__?.shell || {};
 let authBtn;
 let viewInitial, viewAddNotes, viewNotes;
 let linkGoBack, backSeparator;
-let notesInput, notesContent;
+let notesInput, notesContent, slideInfo;
 let welcomeSubtext;
 let privacyLink, websiteLink;
 
@@ -20,6 +20,7 @@ let isAuthenticated = false;
 let userName = '';
 let currentView = 'initial'; // 'initial', 'add-notes', 'notes'
 let manualNotes = ''; // Notes pasted by the user
+let currentSlideData = null; // Store current slide data
 
 // Initialize the app
 window.addEventListener("DOMContentLoaded", async () => {
@@ -34,6 +35,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   backSeparator = document.getElementById("back-separator");
   notesInput = document.getElementById("notes-input");
   notesContent = document.getElementById("notes-content");
+  slideInfo = document.getElementById("slide-info");
   welcomeSubtext = document.getElementById("welcome-subtext");
   privacyLink = document.getElementById("privacy-link");
   websiteLink = document.getElementById("website-link");
@@ -95,20 +97,23 @@ function setupNavigation() {
     e.preventDefault();
     // Clear the input and go back to initial view
     notesInput.value = '';
+    // Clear slide info when going back
+    slideInfo.textContent = '';
+    currentSlideData = null;
     showView('initial');
   });
 
-  // Handle Enter in notes input to submit
-  notesInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && e.ctrlKey) {
-      const notes = notesInput.value.trim();
-      if (notes) {
-        manualNotes = notes;
-        displayNotes(notes);
-        showView('notes');
-      }
-    }
-  });
+  // // Handle Enter in notes input to submit
+  // notesInput.addEventListener("keydown", (e) => {
+  //   if (e.key === "Enter" && e.ctrlKey) {
+  //     const notes = notesInput.value.trim();
+  //     if (notes) {
+  //       manualNotes = notes;
+  //       displayNotes(notes);
+  //       showView('notes');
+  //     }
+  //   }
+  // });
 }
 
 // Auth Handlers
@@ -162,7 +167,21 @@ function updateAuthUI(authenticated, name = '') {
     if (buttonText) buttonText.textContent = 'Sign out';
     if (buttonIcon) buttonIcon.style.display = 'none';
     // Update subtext to show click instruction
-    welcomeSubtext.innerHTML = 'Click anywhere to paste your notes or use with <a href="https://slides.google.com" target="_blank" rel="noopener noreferrer" class="slides-link">Google Slides</a> directly...';
+    welcomeSubtext.innerHTML = 'Click anywhere to paste your notes or use with <a href="#" class="slides-link" id="slides-link">Google Slides</a> directly...';
+    
+    // Add click handler for Google Slides link
+    const slidesLink = document.getElementById('slides-link');
+    if (slidesLink) {
+      slidesLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Show notes view if we have slide data
+        if (currentSlideData) {
+          showView('notes');
+        }
+      });
+    }
+    
     // Enable clickable view
     viewInitial.classList.add('clickable-view');
   } else {
@@ -218,7 +237,7 @@ async function checkCurrentSlide() {
     const slide = await invoke("get_current_slide");
     if (slide) {
       const notes = await invoke("get_current_notes");
-      handleSlideUpdate({ slide_data: slide, notes });
+      handleSlideUpdate({ slide_data: slide, notes }, false); // Don't auto-show
     }
   } catch (error) {
     console.error("Error checking current slide:", error);
@@ -226,17 +245,23 @@ async function checkCurrentSlide() {
 }
 
 // Handle slide update from Google Slides
-function handleSlideUpdate(data) {
+function handleSlideUpdate(data, autoShow = false) {
   const { slide_data, notes } = data;
 
   if (!slide_data) {
     return;
   }
 
+  // Store current slide data
+  currentSlideData = slide_data;
+
   // Display the notes
   if (notes && notes.trim()) {
-    displayNotes(notes);
-    showView('notes');
+    displayNotes(notes, slide_data);
+    // Only auto-show if explicitly requested
+    if (autoShow) {
+      showView('notes');
+    }
   }
 }
 
@@ -250,7 +275,7 @@ function showView(viewName) {
   viewNotes.classList.add('hidden');
 
   // Show/hide the back button in footer based on view
-  if (viewName === 'add-notes') {
+  if (viewName === 'add-notes' || viewName === 'notes') {
     linkGoBack.classList.remove('hidden');
     backSeparator.classList.remove('hidden');
   } else {
@@ -273,9 +298,18 @@ function showView(viewName) {
 }
 
 // Display notes with syntax highlighting
-function displayNotes(text) {
+function displayNotes(text, slideData = null) {
   const highlighted = highlightNotes(text);
   notesContent.innerHTML = highlighted;
+  
+  // Update slide info if available
+  if (slideData && slideInfo) {
+    const slideName = slideData.slide_name || 'Untitled Slide';
+    const slideNumber = slideData.slide_number || '?';
+    slideInfo.textContent = `${slideName} • Slide ${slideNumber}`;
+  } else if (slideInfo) {
+    slideInfo.textContent = '';
+  }
   
   // Start countdown timers if there are any
   startTimers();

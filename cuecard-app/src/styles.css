@@ -292,7 +292,19 @@ body {
 /* Notes Display View */
 #view-notes {
   height: 100%;
-  padding-top: 24px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.slide-info {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.25px;
+  padding-top: 18px;
+  padding-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .notes-content {
@@ -302,6 +314,35 @@ body {
   line-height: 1.2;
   white-space: pre-wrap;
   word-wrap: break-word;
+  padding-top: 24px;
+  padding-bottom: 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Gradient overlays for notes display */
+#view-notes::before {
+  content: '';
+  position: absolute;
+  top: 38px; /* After slide-info (padding-top 18px + text ~12px + padding-bottom 8px) */
+  left: 0;
+  right: 0;
+  height: 24px;
+  background: linear-gradient(to bottom, var(--bg-primary) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+#view-notes::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  background: linear-gradient(to top, var(--bg-primary) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* Syntax Highlighting for Notes */
@@ -313,7 +354,7 @@ body {
   color: var(--accent-timestamp);
   line-height: 1;
   transition: color 0.3s ease;
-  margin-bottom: -24px;
+  margin-bottom: -20px;
 }
 
 /* Warning state: when time < 00:10 */
