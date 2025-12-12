@@ -266,7 +266,7 @@ async function clearGrantedScopes() {
 let authBtn;
 let viewInitial, viewAddNotes, viewNotes, viewSettings;
 let linkGoBack, backSeparator;
-let notesInput, notesContent, slideInfo, slideInfoBtn, slideSeparator;
+let notesInput, notesContent;
 let welcomeHeading, welcomeSubtext;
 let privacyLink, websiteLink, websiteSeparator;
 let settingsLink, settingsSeparator;
@@ -280,6 +280,7 @@ let opacitySlider, opacityValue, screenCaptureToggle;
 let isAuthenticated = false;
 let userName = '';
 let currentView = 'initial'; // 'initial', 'add-notes', 'notes', 'settings'
+let previousView = null; // 'initial', 'add-notes', 'notes', 'settings'
 let manualNotes = ''; // Notes pasted by the user
 let currentSlideData = null; // Store current slide data
 let currentOpacity = 100; // Store current opacity value (10-100)
@@ -310,9 +311,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   backSeparator = document.getElementById("back-separator");
   notesInput = document.getElementById("notes-input");
   notesContent = document.getElementById("notes-content");
-  slideInfo = document.getElementById("slide-info");
-  slideInfoBtn = document.getElementById("slide-info-btn");
-  slideSeparator = document.getElementById("slide-separator");
   welcomeHeading = document.getElementById("welcome-heading");
   welcomeSubtext = document.getElementById("welcome-subtext");
   privacyLink = document.getElementById("privacy-link");
@@ -350,9 +348,6 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   // Set up refresh button handler
   setupRefreshButton();
-
-  // Set up slide info button handler
-  setupSlideInfoButton();
 
   // Set up timer control buttons
   setupTimerControls();
@@ -409,7 +404,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             showView('notes');
           } else {
             displayNotes('Open a Google Slides presentation to see notes here...');
-            slideInfo.textContent = 'No Slide Open';
+            window.title = 'No Slide Open';
             showView('notes');
           }
         }
@@ -425,14 +420,15 @@ function setupNavigation() {
   linkGoBack.addEventListener("click", async (e) => {
     e.preventDefault();
 
-    // Save notes to storage if we're in add-notes view
-    if (currentView === 'add-notes') {
-      await saveNotesToStorage();
+    if (currentView === 'settings') {
+      showView(previousView);
+      return;
     }
+
+    showView('initial');
 
     // Reset all states
     resetAllStates();
-    showView('initial');
   });
 }
 
@@ -448,7 +444,7 @@ function resetAllStates() {
   notesContent.innerHTML = '';
 
   // Clear slide info
-  slideInfo.textContent = '';
+  window.title = '';
 
   // Reset slide data
   currentSlideData = null;
@@ -504,45 +500,6 @@ function setupRefreshButton() {
       // Restore original text
       refreshBtn.textContent = originalText;
       refreshBtn.disabled = false;
-    }
-  });
-}
-
-// Slide Info Button Handler
-function setupSlideInfoButton() {
-  if (!slideInfoBtn) return;
-
-  slideInfoBtn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    console.log("Slide info button clicked. Current slide data:", currentSlideData);
-
-    if (!currentSlideData) {
-      console.log("No slide data available");
-      return;
-    }
-
-    if (!openUrl) {
-      console.error("Tauri opener API not available");
-      // Fallback to window.open
-      const presentationId = currentSlideData.presentationId;
-      const slideId = currentSlideData.slideId;
-      const url = `https://docs.google.com/presentation/d/${presentationId}/view#slide=id.${slideId}`;
-      window.open(url, "_blank", "noopener,noreferrer");
-      return;
-    }
-
-    try {
-      // Construct the Google Slides URL
-      const presentationId = currentSlideData.presentationId;
-      const slideId = currentSlideData.slideId;
-      const url = `https://docs.google.com/presentation/d/${presentationId}/view#slide=id.${slideId}`;
-
-      console.log("Opening slide:", url);
-      await openUrl(url);
-    } catch (error) {
-      console.error("Error opening slide:", error);
     }
   });
 }
@@ -889,10 +846,6 @@ function updateAuthUI(authenticated, name = '') {
     if (buttonText) buttonText.textContent = 'Sign out';
     if (buttonIcon) buttonIcon.style.display = 'none';
 
-    // Show settings link
-    settingsLink.classList.remove('hidden');
-    settingsSeparator.classList.remove('hidden');
-
     // Update welcome heading with greeting and first name
     const firstName = getFirstName(name);
     const greeting = getGreeting();
@@ -947,7 +900,7 @@ function updateAuthUI(authenticated, name = '') {
         } else {
           // Show notes view with default message when no slide is open
           displayNotes('Open a Google Slides presentation to see notes here...');
-          slideInfo.textContent = 'No Slide Open';
+          window.title = 'No Slide Open';
           showView('notes');
         }
       });
@@ -956,10 +909,6 @@ function updateAuthUI(authenticated, name = '') {
     // Update button to show "Sign in"
     if (buttonText) buttonText.textContent = 'Sign in with Google';
     if (buttonIcon) buttonIcon.style.display = 'block';
-
-    // Hide settings link
-    settingsLink.classList.add('hidden');
-    settingsSeparator.classList.add('hidden');
 
     // Reset welcome heading to default
     welcomeHeading.innerHTML = 'CueCard\n<span class="version-text">1.0.1</span>';
@@ -1061,7 +1010,13 @@ function handleSlideUpdate(data, autoShow = false) {
 }
 
 // Show a specific view
-function showView(viewName) {
+async function showView(viewName) {
+  // Save notes to storage if we're in add-notes view
+  if (currentView === 'add-notes') {
+    await saveNotesToStorage();
+  }
+      
+  previousView = currentView;
   currentView = viewName;
 
   // Hide all views
@@ -1079,16 +1034,16 @@ function showView(viewName) {
     backSeparator.classList.add('hidden');
   }
 
+  // Show settings link and separator
+  settingsLink.classList.remove('hidden');
+  settingsSeparator.classList.remove('hidden');
+
   // Show/hide privacy, website, and settings links based on view
   if (viewName === 'initial') {
     // Initial view: show Visit Site, Privacy Policy, Settings
     privacyLink.classList.remove('hidden');
     websiteLink.classList.remove('hidden');
     websiteSeparator.classList.remove('hidden');
-    if (isAuthenticated) {
-      settingsLink.classList.remove('hidden');
-      settingsSeparator.classList.remove('hidden');
-    }
   } else if (viewName === 'settings') {
     // Settings view: show Visit Site, Privacy Policy (no Settings button)
     privacyLink.classList.remove('hidden');
@@ -1101,19 +1056,13 @@ function showView(viewName) {
     privacyLink.classList.add('hidden');
     websiteLink.classList.add('hidden');
     websiteSeparator.classList.add('hidden');
-    settingsLink.classList.add('hidden');
-    settingsSeparator.classList.add('hidden');
   }
 
   // Show/hide slide info and refresh button based on view and slide data
   if (viewName === 'notes' && currentSlideData) {
-    slideInfoBtn.classList.remove('hidden');
-    slideSeparator.classList.remove('hidden');
     refreshBtn.classList.remove('hidden');
     refreshSeparator.classList.remove('hidden');
   } else {
-    slideInfoBtn.classList.add('hidden');
-    slideSeparator.classList.add('hidden');
     refreshBtn.classList.add('hidden');
     refreshSeparator.classList.add('hidden');
   }
@@ -1161,24 +1110,20 @@ function displayNotes(text, slideData = null) {
   notesContent.innerHTML = highlighted;
 
   // Update slide info if available
-  if (slideData && slideInfo) {
+  if (slideData) {
     // Use camelCase property names (as sent by backend with serde rename_all = "camelCase")
     const presentationTitle = slideData.title || 'Untitled Presentation';
-    slideInfo.textContent = truncateText(presentationTitle);
+    window.title = truncateText(presentationTitle);
 
     // Show slide info and refresh button in footer when there's slide data
     if (currentView === 'notes') {
-      slideInfoBtn.classList.remove('hidden');
-      slideSeparator.classList.remove('hidden');
       refreshBtn.classList.remove('hidden');
       refreshSeparator.classList.remove('hidden');
     }
-  } else if (slideInfo) {
-    slideInfo.textContent = 'No Slide Open';
+  } else {
+    window.title = 'No Slide Open';
 
     // Hide slide info and refresh button when no slide
-    slideInfoBtn.classList.add('hidden');
-    slideSeparator.classList.add('hidden');
     refreshBtn.classList.add('hidden');
     refreshSeparator.classList.add('hidden');
   }
