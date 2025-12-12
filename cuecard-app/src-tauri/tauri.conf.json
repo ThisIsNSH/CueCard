@@ -8,6 +8,7 @@
   },  
   "app": {
     "withGlobalTauri": true,
+    "macOSPrivateApi": true,
     "windows": [
       {
         "title": "CueCard",
@@ -24,7 +25,7 @@
         "skipTaskbar": true,
         "focus": false,
         "acceptFirstMouse": true,
-        "theme": "Dark"
+        "theme": "Dark"        
       }
     ],
     "security": {
