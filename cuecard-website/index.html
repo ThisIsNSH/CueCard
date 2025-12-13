@@ -18,8 +18,8 @@
         <a href="/" class="nav-logo">
             <svg class="logo-icon" viewBox="0 0 100 100" width="32" height="32">
                 <circle cx="50" cy="50" r="45" fill="#000"/>
-                <path d="M50 10 A40 40 0 0 1 50 90 A20 20 0 0 1 50 50 A20 20 0 0 0 50 10" fill="#1AB2C4"/>
-                <path d="M50 10 A40 40 0 0 0 50 90 A20 20 0 0 0 50 50 A20 20 0 0 1 50 10" fill="#FEBC2E"/>
+                <path d="M50 10 A40 40 0 0 1 50 90 A20 20 0 0 1 50 50 A20 20 0 0 0 50 10" fill="#fff"/>
+                <path d="M50 10 A40 40 0 0 0 50 90 A20 20 0 0 0 50 50 A20 20 0 0 1 50 10" fill="#eee"/>
             </svg>
             <span>CueCard</span>
         </a>
@@ -120,6 +120,56 @@
             </div>
         </section>
 
+        <!-- Syntax Section -->
+        <section class="features syntax-notes">
+            <div class="section-header">
+                <span class="section-tag">Syntax</span>
+                <h2 class="section-title">Simple syntax.<br>Smoother delivery.</h2>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-header">
+                        <span class="feature-number">01</span>
+                        <h3 class="feature-title">What You Write</h3>
+                    </div>
+                    <p class="feature-desc">Write your talk once with simple <code>[time]</code> and <code>[emotion]</code> tags. CueCard keeps everything tidy so you can stay in flow.</p>
+                    <div class="notes-preview notes-preview-raw" aria-label="Sample of raw speaker notes">
+                        <div class="notes-content">
+[time 00:15]
+Imagine your notes floating above the deck. [emotion smile] I've been using CueCard to do that.
+
+[time 00:10]
+It has a [emotion emphasize] timer and that emotion-injection thingy, [emotion excited] which makes me sound way more human.
+
+[time 00:05]
+[emotion hype] Dude, you gotta try this out.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-header">
+                        <span class="feature-number">02</span>
+                        <h3 class="feature-title">What You See</h3>
+                    </div>
+                    <p class="feature-desc">CueCard highlights timestamps, links, and action cues while the on-screen timer gently counts down.</p>
+                    <div class="notes-preview notes-preview-highlighted" aria-live="off">
+                        <div class="notes-content">
+<span class="timestamp" data-time="15">[00:15]</span>
+Imagine your notes floating above the deck. <span class="action-tag">[smile]</span> I've been using CueCard to do that.
+
+<span class="timestamp" data-time="75">[00:25]</span>
+It has a <span class="action-tag">[emphasize]</span> timer and that emotion-injection thingy, [emotion excited] which makes me sound way more human.
+
+<span class="timestamp" data-time="105">[00:30]</span>
+<span class="action-tag">[hype]</span> Dude, you gotta try this out.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
         <!-- Features Section -->
         <section class="features">
             <div class="section-header">
@@ -205,36 +255,6 @@
                             <span>Emotion tags demo</span>
                         </div>
                     </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Syntax Section -->
-        <section class="features">
-            <div class="section-header">
-                <span class="section-tag">Syntax</span>
-                <h2 class="section-title">Simple syntax.<br>Smoother delivery.</h2>
-            </div>
-
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-header">
-                        <span class="feature-number">01</span>
-                        <h3 class="feature-title">What You Write</h3>
-                    </div>
-                    <!-- todo: insert "notes-content" view from cuecard-app/src/index.html. -->
-                    <!-- the text will not have main.js::highlightNotes() applied. -->
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-header">
-                        <span class="feature-number">02</span>
-                        <h3 class="feature-title">What You See</h3>
-                    </div>
-                    <!-- todo: insert "notes-content" view from cuecard-app/src/index.html. -->
-                    <!-- the text will have main.js::highlightNotes() applied. -->
-                    <!-- the timer will be ticking. it will start from whatever value user put and then down to -00:10 and reset back. -->
-                    <!-- so it looks like a loop animation -->
                 </div>
             </div>
         </section>
