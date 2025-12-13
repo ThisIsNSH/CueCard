@@ -3,6 +3,10 @@
 .env.local
 .env.*.local
 
+# Firebase config (contains project-specific settings)
+firebase-config.json
+**/firebase-config.json
+
 # Dependencies
 node_modules/
 
@@ -61,3 +65,6 @@ extension/dist/safari-xcode/
 *.ntvs*
 *.njsproj
 *.sln
+
+# Claude
+.claude

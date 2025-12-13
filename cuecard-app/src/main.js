@@ -46,26 +46,48 @@ async function initFirestoreConfig() {
   }
 }
 
+// Get Firebase ID token for authenticated Firestore requests
+async function getFirebaseIdToken() {
+  if (!invoke) return null;
+  try {
+    return await invoke("get_firebase_id_token");
+  } catch (error) {
+    console.log("Could not get Firebase ID token:", error);
+    return null;
+  }
+}
+
 // Get or create user profile in Firestore
 async function saveUserProfile(email, name) {
   if (!email || !FIRESTORE_BASE_URL) return;
+
+  // Get Firebase ID token for authenticated request
+  const token = await getFirebaseIdToken();
+  if (!token) {
+    console.log("No Firebase token available, skipping Firestore save");
+    return;
+  }
 
   const documentPath = `Profiles/${encodeURIComponent(email)}`;
   const url = `${FIRESTORE_BASE_URL}/${documentPath}`;
 
   try {
     // First, try to get the existing document
-    const getResponse = await fetch(url);
+    const getResponse = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
 
     if (getResponse.ok) {
       // Document exists, just update name and email (don't touch creationDate)
-      const existingDoc = await getResponse.json();
       const updateUrl = `${url}?updateMask.fieldPaths=name&updateMask.fieldPaths=email`;
 
       await fetch(updateUrl, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           fields: {
@@ -83,6 +105,7 @@ async function saveUserProfile(email, name) {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           fields: {
@@ -112,12 +135,23 @@ async function incrementUsage(email, usageType) {
   // Incrementing usage counter
   if (!email || !FIRESTORE_BASE_URL) return;
 
+  // Get Firebase ID token for authenticated request
+  const token = await getFirebaseIdToken();
+  if (!token) {
+    console.log("No Firebase token available, skipping usage increment");
+    return;
+  }
+
   const documentPath = `Profiles/${encodeURIComponent(email)}`;
   const url = `${FIRESTORE_BASE_URL}/${documentPath}`;
 
   try {
     // Get current document to read current usage values
-    const getResponse = await fetch(url);
+    const getResponse = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
 
     if (getResponse.ok) {
       const doc = await getResponse.json();
@@ -136,6 +170,7 @@ async function incrementUsage(email, usageType) {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           fields: {
@@ -181,14 +216,7 @@ let appStore = null;
 const STORAGE_KEYS = {
   SETTINGS_OPACITY: 'settings_opacity',
   SETTINGS_SCREENSHOT_PROTECTION: 'settings_screenshot_protection',
-  ADD_NOTES_CONTENT: 'add_notes_content',
-  GRANTED_SCOPES: 'granted_scopes'
-};
-
-// Scope constants (must match backend)
-const SCOPES = {
-  PROFILE: 'openid profile email',
-  SLIDES: 'https://www.googleapis.com/auth/presentations.readonly'
+  ADD_NOTES_CONTENT: 'add_notes_content'
 };
 
 // Initialize the store
@@ -252,38 +280,19 @@ async function saveNotesToStorage() {
   }
 }
 
-// Get granted scopes from storage
-async function getGrantedScopes() {
-  const scopes = await getStoredValue(STORAGE_KEYS.GRANTED_SCOPES);
-  return scopes || [];
-}
-
-// Save granted scopes to storage
-async function saveGrantedScopes(scopes) {
-  await setStoredValue(STORAGE_KEYS.GRANTED_SCOPES, scopes);
-  // Granted scopes saved
-}
-
-// Check if a specific scope is granted
+// Check if a specific scope is granted (backend handles scope tracking)
 async function hasScope(scopeType) {
-  const scopes = await getGrantedScopes();
-  const scopeUrl = scopeType === 'profile' ? SCOPES.PROFILE : SCOPES.SLIDES;
-  return scopes.includes(scopeUrl);
-}
-
-// Add a scope to the granted scopes list
-async function addGrantedScope(scopeUrl) {
-  const scopes = await getGrantedScopes();
-  if (!scopes.includes(scopeUrl)) {
-    scopes.push(scopeUrl);
-    await saveGrantedScopes(scopes);
+  if (!invoke) return false;
+  try {
+    if (scopeType === 'slides') {
+      return await invoke("has_slides_scope");
+    }
+    // Profile scope is implied by being authenticated
+    return await invoke("get_auth_status");
+  } catch (error) {
+    console.error("Error checking scope:", error);
+    return false;
   }
-}
-
-// Clear all granted scopes (for logout)
-async function clearGrantedScopes() {
-  await setStoredValue(STORAGE_KEYS.GRANTED_SCOPES, []);
-  console.log("Cleared granted scopes");
 }
 
 // =============================================================================
@@ -407,34 +416,27 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (listen) {
     await listen("auth-status", async (event) => {
       // Auth status changed
-
-      // Save granted scopes if provided
-      if (event.payload.granted_scopes && Array.isArray(event.payload.granted_scopes)) {
-        await saveGrantedScopes(event.payload.granted_scopes);
-      }
+      console.log("Auth status event:", event.payload);
 
       // Save user profile to Firestore when authenticated
-      if (event.payload.authenticated) {
-        const email = await getUserEmail();
-        if (email && event.payload.user_name) {
-          saveUserProfile(email, event.payload.user_name);
-        }
+      if (event.payload.authenticated && event.payload.user_email) {
+        saveUserProfile(event.payload.user_email, event.payload.user_name || '');
       }
 
-      updateAuthUI(event.payload.authenticated, event.payload.user_name);
+      // Update auth UI (only for profile auth, not slides)
+      if (event.payload.requested_scope === 'profile' || !event.payload.slides_authorized) {
+        updateAuthUI(event.payload.authenticated, event.payload.user_name);
+      }
 
-      // If slides scope was just granted and we requested it, show the notes view
-      if (event.payload.requested_scope === 'slides' && event.payload.authenticated) {
-        const hasSlidesScope = await hasScope('slides');
-        if (hasSlidesScope) {
-          // Show notes view with slide data or default message
-          if (currentSlideData) {
-            showView('notes');
-          } else {
-            displayNotes('Open a Google Slides presentation to see notes here...');
-            window.title = 'No Slide Open';
-            showView('notes');
-          }
+      // If slides scope was just granted, show the notes view
+      if (event.payload.slides_authorized) {
+        // Show notes view with slide data or default message
+        if (currentSlideData) {
+          showView('notes');
+        } else {
+          displayNotes('Open a Google Slides presentation to see notes here...');
+          window.title = 'No Slide Open';
+          showView('notes');
         }
       }
     });
@@ -821,7 +823,7 @@ async function checkAuthStatus() {
   }
   try {
     const status = await invoke("get_auth_status");
-    // Try to get user info and granted scopes if authenticated
+    // Try to get user info if authenticated
     let name = '';
     let email = '';
     if (status) {
@@ -831,17 +833,6 @@ async function checkAuthStatus() {
         email = userInfo?.email || '';
       } catch (e) {
         console.log("Could not get user info:", e);
-      }
-
-      // Sync granted scopes from backend
-      try {
-        const scopes = await invoke("get_granted_scopes");
-        if (scopes && Array.isArray(scopes)) {
-          await saveGrantedScopes(scopes);
-          // Synced granted scopes
-        }
-      } catch (e) {
-        console.log("Could not get granted scopes:", e);
       }
 
       // Save user profile to Firestore
@@ -986,8 +977,6 @@ async function handleLogout() {
   }
   try {
     await invoke("logout");
-    // Clear granted scopes from local storage
-    await clearGrantedScopes();
     updateAuthUI(false, '');
     // Reset to initial view if viewing slide notes
     if (currentView === 'notes' && !manualNotes) {

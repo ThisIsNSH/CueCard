@@ -1,7 +1,7 @@
 //! CueCard - Speaker notes visible only to you
 //!
 //! This module contains the main backend logic for the CueCard application:
-//! - OAuth2 authentication with Google
+//! - Firebase Authentication with Google provider
 //! - Google Slides API integration
 //! - Local web server for browser extension communication
 //! - Tauri commands for frontend interaction
@@ -31,44 +31,76 @@ extern crate objc;
 // CONSTANTS
 // =============================================================================
 
-// OAuth2 Configuration - Set these via environment variables
+// OAuth2 Configuration
 const GOOGLE_AUTH_URL: &str = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL: &str = "https://oauth2.googleapis.com/token";
 const REDIRECT_URI: &str = "http://127.0.0.1:3642/oauth/callback";
-// Split scopes for incremental authorization
+
+// Firebase REST API endpoints
+const FIREBASE_SIGNUP_URL: &str = "https://identitytoolkit.googleapis.com/v1/accounts:signUp";
+const FIREBASE_SIGNIN_IDP_URL: &str = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp";
+const FIREBASE_TOKEN_URL: &str = "https://securetoken.googleapis.com/v1/token";
+
+// Scopes
 const SCOPE_PROFILE: &str = "openid profile email";
 const SCOPE_SLIDES: &str = "https://www.googleapis.com/auth/presentations.readonly";
-
-// =============================================================================
-// GLOBAL STATE
-// =============================================================================
-
-// Global state using lazy initialization with thread-safe RwLock
-static CURRENT_SLIDE: Lazy<Arc<RwLock<Option<SlideData>>>> =
-    Lazy::new(|| Arc::new(RwLock::new(None)));
-static SLIDE_NOTES: Lazy<Arc<RwLock<HashMap<String, String>>>> =
-    Lazy::new(|| Arc::new(RwLock::new(HashMap::new())));
-static CURRENT_PRESENTATION_ID: Lazy<Arc<RwLock<Option<String>>>> =
-    Lazy::new(|| Arc::new(RwLock::new(None)));
-static APP_HANDLE: Lazy<Arc<RwLock<Option<AppHandle>>>> =
-    Lazy::new(|| Arc::new(RwLock::new(None)));
-static OAUTH_TOKENS: Lazy<Arc<RwLock<Option<OAuthTokens>>>> =
-    Lazy::new(|| Arc::new(RwLock::new(None)));
-static PENDING_OAUTH_SCOPE: Lazy<Arc<RwLock<Option<String>>>> =
-    Lazy::new(|| Arc::new(RwLock::new(None)));
 
 // =============================================================================
 // DATA TYPES
 // =============================================================================
 
-/// OAuth tokens received from Google authentication
+/// Firebase configuration loaded from firebase-config.json
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct OAuthTokens {
+pub struct FirebaseConfig {
+    pub api_key: String,
+    pub auth_domain: String,
+    pub project_id: String,
+    pub storage_bucket: Option<String>,
+    pub messaging_sender_id: Option<String>,
+    pub app_id: Option<String>,
+}
+
+/// Wrapper for firebase-config.json structure
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct FirebaseConfigFile {
+    firebase: FirebaseConfigFileInner,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct FirebaseConfigFileInner {
+    api_key: String,
+    auth_domain: String,
+    project_id: String,
+    storage_bucket: Option<String>,
+    messaging_sender_id: Option<String>,
+    app_id: Option<String>,
+}
+
+/// Firebase authentication tokens
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FirebaseTokens {
+    pub id_token: String,
+    pub refresh_token: String,
+    pub expires_at: i64,
+    pub email: Option<String>,
+    pub local_id: String,
+    pub display_name: Option<String>,
+}
+
+/// OAuth credentials fetched from Firestore
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OAuthCredentials {
+    pub client_id: String,
+    pub client_secret: String,
+}
+
+/// Slides API tokens (separate from Firebase auth)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SlidesTokens {
     pub access_token: String,
     pub refresh_token: Option<String>,
     pub expires_at: Option<i64>,
-    #[serde(default)]
-    pub granted_scopes: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -103,20 +135,562 @@ pub struct OAuthCallback {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct GoogleTokenResponse {
     access_token: String,
+    id_token: Option<String>,
     refresh_token: Option<String>,
     expires_in: Option<i64>,
     scope: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(dead_code)]
+struct FirebaseSignUpResponse {
+    #[serde(rename = "idToken")]
+    id_token: String,
+    #[serde(rename = "refreshToken")]
+    refresh_token: String,
+    #[serde(rename = "expiresIn")]
+    expires_in: String,
+    #[serde(rename = "localId")]
+    local_id: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct FirebaseSignInIdpResponse {
+    #[serde(rename = "idToken")]
+    id_token: String,
+    #[serde(rename = "refreshToken")]
+    refresh_token: String,
+    #[serde(rename = "expiresIn")]
+    expires_in: String,
+    #[serde(rename = "localId")]
+    local_id: String,
+    email: Option<String>,
+    #[serde(rename = "displayName")]
+    display_name: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct FirebaseRefreshResponse {
+    id_token: String,
+    refresh_token: String,
+    expires_in: String,
+}
+
+// =============================================================================
+// GLOBAL STATE
+// =============================================================================
+
+static CURRENT_SLIDE: Lazy<Arc<RwLock<Option<SlideData>>>> =
+    Lazy::new(|| Arc::new(RwLock::new(None)));
+static SLIDE_NOTES: Lazy<Arc<RwLock<HashMap<String, String>>>> =
+    Lazy::new(|| Arc::new(RwLock::new(HashMap::new())));
+static CURRENT_PRESENTATION_ID: Lazy<Arc<RwLock<Option<String>>>> =
+    Lazy::new(|| Arc::new(RwLock::new(None)));
+static APP_HANDLE: Lazy<Arc<RwLock<Option<AppHandle>>>> =
+    Lazy::new(|| Arc::new(RwLock::new(None)));
+
+// Firebase and OAuth state
+static FIREBASE_CONFIG: Lazy<Arc<RwLock<Option<FirebaseConfig>>>> =
+    Lazy::new(|| Arc::new(RwLock::new(None)));
+static FIREBASE_TOKENS: Lazy<Arc<RwLock<Option<FirebaseTokens>>>> =
+    Lazy::new(|| Arc::new(RwLock::new(None)));
+static OAUTH_CREDENTIALS: Lazy<Arc<RwLock<Option<OAuthCredentials>>>> =
+    Lazy::new(|| Arc::new(RwLock::new(None)));
+static SLIDES_TOKENS: Lazy<Arc<RwLock<Option<SlidesTokens>>>> =
+    Lazy::new(|| Arc::new(RwLock::new(None)));
+static PENDING_OAUTH_SCOPE: Lazy<Arc<RwLock<Option<String>>>> =
+    Lazy::new(|| Arc::new(RwLock::new(None)));
+
+// =============================================================================
+// FIREBASE CONFIGURATION
+// =============================================================================
+
+/// Load Firebase configuration from firebase-config.json
+fn load_firebase_config(app: &AppHandle) -> Result<FirebaseConfig, String> {
+    // Try to find firebase-config.json in the resource directory or app directory
+    let config_path = app
+        .path()
+        .resource_dir()
+        .map(|p| p.join("firebase-config.json"))
+        .ok();
+
+    // Also try the current directory and parent directories
+    let possible_paths = vec![
+        config_path,
+        Some(std::path::PathBuf::from("firebase-config.json")),
+        Some(std::path::PathBuf::from("../firebase-config.json")),
+        Some(std::path::PathBuf::from("../../firebase-config.json")),
+    ];
+
+    for path_opt in possible_paths {
+        if let Some(path) = path_opt {
+            if path.exists() {
+                let content = std::fs::read_to_string(&path)
+                    .map_err(|e| format!("Failed to read firebase-config.json: {}", e))?;
+                let config_file: FirebaseConfigFile = serde_json::from_str(&content)
+                    .map_err(|e| format!("Failed to parse firebase-config.json: {}", e))?;
+
+                let config = FirebaseConfig {
+                    api_key: config_file.firebase.api_key,
+                    auth_domain: config_file.firebase.auth_domain,
+                    project_id: config_file.firebase.project_id,
+                    storage_bucket: config_file.firebase.storage_bucket,
+                    messaging_sender_id: config_file.firebase.messaging_sender_id,
+                    app_id: config_file.firebase.app_id,
+                };
+
+                return Ok(config);
+            }
+        }
+    }
+
+    Err("firebase-config.json not found".to_string())
+}
+
+// =============================================================================
+// FIREBASE AUTHENTICATION
+// =============================================================================
+
+/// Sign in anonymously to Firebase (for bootstrap)
+async fn sign_in_anonymously() -> Result<String, String> {
+    let config = FIREBASE_CONFIG
+        .read()
+        .clone()
+        .ok_or("Firebase config not loaded")?;
+
+    let url = format!("{}?key={}", FIREBASE_SIGNUP_URL, config.api_key);
+
+    let client = reqwest::Client::new();
+    let response = client
+        .post(&url)
+        .json(&serde_json::json!({"returnSecureToken": true}))
+        .send()
+        .await
+        .map_err(|e| format!("Anonymous sign-in request failed: {}", e))?;
+
+    if !response.status().is_success() {
+        let error_text = response.text().await.unwrap_or_default();
+        return Err(format!("Anonymous sign-in failed: {}", error_text));
+    }
+
+    let sign_up_response: FirebaseSignUpResponse = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse sign-up response: {}", e))?;
+
+    Ok(sign_up_response.id_token)
+}
+
+/// Fetch OAuth credentials from Firestore Configs/v-1
+async fn fetch_oauth_credentials(firebase_token: &str) -> Result<OAuthCredentials, String> {
+    let config = FIREBASE_CONFIG
+        .read()
+        .clone()
+        .ok_or("Firebase config not loaded")?;
+
+    let url = format!(
+        "https://firestore.googleapis.com/v1/projects/{}/databases/(default)/documents/Configs/v-1",
+        config.project_id
+    );
+
+    let client = reqwest::Client::new();
+    let response = client
+        .get(&url)
+        .header("Authorization", format!("Bearer {}", firebase_token))
+        .send()
+        .await
+        .map_err(|e| format!("Failed to fetch OAuth credentials: {}", e))?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        let error_text = response.text().await.unwrap_or_default();
+        return Err(format!(
+            "Failed to fetch Configs/v-1: {} - {}",
+            status, error_text
+        ));
+    }
+
+    let doc: serde_json::Value = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse Firestore response: {}", e))?;
+
+    // Extract fields from Firestore document format
+    let fields = doc
+        .get("fields")
+        .ok_or("No fields in Configs/v-1 document")?;
+
+    let client_id = fields
+        .get("googleClientId")
+        .and_then(|v| v.get("stringValue"))
+        .and_then(|v| v.as_str())
+        .ok_or("googleClientId not found in Configs/v-1")?
+        .to_string();
+
+    let client_secret = fields
+        .get("googleClientSecret")
+        .and_then(|v| v.get("stringValue"))
+        .and_then(|v| v.as_str())
+        .ok_or("googleClientSecret not found in Configs/v-1")?
+        .to_string();
+
+    Ok(OAuthCredentials {
+        client_id,
+        client_secret,
+    })
+}
+
+/// Exchange Google ID token for Firebase ID token
+async fn exchange_google_token_for_firebase(google_id_token: &str) -> Result<FirebaseTokens, String> {
+    let config = FIREBASE_CONFIG
+        .read()
+        .clone()
+        .ok_or("Firebase config not loaded")?;
+
+    let url = format!("{}?key={}", FIREBASE_SIGNIN_IDP_URL, config.api_key);
+
+    let post_body = format!("id_token={}&providerId=google.com", google_id_token);
+
+    let client = reqwest::Client::new();
+    let response = client
+        .post(&url)
+        .json(&serde_json::json!({
+            "postBody": post_body,
+            "requestUri": "http://localhost",
+            "returnSecureToken": true,
+            "returnIdpCredential": true
+        }))
+        .send()
+        .await
+        .map_err(|e| format!("Firebase signInWithIdp request failed: {}", e))?;
+
+    if !response.status().is_success() {
+        let error_text = response.text().await.unwrap_or_default();
+        return Err(format!("Firebase signInWithIdp failed: {}", error_text));
+    }
+
+    let idp_response: FirebaseSignInIdpResponse = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse signInWithIdp response: {}", e))?;
+
+    let expires_in: i64 = idp_response.expires_in.parse().unwrap_or(3600);
+    let expires_at = chrono::Utc::now().timestamp() + expires_in;
+
+    Ok(FirebaseTokens {
+        id_token: idp_response.id_token,
+        refresh_token: idp_response.refresh_token,
+        expires_at,
+        email: idp_response.email,
+        local_id: idp_response.local_id,
+        display_name: idp_response.display_name,
+    })
+}
+
+/// Refresh Firebase ID token
+async fn refresh_firebase_token() -> Result<(), String> {
+    let config = FIREBASE_CONFIG
+        .read()
+        .clone()
+        .ok_or("Firebase config not loaded")?;
+
+    let refresh_token = {
+        let tokens = FIREBASE_TOKENS.read();
+        tokens
+            .as_ref()
+            .map(|t| t.refresh_token.clone())
+            .ok_or("No Firebase refresh token available")?
+    };
+
+    let url = format!("{}?key={}", FIREBASE_TOKEN_URL, config.api_key);
+
+    let client = reqwest::Client::new();
+    let response = client
+        .post(&url)
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body(format!(
+            "grant_type=refresh_token&refresh_token={}",
+            refresh_token
+        ))
+        .send()
+        .await
+        .map_err(|e| format!("Firebase token refresh failed: {}", e))?;
+
+    if !response.status().is_success() {
+        let error_text = response.text().await.unwrap_or_default();
+        return Err(format!("Firebase token refresh failed: {}", error_text));
+    }
+
+    let refresh_response: FirebaseRefreshResponse = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse refresh response: {}", e))?;
+
+    let expires_in: i64 = refresh_response.expires_in.parse().unwrap_or(3600);
+    let expires_at = chrono::Utc::now().timestamp() + expires_in;
+
+    // Update tokens
+    {
+        let mut tokens = FIREBASE_TOKENS.write();
+        if let Some(ref mut t) = *tokens {
+            t.id_token = refresh_response.id_token;
+            t.refresh_token = refresh_response.refresh_token;
+            t.expires_at = expires_at;
+        }
+    }
+
+    // Save to persistent storage
+    if let Some(app) = APP_HANDLE.read().as_ref() {
+        save_firebase_tokens_to_store(app);
+    }
+
+    Ok(())
+}
+
+/// Get valid Firebase ID token (refreshes if needed)
+async fn get_valid_firebase_token() -> Option<String> {
+    let (id_token, expires_at) = {
+        let tokens = FIREBASE_TOKENS.read();
+        match tokens.as_ref() {
+            Some(t) => (t.id_token.clone(), t.expires_at),
+            None => return None,
+        }
+    };
+
+    // Check if token is expired or about to expire (within 5 minutes)
+    let now = chrono::Utc::now().timestamp();
+    let is_expired = now >= expires_at - 300;
+
+    if is_expired {
+        if let Err(e) = refresh_firebase_token().await {
+            eprintln!("Failed to refresh Firebase token: {}", e);
+            return None;
+        }
+        // Return the new token
+        let tokens = FIREBASE_TOKENS.read();
+        return tokens.as_ref().map(|t| t.id_token.clone());
+    }
+
+    Some(id_token)
+}
+
+// =============================================================================
+// GOOGLE OAUTH (for Slides API)
+// =============================================================================
+
+/// Exchange authorization code for Google tokens
+async fn exchange_code_for_google_tokens(code: &str) -> Result<GoogleTokenResponse, String> {
+    let credentials = OAUTH_CREDENTIALS
+        .read()
+        .clone()
+        .ok_or("OAuth credentials not available")?;
+
+    let client = reqwest::Client::new();
+    let response = client
+        .post(GOOGLE_TOKEN_URL)
+        .form(&[
+            ("code", code),
+            ("client_id", &credentials.client_id),
+            ("client_secret", &credentials.client_secret),
+            ("redirect_uri", REDIRECT_URI),
+            ("grant_type", "authorization_code"),
+        ])
+        .send()
+        .await
+        .map_err(|e| format!("Token request failed: {}", e))?;
+
+    if !response.status().is_success() {
+        let error_text = response.text().await.unwrap_or_default();
+        return Err(format!("Token exchange failed: {}", error_text));
+    }
+
+    let token_response: GoogleTokenResponse = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse token response: {}", e))?;
+
+    Ok(token_response)
+}
+
+/// Refresh Slides API access token
+async fn refresh_slides_token() -> Result<(), String> {
+    let credentials = OAUTH_CREDENTIALS
+        .read()
+        .clone()
+        .ok_or("OAuth credentials not available")?;
+
+    let refresh_token = {
+        let tokens = SLIDES_TOKENS.read();
+        tokens
+            .as_ref()
+            .and_then(|t| t.refresh_token.clone())
+            .ok_or("No Slides refresh token available")?
+    };
+
+    let client = reqwest::Client::new();
+    let response = client
+        .post(GOOGLE_TOKEN_URL)
+        .form(&[
+            ("refresh_token", refresh_token.as_str()),
+            ("client_id", &credentials.client_id),
+            ("client_secret", &credentials.client_secret),
+            ("grant_type", "refresh_token"),
+        ])
+        .send()
+        .await
+        .map_err(|e| format!("Token refresh failed: {}", e))?;
+
+    if !response.status().is_success() {
+        let error_text = response.text().await.unwrap_or_default();
+        return Err(format!("Token refresh failed: {}", error_text));
+    }
+
+    let token_response: GoogleTokenResponse = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse token response: {}", e))?;
+
+    let expires_at = token_response
+        .expires_in
+        .map(|secs| chrono::Utc::now().timestamp() + secs);
+
+    // Update tokens
+    {
+        let mut tokens = SLIDES_TOKENS.write();
+        if let Some(ref mut t) = *tokens {
+            t.access_token = token_response.access_token;
+            if token_response.refresh_token.is_some() {
+                t.refresh_token = token_response.refresh_token;
+            }
+            t.expires_at = expires_at;
+        }
+    }
+
+    // Save to persistent storage
+    if let Some(app) = APP_HANDLE.read().as_ref() {
+        save_slides_tokens_to_store(app);
+    }
+
+    Ok(())
+}
+
+/// Get valid Slides API access token (refreshes if needed)
+async fn get_valid_slides_token() -> Option<String> {
+    let (access_token, expires_at, has_refresh) = {
+        let tokens = SLIDES_TOKENS.read();
+        match tokens.as_ref() {
+            Some(t) => (
+                t.access_token.clone(),
+                t.expires_at,
+                t.refresh_token.is_some(),
+            ),
+            None => return None,
+        }
+    };
+
+    // Check if token is expired or about to expire (within 5 minutes)
+    let now = chrono::Utc::now().timestamp();
+    let is_expired = expires_at.map(|exp| now >= exp - 300).unwrap_or(false);
+
+    if is_expired && has_refresh {
+        if let Err(e) = refresh_slides_token().await {
+            eprintln!("Failed to refresh Slides token: {}", e);
+            return None;
+        }
+        // Return the new token
+        let tokens = SLIDES_TOKENS.read();
+        return tokens.as_ref().map(|t| t.access_token.clone());
+    }
+
+    Some(access_token)
+}
+
+// =============================================================================
+// TOKEN STORAGE
+// =============================================================================
+
+fn save_firebase_tokens_to_store(app: &AppHandle) {
+    if let Ok(store) = app.store("cuecard-store.json") {
+        let tokens = FIREBASE_TOKENS.read();
+        if let Some(ref t) = *tokens {
+            if let Ok(json) = serde_json::to_value(t) {
+                let _ = store.set("firebase_tokens", json);
+                let _ = store.save();
+            }
+        }
+    }
+}
+
+fn save_slides_tokens_to_store(app: &AppHandle) {
+    if let Ok(store) = app.store("cuecard-store.json") {
+        let tokens = SLIDES_TOKENS.read();
+        if let Some(ref t) = *tokens {
+            if let Ok(json) = serde_json::to_value(t) {
+                let _ = store.set("slides_tokens", json);
+                let _ = store.save();
+            }
+        }
+    }
+}
+
+fn save_oauth_credentials_to_store(app: &AppHandle) {
+    if let Ok(store) = app.store("cuecard-store.json") {
+        let creds = OAUTH_CREDENTIALS.read();
+        if let Some(ref c) = *creds {
+            if let Ok(json) = serde_json::to_value(c) {
+                let _ = store.set("oauth_credentials", json);
+                let _ = store.save();
+            }
+        }
+    }
+}
+
+fn clear_all_tokens_from_store(app: &AppHandle) {
+    if let Ok(store) = app.store("cuecard-store.json") {
+        let _ = store.delete("firebase_tokens");
+        let _ = store.delete("slides_tokens");
+        let _ = store.delete("oauth_credentials");
+        let _ = store.save();
+    }
+}
+
+fn load_tokens_from_store(app: &AppHandle) {
+    if let Ok(store) = app.store("cuecard-store.json") {
+        // Load Firebase tokens
+        if let Some(tokens_json) = store.get("firebase_tokens") {
+            if let Ok(tokens) = serde_json::from_value::<FirebaseTokens>(tokens_json.clone()) {
+                let mut firebase = FIREBASE_TOKENS.write();
+                *firebase = Some(tokens);
+            }
+        }
+
+        // Load Slides tokens
+        if let Some(tokens_json) = store.get("slides_tokens") {
+            if let Ok(tokens) = serde_json::from_value::<SlidesTokens>(tokens_json.clone()) {
+                let mut slides = SLIDES_TOKENS.write();
+                *slides = Some(tokens);
+            }
+        }
+
+        // Load OAuth credentials
+        if let Some(creds_json) = store.get("oauth_credentials") {
+            if let Ok(creds) = serde_json::from_value::<OAuthCredentials>(creds_json.clone()) {
+                let mut oauth = OAUTH_CREDENTIALS.write();
+                *oauth = Some(creds);
+            }
+        }
+    }
 }
 
 // =============================================================================
 // WEB SERVER HANDLERS
 // =============================================================================
 
-// Health check endpoint
 async fn health_handler() -> Json<serde_json::Value> {
-    let is_authenticated = OAUTH_TOKENS.read().is_some();
+    let is_authenticated = FIREBASE_TOKENS.read().is_some();
     Json(serde_json::json!({
         "status": "ok",
         "server": "cuecard-app",
@@ -124,42 +698,35 @@ async fn health_handler() -> Json<serde_json::Value> {
     }))
 }
 
-// Slides endpoint (POST) - receives slide data from extension
-async fn slides_handler(Json(slide_data): Json<SlideData>) -> Result<Json<ApiResponse>, StatusCode> {
-    // Slide change received
-
-    // Check if presentation changed - if so, prefetch all notes
+async fn slides_handler(
+    Json(slide_data): Json<SlideData>,
+) -> Result<Json<ApiResponse>, StatusCode> {
+    // Check if presentation changed
     let presentation_changed = {
         let current_pres = CURRENT_PRESENTATION_ID.read();
         current_pres.as_ref() != Some(&slide_data.presentation_id)
     };
 
     if presentation_changed {
-        // New presentation detected
-        // Update current presentation ID
         {
             let mut current_pres = CURRENT_PRESENTATION_ID.write();
             *current_pres = Some(slide_data.presentation_id.clone());
         }
-        // Clear old notes cache and prefetch all notes for new presentation
         {
             let mut notes_cache = SLIDE_NOTES.write();
             notes_cache.clear();
         }
-        // Prefetch all notes in the background
         let presentation_id = slide_data.presentation_id.clone();
         tokio::spawn(async move {
             let _ = prefetch_all_notes(&presentation_id).await;
         });
     }
 
-    // Store the current slide
     {
         let mut current = CURRENT_SLIDE.write();
         *current = Some(slide_data.clone());
     }
 
-    // Try to get notes from cache first, otherwise fetch
     let notes = {
         let notes_cache = SLIDE_NOTES.read();
         let key = format!("{}:{}", slide_data.presentation_id, slide_data.slide_id);
@@ -169,8 +736,8 @@ async fn slides_handler(Json(slide_data): Json<SlideData>) -> Result<Json<ApiRes
     let notes = match notes {
         Some(n) => Some(n),
         None => {
-            // Not in cache, fetch and cache it
-            let fetched = fetch_slide_notes(&slide_data.presentation_id, &slide_data.slide_id).await;
+            let fetched =
+                fetch_slide_notes(&slide_data.presentation_id, &slide_data.slide_id).await;
             if let Some(ref note_text) = fetched {
                 let mut notes_cache = SLIDE_NOTES.write();
                 let key = format!("{}:{}", slide_data.presentation_id, slide_data.slide_id);
@@ -180,7 +747,6 @@ async fn slides_handler(Json(slide_data): Json<SlideData>) -> Result<Json<ApiRes
         }
     };
 
-    // Emit event to frontend
     if let Some(app) = APP_HANDLE.read().as_ref() {
         let event = SlideUpdateEvent {
             slide_data: slide_data.clone(),
@@ -195,15 +761,13 @@ async fn slides_handler(Json(slide_data): Json<SlideData>) -> Result<Json<ApiRes
     }))
 }
 
-// =============================================================================
-// OAUTH2 AUTHENTICATION
-// =============================================================================
-
-// OAuth2 login - redirects to Google
+// OAuth login handler - redirects to Google
 async fn oauth_login_handler() -> Result<Redirect, StatusCode> {
-    let client_id = env!("GOOGLE_CLIENT_ID");
+    let credentials = match OAUTH_CREDENTIALS.read().clone() {
+        Some(c) => c,
+        None => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+    };
 
-    // Get the pending scope or default to both
     let scope_url = {
         let pending = PENDING_OAUTH_SCOPE.read();
         match pending.as_deref() {
@@ -216,7 +780,7 @@ async fn oauth_login_handler() -> Result<Redirect, StatusCode> {
     let auth_url = format!(
         "{}?client_id={}&redirect_uri={}&response_type=code&scope={}&access_type=offline&prompt=consent&include_granted_scopes=true",
         GOOGLE_AUTH_URL,
-        urlencoding::encode(&client_id),
+        urlencoding::encode(&credentials.client_id),
         urlencoding::encode(REDIRECT_URI),
         urlencoding::encode(&scope_url)
     );
@@ -224,7 +788,7 @@ async fn oauth_login_handler() -> Result<Redirect, StatusCode> {
     Ok(Redirect::temporary(&auth_url))
 }
 
-// OAuth2 callback - exchanges code for tokens
+// OAuth callback handler
 async fn oauth_callback_handler(Query(params): Query<OAuthCallback>) -> Html<String> {
     if let Some(error) = params.error {
         return Html(format!(
@@ -257,89 +821,137 @@ async fn oauth_callback_handler(Query(params): Query<OAuthCallback>) -> Html<Str
         }
     };
 
-    // Exchange code for tokens
-    match exchange_code_for_tokens(&code).await {
-        Ok(mut new_tokens) => {
-            // Get the pending scope that was requested
-            let pending_scope = {
-                let mut pending = PENDING_OAUTH_SCOPE.write();
-                pending.take()
-            };
+    // Get pending scope
+    let pending_scope = {
+        let mut pending = PENDING_OAUTH_SCOPE.write();
+        pending.take()
+    };
 
-            // Merge with existing tokens if present (for incremental authorization)
-            {
-                let mut oauth = OAUTH_TOKENS.write();
-                if let Some(ref existing) = *oauth {
-                    // Keep existing refresh token if new one is not provided
-                    if new_tokens.refresh_token.is_none() {
-                        new_tokens.refresh_token = existing.refresh_token.clone();
-                    }
-                    // Merge scopes
-                    for scope in &existing.granted_scopes {
-                        if !new_tokens.granted_scopes.contains(scope) {
-                            new_tokens.granted_scopes.push(scope.clone());
+    // Exchange code for Google tokens
+    match exchange_code_for_google_tokens(&code).await {
+        Ok(google_tokens) => {
+            let is_profile_scope = pending_scope.as_deref() == Some("profile");
+
+            if is_profile_scope {
+                // For profile scope, exchange Google ID token for Firebase token
+                if let Some(google_id_token) = &google_tokens.id_token {
+                    match exchange_google_token_for_firebase(google_id_token).await {
+                        Ok(firebase_tokens) => {
+                            let user_name = firebase_tokens.display_name.clone();
+                            let user_email = firebase_tokens.email.clone();
+
+                            // Store Firebase tokens
+                            {
+                                let mut tokens = FIREBASE_TOKENS.write();
+                                *tokens = Some(firebase_tokens);
+                            }
+
+                            // Save to persistent storage
+                            if let Some(app) = APP_HANDLE.read().as_ref() {
+                                save_firebase_tokens_to_store(app);
+                                save_oauth_credentials_to_store(app);
+                            }
+
+                            // Notify frontend
+                            if let Some(app) = APP_HANDLE.read().as_ref() {
+                                let _ = app.emit(
+                                    "auth-status",
+                                    serde_json::json!({
+                                        "authenticated": true,
+                                        "user_name": user_name,
+                                        "user_email": user_email,
+                                        "requested_scope": pending_scope
+                                    }),
+                                );
+                            }
+
+                            Html(
+                                r#"<!DOCTYPE html>
+                                <html><head><title>Authentication Successful</title>
+                                <style>
+                                    body { font-family: system-ui; padding: 40px; text-align: center; background: #fff; }
+                                    .success { color: #000; }
+                                </style>
+                                </head><body>
+                                <h1 class="success">Authentication Successful!</h1>
+                                <p>You can now close this window and return to CueCard.</p>
+                                <script>setTimeout(() => window.close(), 2000);</script>
+                                </body></html>"#
+                                    .to_string(),
+                            )
                         }
-                    }
-                }
-                *oauth = Some(new_tokens);
-            }
-
-            // Get the final granted scopes for response
-            let granted_scopes: Vec<String> = {
-                let oauth = OAUTH_TOKENS.read();
-                oauth.as_ref().map(|t| t.granted_scopes.clone()).unwrap_or_default()
-            };
-
-            // Save tokens to persistent storage
-            if let Some(app) = APP_HANDLE.read().as_ref() {
-                save_tokens_to_store(app);
-            }
-
-            // Fetch user info to get the name
-            let user_name = if let Some(access_token) = get_valid_access_token().await {
-                let client = reqwest::Client::new();
-                if let Ok(response) = client
-                    .get("https://www.googleapis.com/oauth2/v3/userinfo")
-                    .header("Authorization", format!("Bearer {}", access_token))
-                    .send()
-                    .await
-                {
-                    if let Ok(user_info) = response.json::<serde_json::Value>().await {
-                        user_info.get("name").and_then(|n| n.as_str()).map(|s| s.to_string())
-                    } else {
-                        None
+                        Err(e) => Html(format!(
+                            r#"<!DOCTYPE html>
+                            <html><head><title>Authentication Failed</title>
+                            <style>body {{ font-family: system-ui; padding: 40px; text-align: center; }}</style>
+                            </head><body>
+                            <h1>Firebase Authentication Failed</h1>
+                            <p>Error: {}</p>
+                            <p>You can close this window.</p>
+                            </body></html>"#,
+                            e
+                        )),
                     }
                 } else {
-                    None
+                    Html(
+                        r#"<!DOCTYPE html>
+                        <html><head><title>Authentication Failed</title>
+                        <style>body { font-family: system-ui; padding: 40px; text-align: center; }</style>
+                        </head><body>
+                        <h1>Authentication Failed</h1>
+                        <p>No ID token received from Google.</p>
+                        <p>You can close this window.</p>
+                        </body></html>"#
+                            .to_string(),
+                    )
                 }
             } else {
-                None
-            };
+                // For slides scope, store the access token for Slides API
+                let expires_at = google_tokens
+                    .expires_in
+                    .map(|secs| chrono::Utc::now().timestamp() + secs);
 
-            // Notify frontend with granted scopes
-            if let Some(app) = APP_HANDLE.read().as_ref() {
-                let _ = app.emit("auth-status", serde_json::json!({
-                    "authenticated": true,
-                    "user_name": user_name,
-                    "granted_scopes": granted_scopes,
-                    "requested_scope": pending_scope
-                }));
+                {
+                    let mut tokens = SLIDES_TOKENS.write();
+                    *tokens = Some(SlidesTokens {
+                        access_token: google_tokens.access_token,
+                        refresh_token: google_tokens.refresh_token,
+                        expires_at,
+                    });
+                }
+
+                // Save to persistent storage
+                if let Some(app) = APP_HANDLE.read().as_ref() {
+                    save_slides_tokens_to_store(app);
+                }
+
+                // Notify frontend
+                if let Some(app) = APP_HANDLE.read().as_ref() {
+                    let _ = app.emit(
+                        "auth-status",
+                        serde_json::json!({
+                            "authenticated": true,
+                            "slides_authorized": true,
+                            "requested_scope": pending_scope
+                        }),
+                    );
+                }
+
+                Html(
+                    r#"<!DOCTYPE html>
+                    <html><head><title>Slides Access Granted</title>
+                    <style>
+                        body { font-family: system-ui; padding: 40px; text-align: center; background: #fff; }
+                        .success { color: #000; }
+                    </style>
+                    </head><body>
+                    <h1 class="success">Google Slides Access Granted!</h1>
+                    <p>You can now close this window and return to CueCard.</p>
+                    <script>setTimeout(() => window.close(), 2000);</script>
+                    </body></html>"#
+                        .to_string(),
+                )
             }
-
-            Html(
-                r#"<!DOCTYPE html>
-                <html><head><title>Authentication Successful</title>
-                <style>
-                    body { font-family: system-ui; padding: 40px; text-align: center; background: #fff; }
-                    .success { color: #000; }
-                </style>
-                </head><body>
-                <h1 class="success">Authentication Successful!</h1>
-                <p>You can now close this window and return to CueCard.</p>
-                <script>setTimeout(() => window.close(), 2000);</script>
-                </body></html>"#
-                    .to_string(),
-            )
         }
         Err(e) => Html(format!(
             r#"<!DOCTYPE html>
@@ -355,193 +967,70 @@ async fn oauth_callback_handler(Query(params): Query<OAuthCallback>) -> Html<Str
     }
 }
 
-// Exchange authorization code for tokens
-async fn exchange_code_for_tokens(code: &str) -> Result<OAuthTokens, String> {
-    let client_id = env!("GOOGLE_CLIENT_ID");
-    let client_secret = env!("GOOGLE_CLIENT_SECRET");
-
-    let client = reqwest::Client::new();
-    let response = client
-        .post(GOOGLE_TOKEN_URL)
-        .form(&[
-            ("code", code),
-            ("client_id", &client_id),
-            ("client_secret", &client_secret),
-            ("redirect_uri", REDIRECT_URI),
-            ("grant_type", "authorization_code"),
-        ])
-        .send()
-        .await
-        .map_err(|e| format!("Token request failed: {}", e))?;
-
-    if !response.status().is_success() {
-        let error_text = response.text().await.unwrap_or_default();
-        return Err(format!("Token exchange failed: {}", error_text));
-    }
-
-    let token_response: GoogleTokenResponse = response
-        .json()
-        .await
-        .map_err(|e| format!("Failed to parse token response: {}", e))?;
-
-    let expires_at = token_response
-        .expires_in
-        .map(|secs| chrono::Utc::now().timestamp() + secs);
-
-    // Parse the scopes from the response
-    let granted_scopes: Vec<String> = token_response
-        .scope
-        .map(|s| s.split_whitespace().map(|s| s.to_string()).collect())
-        .unwrap_or_default();
-
-    Ok(OAuthTokens {
-        access_token: token_response.access_token,
-        refresh_token: token_response.refresh_token,
-        expires_at,
-        granted_scopes,
-    })
+async fn auth_status_handler() -> Json<serde_json::Value> {
+    let is_authenticated = FIREBASE_TOKENS.read().is_some();
+    Json(serde_json::json!({
+        "authenticated": is_authenticated
+    }))
 }
 
-// Refresh access token
-async fn refresh_access_token() -> Result<(), String> {
-    let refresh_token = {
-        let tokens = OAUTH_TOKENS.read();
-        tokens
-            .as_ref()
-            .and_then(|t| t.refresh_token.clone())
-            .ok_or("No refresh token available")?
-    };
-
-    let client_id = env!("GOOGLE_CLIENT_ID");
-    let client_secret = env!("GOOGLE_CLIENT_SECRET");
-
-    let client = reqwest::Client::new();
-    let response = client
-        .post(GOOGLE_TOKEN_URL)
-        .form(&[
-            ("refresh_token", refresh_token.as_str()),
-            ("client_id", &client_id),
-            ("client_secret", &client_secret),
-            ("grant_type", "refresh_token"),
-        ])
-        .send()
-        .await
-        .map_err(|e| format!("Token refresh failed: {}", e))?;
-
-    if !response.status().is_success() {
-        let error_text = response.text().await.unwrap_or_default();
-        return Err(format!("Token refresh failed: {}", error_text));
-    }
-
-    let token_response: GoogleTokenResponse = response
-        .json()
-        .await
-        .map_err(|e| format!("Failed to parse token response: {}", e))?;
-
-    let expires_at = token_response
-        .expires_in
-        .map(|secs| chrono::Utc::now().timestamp() + secs);
-
-    // Parse any new scopes from the response
-    let new_scopes: Vec<String> = token_response
-        .scope
-        .map(|s| s.split_whitespace().map(|s| s.to_string()).collect())
-        .unwrap_or_default();
-
-    // Update tokens (keep existing refresh token and merge scopes if new one not provided)
+async fn logout_handler() -> Json<serde_json::Value> {
     {
-        let mut tokens = OAUTH_TOKENS.write();
-        if let Some(ref mut t) = *tokens {
-            t.access_token = token_response.access_token;
-            if token_response.refresh_token.is_some() {
-                t.refresh_token = token_response.refresh_token;
-            }
-            t.expires_at = expires_at;
-            // Merge new scopes with existing ones
-            if !new_scopes.is_empty() {
-                for scope in new_scopes {
-                    if !t.granted_scopes.contains(&scope) {
-                        t.granted_scopes.push(scope);
-                    }
-                }
-            }
-        }
+        let mut tokens = FIREBASE_TOKENS.write();
+        *tokens = None;
+    }
+    {
+        let mut tokens = SLIDES_TOKENS.write();
+        *tokens = None;
     }
 
-    // Save updated tokens to persistent storage
     if let Some(app) = APP_HANDLE.read().as_ref() {
-        save_tokens_to_store(app);
+        clear_all_tokens_from_store(app);
+
+        let _ = app.emit(
+            "auth-status",
+            serde_json::json!({
+                "authenticated": false,
+                "user_name": null
+            }),
+        );
     }
 
-    Ok(())
+    Json(serde_json::json!({
+        "success": true
+    }))
 }
 
-// Save OAuth tokens to persistent storage
-fn save_tokens_to_store(app: &AppHandle) {
-    if let Ok(store) = app.store("cuecard-store.json") {
-        let tokens = OAUTH_TOKENS.read();
-        if let Some(ref t) = *tokens {
-            if let Ok(json) = serde_json::to_value(t) {
-                let _ = store.set("oauth_tokens", json);
-                let _ = store.save();
-                // OAuth tokens saved
-            }
-        }
-    }
-}
+async fn start_server() {
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
 
-// Clear OAuth tokens from persistent storage
-fn clear_tokens_from_store(app: &AppHandle) {
-    if let Ok(store) = app.store("cuecard-store.json") {
-        let _ = store.delete("oauth_tokens");
-        let _ = store.save();
-        // OAuth tokens cleared
-    }
-}
+    let app = Router::new()
+        .route("/health", get(health_handler))
+        .route("/slides", post(slides_handler))
+        .route("/oauth/login", get(oauth_login_handler))
+        .route("/oauth/callback", get(oauth_callback_handler))
+        .route("/oauth/status", get(auth_status_handler))
+        .route("/oauth/logout", post(logout_handler))
+        .layer(cors);
 
-// Get valid access token (refreshes if needed)
-async fn get_valid_access_token() -> Option<String> {
-    let (access_token, expires_at, has_refresh) = {
-        let tokens = OAUTH_TOKENS.read();
-        match tokens.as_ref() {
-            Some(t) => (
-                t.access_token.clone(),
-                t.expires_at,
-                t.refresh_token.is_some(),
-            ),
-            None => return None,
-        }
-    };
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:3642")
+        .await
+        .expect("Failed to bind to port 3642");
 
-    // Check if token is expired or about to expire (within 5 minutes)
-    let now = chrono::Utc::now().timestamp();
-    let is_expired = expires_at.map(|exp| now >= exp - 300).unwrap_or(false);
-
-    if is_expired && has_refresh {
-        if let Err(e) = refresh_access_token().await {
-            eprintln!("Failed to refresh token: {}", e);
-            return None;
-        }
-        // Return the new token
-        let tokens = OAUTH_TOKENS.read();
-        return tokens.as_ref().map(|t| t.access_token.clone());
-    }
-
-    Some(access_token)
+    axum::serve(listener, app).await.expect("Server error");
 }
 
 // =============================================================================
 // GOOGLE SLIDES API
 // =============================================================================
 
-// Prefetch all notes for a presentation
 async fn prefetch_all_notes(presentation_id: &str) -> Result<(), String> {
-    let access_token = match get_valid_access_token().await {
+    let access_token = match get_valid_slides_token().await {
         Some(token) => token,
-        None => {
-            // Not authenticated, cannot prefetch notes
-            return Err("Not authenticated".to_string());
-        }
+        None => return Err("Not authenticated for Slides".to_string()),
     };
 
     let url = format!(
@@ -566,7 +1055,10 @@ async fn prefetch_all_notes(presentation_id: &str) -> Result<(), String> {
     if !response.status().is_success() {
         let status = response.status();
         let error_body = response.text().await.unwrap_or_default();
-        eprintln!("Slides API error during prefetch: {} - {}", status, error_body);
+        eprintln!(
+            "Slides API error during prefetch: {} - {}",
+            status, error_body
+        );
         return Err(format!("API error: {}", status));
     }
 
@@ -578,7 +1070,6 @@ async fn prefetch_all_notes(presentation_id: &str) -> Result<(), String> {
         }
     };
 
-    // Extract notes for all slides
     let slides = match json.get("slides").and_then(|s| s.as_array()) {
         Some(s) => s,
         None => return Ok(()),
@@ -598,7 +1089,6 @@ async fn prefetch_all_notes(presentation_id: &str) -> Result<(), String> {
     Ok(())
 }
 
-// Extract notes from a single slide JSON object
 fn extract_notes_from_slide(slide: &serde_json::Value) -> Option<String> {
     let notes = slide
         .get("slideProperties")?
@@ -621,14 +1111,10 @@ fn extract_notes_from_slide(slide: &serde_json::Value) -> Option<String> {
     None
 }
 
-// Fetch notes from Google Slides API using OAuth2
 async fn fetch_slide_notes(presentation_id: &str, slide_id: &str) -> Option<String> {
-    let access_token = match get_valid_access_token().await {
+    let access_token = match get_valid_slides_token().await {
         Some(token) => token,
-        None => {
-            // Not authenticated
-            return None;
-        }
+        None => return None,
     };
 
     let url = format!(
@@ -663,7 +1149,6 @@ async fn fetch_slide_notes(presentation_id: &str, slide_id: &str) -> Option<Stri
         }
     };
 
-    // Find the slide and extract speaker notes
     let slides = json.get("slides")?.as_array()?;
     for slide in slides {
         let obj_id = slide.get("objectId")?.as_str()?;
@@ -691,7 +1176,6 @@ async fn fetch_slide_notes(presentation_id: &str, slide_id: &str) -> Option<Stri
     None
 }
 
-// Extract text content from Google Slides text elements
 fn extract_text_from_text_elements(text: &serde_json::Value) -> Option<String> {
     let elements = text.get("textElements")?.as_array()?;
     let mut result = String::new();
@@ -711,72 +1195,15 @@ fn extract_text_from_text_elements(text: &serde_json::Value) -> Option<String> {
     }
 }
 
-// Auth status endpoint
-async fn auth_status_handler() -> Json<serde_json::Value> {
-    let is_authenticated = OAUTH_TOKENS.read().is_some();
-    Json(serde_json::json!({
-        "authenticated": is_authenticated
-    }))
-}
-
-// Logout endpoint
-async fn logout_handler() -> Json<serde_json::Value> {
-    {
-        let mut tokens = OAUTH_TOKENS.write();
-        *tokens = None;
-    }
-
-    if let Some(app) = APP_HANDLE.read().as_ref() {
-        // Clear tokens from persistent storage
-        clear_tokens_from_store(app);
-
-        let _ = app.emit("auth-status", serde_json::json!({
-            "authenticated": false,
-            "user_name": null
-        }));
-    }
-
-    Json(serde_json::json!({
-        "success": true
-    }))
-}
-
-// Start the web server
-async fn start_server() {
-    let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
-
-    let app = Router::new()
-        .route("/health", get(health_handler))
-        .route("/slides", post(slides_handler))
-        .route("/oauth/login", get(oauth_login_handler))
-        .route("/oauth/callback", get(oauth_callback_handler))
-        .route("/oauth/status", get(auth_status_handler))
-        .route("/oauth/logout", post(logout_handler))
-        .layer(cors);
-
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3642")
-        .await
-        .expect("Failed to bind to port 3642");
-
-    // Server started
-
-    axum::serve(listener, app).await.expect("Server error");
-}
-
 // =============================================================================
 // TAURI COMMANDS
 // =============================================================================
 
-// Tauri command to get current slide data
 #[tauri::command]
 fn get_current_slide() -> Option<SlideData> {
     CURRENT_SLIDE.read().clone()
 }
 
-// Tauri command to get notes for current slide
 #[tauri::command]
 fn get_current_notes() -> Option<String> {
     let current = CURRENT_SLIDE.read();
@@ -789,99 +1216,87 @@ fn get_current_notes() -> Option<String> {
     }
 }
 
-// Tauri command to check auth status
 #[tauri::command]
 fn get_auth_status() -> bool {
-    OAUTH_TOKENS.read().is_some()
+    FIREBASE_TOKENS.read().is_some()
 }
 
-// Tauri command to get Firestore project ID (compile-time environment variable)
 #[tauri::command]
 fn get_firestore_project_id() -> String {
-    env!("FIRESTORE_PROJECT_ID").to_string()
-}
-
-// Tauri command to get granted scopes
-#[tauri::command]
-fn get_granted_scopes() -> Vec<String> {
-    OAUTH_TOKENS
+    FIREBASE_CONFIG
         .read()
         .as_ref()
-        .map(|t| t.granted_scopes.clone())
+        .map(|c| c.project_id.clone())
         .unwrap_or_default()
 }
 
-// Tauri command to check if a specific scope is granted
 #[tauri::command]
-fn has_scope(scope: String) -> bool {
-    let scope_url = match scope.as_str() {
-        "profile" => SCOPE_PROFILE,
-        "slides" => SCOPE_SLIDES,
-        _ => return false,
-    };
-    OAUTH_TOKENS
-        .read()
-        .as_ref()
-        .map(|t| t.granted_scopes.iter().any(|s| s == scope_url))
-        .unwrap_or(false)
+async fn get_firebase_id_token() -> Result<String, String> {
+    get_valid_firebase_token()
+        .await
+        .ok_or_else(|| "Not authenticated".to_string())
 }
 
-// Tauri command to get user info from Google
+#[tauri::command]
+fn has_slides_scope() -> bool {
+    SLIDES_TOKENS.read().is_some()
+}
+
 #[tauri::command]
 async fn get_user_info() -> Result<serde_json::Value, String> {
-    let access_token = match get_valid_access_token().await {
-        Some(token) => token,
-        None => return Err("Not authenticated".to_string()),
-    };
-
-    let client = reqwest::Client::new();
-    let response = client
-        .get("https://www.googleapis.com/oauth2/v3/userinfo")
-        .header("Authorization", format!("Bearer {}", access_token))
-        .send()
-        .await
-        .map_err(|e| format!("Failed to fetch user info: {}", e))?;
-
-    if !response.status().is_success() {
-        return Err(format!("Failed to fetch user info: {}", response.status()));
+    let tokens = FIREBASE_TOKENS.read();
+    match tokens.as_ref() {
+        Some(t) => Ok(serde_json::json!({
+            "email": t.email,
+            "name": t.display_name,
+            "local_id": t.local_id
+        })),
+        None => Err("Not authenticated".to_string()),
     }
-
-    let user_info: serde_json::Value = response
-        .json()
-        .await
-        .map_err(|e| format!("Failed to parse user info: {}", e))?;
-
-    Ok(user_info)
 }
 
-// Tauri command to initiate login - opens browser directly
-// scope parameter can be "profile" or "slides"
 #[tauri::command]
 async fn start_login(app: AppHandle, scope: String) -> Result<(), String> {
-    let client_id = env!("GOOGLE_CLIENT_ID");
+    // Set pending scope
+    {
+        let mut pending = PENDING_OAUTH_SCOPE.write();
+        *pending = Some(scope.clone());
+    }
 
-    // Determine which scope(s) to request
+    // Check if we have OAuth credentials
+    let has_credentials = OAUTH_CREDENTIALS.read().is_some();
+
+    if !has_credentials {
+        // Bootstrap: sign in anonymously and fetch credentials
+        let anon_token = sign_in_anonymously().await?;
+        let credentials = fetch_oauth_credentials(&anon_token).await?;
+
+        // Store credentials
+        {
+            let mut creds = OAUTH_CREDENTIALS.write();
+            *creds = Some(credentials.clone());
+        }
+    }
+
+    // Now build the OAuth URL
+    let credentials = OAUTH_CREDENTIALS
+        .read()
+        .clone()
+        .ok_or("OAuth credentials not available")?;
+
     let scope_url = match scope.as_str() {
         "profile" => SCOPE_PROFILE.to_string(),
         "slides" => SCOPE_SLIDES.to_string(),
         _ => format!("{} {}", SCOPE_PROFILE, SCOPE_SLIDES),
     };
 
-    // Store the pending scope for the callback
-    {
-        let mut pending = PENDING_OAUTH_SCOPE.write();
-        *pending = Some(scope.clone());
-    }
-
-    // Use include_granted_scopes=true for incremental authorization
     let auth_url = format!(
         "{}?client_id={}&redirect_uri={}&response_type=code&scope={}&access_type=offline&prompt=consent&include_granted_scopes=true",
         GOOGLE_AUTH_URL,
-        urlencoding::encode(&client_id),
+        urlencoding::encode(&credentials.client_id),
         urlencoding::encode(REDIRECT_URI),
         urlencoding::encode(&scope_url)
     );
-    // Opening browser for OAuth
 
     app.opener()
         .open_url(&auth_url, None::<&str>)
@@ -890,47 +1305,42 @@ async fn start_login(app: AppHandle, scope: String) -> Result<(), String> {
     Ok(())
 }
 
-// Tauri command to logout
 #[tauri::command]
 fn logout(app: AppHandle) {
-    let mut tokens = OAUTH_TOKENS.write();
-    *tokens = None;
-    drop(tokens); // Release lock before calling clear_tokens_from_store
+    {
+        let mut tokens = FIREBASE_TOKENS.write();
+        *tokens = None;
+    }
+    {
+        let mut tokens = SLIDES_TOKENS.write();
+        *tokens = None;
+    }
 
-    // Clear tokens from persistent storage
-    clear_tokens_from_store(&app);
+    clear_all_tokens_from_store(&app);
 }
 
-// Tauri command to refresh notes for current slide/presentation
 #[tauri::command]
 async fn refresh_notes(app: AppHandle) -> Result<Option<String>, String> {
-    let current_slide = {
-        CURRENT_SLIDE.read().clone()
-    };
+    let current_slide = { CURRENT_SLIDE.read().clone() };
 
     let slide_data = match current_slide {
         Some(s) => s,
         None => return Err("No current slide".to_string()),
     };
 
-    // Clear cache for this presentation and refetch all notes
     {
         let mut notes_cache = SLIDE_NOTES.write();
-        // Remove all notes for this presentation
         notes_cache.retain(|k, _| !k.starts_with(&format!("{}:", slide_data.presentation_id)));
     }
 
-    // Refetch all notes
     let _ = prefetch_all_notes(&slide_data.presentation_id).await;
 
-    // Get notes for current slide
     let notes = {
         let notes_cache = SLIDE_NOTES.read();
         let key = format!("{}:{}", slide_data.presentation_id, slide_data.slide_id);
         notes_cache.get(&key).cloned()
     };
 
-    // Emit event to frontend with refreshed notes
     let event = SlideUpdateEvent {
         slide_data: slide_data.clone(),
         notes: notes.clone(),
@@ -944,18 +1354,20 @@ async fn refresh_notes(app: AppHandle) -> Result<Option<String>, String> {
 // WINDOW MANAGEMENT (macOS)
 // =============================================================================
 
-// Tauri command to set window opacity/transparency
 #[tauri::command]
 fn set_window_opacity(app: AppHandle, opacity: f64) -> Result<(), String> {
     use cocoa::appkit::NSWindow;
     use cocoa::base::id;
 
-    let window = app.get_webview_window("main").ok_or("Failed to get main window")?;
+    let window = app
+        .get_webview_window("main")
+        .ok_or("Failed to get main window")?;
 
-    // Clamp opacity between 0.1 and 1.0
     let clamped_opacity = opacity.max(0.1).min(1.0);
 
-    let ns_window = window.ns_window().map_err(|e| format!("Failed to get NSWindow: {}", e))? as id;
+    let ns_window = window
+        .ns_window()
+        .map_err(|e| format!("Failed to get NSWindow: {}", e))? as id;
     unsafe {
         ns_window.setAlphaValue_(clamped_opacity);
     }
@@ -963,32 +1375,36 @@ fn set_window_opacity(app: AppHandle, opacity: f64) -> Result<(), String> {
     Ok(())
 }
 
-// Tauri command to get current window opacity
 #[tauri::command]
 fn get_window_opacity(app: AppHandle) -> Result<f64, String> {
     use cocoa::appkit::NSWindow;
     use cocoa::base::id;
 
-    let window = app.get_webview_window("main").ok_or("Failed to get main window")?;
-    let ns_window = window.ns_window().map_err(|e| format!("Failed to get NSWindow: {}", e))? as id;
+    let window = app
+        .get_webview_window("main")
+        .ok_or("Failed to get main window")?;
+    let ns_window = window
+        .ns_window()
+        .map_err(|e| format!("Failed to get NSWindow: {}", e))? as id;
     let opacity = unsafe { ns_window.alphaValue() };
     Ok(opacity)
 }
 
-// Tauri command to enable/disable screenshot protection
 #[tauri::command]
 fn set_screenshot_protection(app: AppHandle, enabled: bool) -> Result<(), String> {
     use cocoa::base::id;
 
-    let window = app.get_webview_window("main").ok_or("Failed to get main window")?;
-    let ns_window = window.ns_window().map_err(|e| format!("Failed to get NSWindow: {}", e))? as id;
+    let window = app
+        .get_webview_window("main")
+        .ok_or("Failed to get main window")?;
+    let ns_window = window
+        .ns_window()
+        .map_err(|e| format!("Failed to get NSWindow: {}", e))? as id;
 
     unsafe {
         if enabled {
-            // NSWindowSharingNone = 0 prevents the window from being captured
             let _: () = msg_send![ns_window, setSharingType: 0u64];
         } else {
-            // NSWindowSharingReadOnly = 1 allows capturing
             let _: () = msg_send![ns_window, setSharingType: 1u64];
         }
     }
@@ -1013,24 +1429,25 @@ pub fn run() {
                 *handle = Some(app.handle().clone());
             }
 
-            // Load stored OAuth tokens from persistent storage
-            if let Ok(store) = app.store("cuecard-store.json") {
-                if let Some(tokens_json) = store.get("oauth_tokens") {
-                    if let Ok(tokens) = serde_json::from_value::<OAuthTokens>(tokens_json.clone()) {
-                        // OAuth tokens loaded from storage
-                        let mut oauth = OAUTH_TOKENS.write();
-                        *oauth = Some(tokens);
-                    }
+            // Load Firebase configuration
+            match load_firebase_config(app.handle()) {
+                Ok(config) => {
+                    let mut firebase_config = FIREBASE_CONFIG.write();
+                    *firebase_config = Some(config);
+                }
+                Err(e) => {
+                    eprintln!("Warning: Failed to load Firebase config: {}", e);
                 }
             }
+
+            // Load stored tokens from persistent storage
+            load_tokens_from_store(app.handle());
 
             // Enable screenshot protection and full-screen overlay by default
             {
                 use cocoa::appkit::NSApplication;
                 use cocoa::base::{nil, NO};
 
-                // Set application activation policy to Accessory (non-activating)
-                // NSApplicationActivationPolicyAccessory = 1
                 unsafe {
                     let ns_app = NSApplication::sharedApplication(nil);
                     let _: () = msg_send![ns_app, setActivationPolicy: 1i64];
@@ -1042,27 +1459,13 @@ pub fn run() {
                     if let Ok(ns_window) = window.ns_window() {
                         let ns_window = ns_window as id;
                         unsafe {
-                            // NSWindowSharingNone = 0 prevents the window from being captured
                             let _: () = msg_send![ns_window, setSharingType: 0u64];
-
-                            // Set collection behavior to show over full-screen apps and ignore activation cycle
-                            // NSWindowCollectionBehaviorCanJoinAllSpaces = 1 << 0
-                            // NSWindowCollectionBehaviorFullScreenAuxiliary = 1 << 8
-                            // NSWindowCollectionBehaviorIgnoresCycle = 1 << 6 (prevents window from being activated by window cycling)
                             let collection_behavior: u64 = (1 << 0) | (1 << 8) | (1 << 6);
-                            let _: () = msg_send![ns_window, setCollectionBehavior: collection_behavior];
-
-                            // Set window level to floating to keep it on top without activation
-                            // NSFloatingWindowLevel = 3
+                            let _: () =
+                                msg_send![ns_window, setCollectionBehavior: collection_behavior];
                             let _: () = msg_send![ns_window, setLevel: 3i32];
-
-                            // Prevent the window from hiding when it "deactivates"
                             let _: () = msg_send![ns_window, setHidesOnDeactivate: NO];
-
-                            // Set style mask to include non-activating panel behavior
-                            // This prevents the window from becoming key when clicked
                             let current_style: u64 = msg_send![ns_window, styleMask];
-                            // NSWindowStyleMaskNonactivatingPanel = 1 << 7
                             let new_style = current_style | (1 << 7);
                             let _: () = msg_send![ns_window, setStyleMask: new_style];
                         }
@@ -1083,8 +1486,8 @@ pub fn run() {
             get_current_notes,
             get_auth_status,
             get_firestore_project_id,
-            get_granted_scopes,
-            has_scope,
+            get_firebase_id_token,
+            has_slides_scope,
             get_user_info,
             start_login,
             logout,
