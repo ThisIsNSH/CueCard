@@ -1,3 +1,19 @@
+/**
+ * CueCard - Main Frontend Application
+ *
+ * This file contains the main frontend logic for the CueCard application:
+ * - Firestore integration for usage analytics
+ * - Persistent storage management
+ * - Google OAuth authentication UI
+ * - Notes display and syntax highlighting
+ * - Timer functionality for presentations
+ * - Settings management (opacity, screenshot protection)
+ */
+
+// =============================================================================
+// TAURI API INITIALIZATION
+// =============================================================================
+
 // Check if Tauri is available
 if (!window.__TAURI__) {
   console.error("Tauri runtime not available! Make sure you're running the app with 'npm run tauri dev' or as a built Tauri app.");
@@ -6,6 +22,10 @@ if (!window.__TAURI__) {
 const { invoke } = window.__TAURI__?.core || {};
 const { listen } = window.__TAURI__?.event || {};
 const { openUrl } = window.__TAURI__?.opener || {};
+
+// =============================================================================
+// FIRESTORE INTEGRATION
+// =============================================================================
 
 // Firestore REST API Configuration
 let FIRESTORE_PROJECT_ID = null;
@@ -150,6 +170,10 @@ async function getUserEmail() {
   }
 }
 
+// =============================================================================
+// PERSISTENT STORAGE
+// =============================================================================
+
 // Store for persistent storage
 let appStore = null;
 
@@ -262,6 +286,10 @@ async function clearGrantedScopes() {
   console.log("Cleared granted scopes");
 }
 
+// =============================================================================
+// DOM ELEMENTS AND STATE
+// =============================================================================
+
 // DOM Elements
 let authBtn;
 let viewInitial, viewAddNotes, viewNotes, viewSettings;
@@ -290,6 +318,10 @@ let screenshotProtectionEnabled = true; // Default: protected (not shown in capt
 let timerState = 'stopped'; // 'stopped', 'running', 'paused'
 let timerIntervals = []; // Store all timer interval IDs
 let originalTimerValues = []; // Store original timer values for reset
+
+// =============================================================================
+// APPLICATION INITIALIZATION
+// =============================================================================
 
 // Initialize the app
 window.addEventListener("DOMContentLoaded", async () => {
@@ -411,6 +443,10 @@ window.addEventListener("DOMContentLoaded", async () => {
   console.log("App initialization complete!");
 });
 
+// =============================================================================
+// NAVIGATION
+// =============================================================================
+
 // Navigation Handlers
 function setupNavigation() {
   linkGoBack.addEventListener("click", async (e) => {
@@ -454,6 +490,10 @@ function resetAllStates() {
   // Update timer button visibility
   updateTimerButtonVisibility();
 }
+
+// =============================================================================
+// AUTHENTICATION
+// =============================================================================
 
 // Auth Handlers
 function setupAuth() {
@@ -499,6 +539,10 @@ function setupRefreshButton() {
     }
   });
 }
+
+// =============================================================================
+// TIMER FUNCTIONALITY
+// =============================================================================
 
 // Timer Control Buttons Setup
 function setupTimerControls() {
@@ -684,6 +728,10 @@ function updateTimerButtonVisibility() {
     timerSeparator.classList.add('hidden');
   }
 }
+
+// =============================================================================
+// NOTES INPUT AND SYNTAX HIGHLIGHTING
+// =============================================================================
 
 // Setup syntax highlighting for notes input
 function setupNotesInputHighlighting() {
@@ -1005,6 +1053,10 @@ function handleSlideUpdate(data, autoShow = false) {
   }
 }
 
+// =============================================================================
+// VIEW MANAGEMENT
+// =============================================================================
+
 // Show a specific view
 async function showView(viewName) {
   // Save notes to storage if we're in add-notes view
@@ -1099,6 +1151,10 @@ function truncateText(text, maxLength = 35) {
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength) + '...';
 }
+
+// =============================================================================
+// NOTES DISPLAY
+// =============================================================================
 
 // Display notes with syntax highlighting
 function displayNotes(text, slideData = null) {
@@ -1216,6 +1272,10 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// =============================================================================
+// FOOTER AND EXTERNAL LINKS
+// =============================================================================
+
 // Footer Handlers
 function setupFooter() {
   privacyLink.addEventListener("click", async (e) => {
@@ -1255,6 +1315,10 @@ function setupFooter() {
     showView('settings');
   });
 }
+
+// =============================================================================
+// SETTINGS MANAGEMENT
+// =============================================================================
 
 // Load stored settings from persistent storage
 async function loadStoredSettings() {
