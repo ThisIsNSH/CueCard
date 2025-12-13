@@ -1,11 +1,10 @@
 {
-  "name": "slides-tracker-extension",
-  "version": "1.0.0",
-  "description": "Browser extension to track Google Slides presentations",
+  "name": "cuecard-extension",
+  "version": "1.0.1",
+  "description": "Browser extension for CueCard - syncs speaker notes from Google Slides",
   "scripts": {
     "build": "node scripts/build.js",
     "build:chrome": "node scripts/build.js chrome",
-    "build:firefox": "node scripts/build.js firefox",
     "build:safari": "node scripts/build.js safari && ./scripts/safari-convert.sh",
     "release": "node scripts/release.js"
   },

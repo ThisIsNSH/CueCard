@@ -1,4 +1,4 @@
-// Google Slides Tracker - Popup Script
+// CueCard Extension - Popup Script
 
 const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 

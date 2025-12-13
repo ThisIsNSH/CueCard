@@ -1,5 +1,5 @@
-// Google Slides Tracker - Content Script
-// Detects slide changes in both edit and slideshow modes
+// CueCard Extension - Content Script
+// Detects slide changes in Google Slides and sends data to the CueCard app
 
 (function() {
   'use strict';
@@ -94,13 +94,13 @@
       });
 
       if (response && response.success) {
-        console.log('[SlidesTracker] Successfully sent slide info:', slideInfo);
+        console.log('[CueCard] Successfully sent slide info');
         return true;
       }
-      console.warn('[SlidesTracker] Failed to send:', response?.error || 'Unknown error');
+      console.warn('[CueCard] Failed to send:', response?.error || 'Unknown error');
       return false;
     } catch (error) {
-      console.error('[SlidesTracker] Failed to send slide info:', error.message);
+      console.error('[CueCard] Failed to send slide info:', error.message);
       return false;
     }
   }
@@ -131,7 +131,7 @@
     const newSlideInfo = buildSlideInfo();
 
     if (hasSlideChanged(newSlideInfo)) {
-      console.log('[SlidesTracker] Slide changed:', newSlideInfo);
+      console.log('[CueCard] Slide changed');
       currentSlideInfo = newSlideInfo;
       sendSlideInfo(newSlideInfo);
     }
@@ -145,7 +145,7 @@
 
   // Initialize edit mode detection
   function initEditModeDetection() {
-    console.log('[SlidesTracker] Initializing edit mode detection');
+    console.log('[CueCard] Initializing edit mode detection');
 
     // Listen for hash changes (slide navigation)
     window.addEventListener('hashchange', handleSlideChange);
@@ -177,7 +177,7 @@
 
   // Initialize slideshow mode detection
   function initSlideshowDetection() {
-    console.log('[SlidesTracker] Initializing slideshow mode detection');
+    console.log('[CueCard] Initializing slideshow mode detection');
 
     // MutationObserver for slide transitions
     const slideContainer = document.querySelector('.punch-viewer-content') ||
@@ -230,7 +230,7 @@
     isInitialized = true;
 
     const mode = detectMode();
-    console.log('[SlidesTracker] Initializing in mode:', mode);
+    console.log('[CueCard] Initializing in mode:', mode);
 
     // Send initial slide info
     currentSlideInfo = buildSlideInfo();
@@ -257,7 +257,7 @@
       // Re-initialize if mode or significant URL change
       if (currentMode !== lastMode ||
           (currentUrl !== lastUrl && !currentUrl.includes('#'))) {
-        console.log('[SlidesTracker] Mode/URL change detected, reinitializing');
+        console.log('[CueCard] Mode/URL change detected, reinitializing');
         lastMode = currentMode;
         lastUrl = currentUrl;
         init();
@@ -289,5 +289,5 @@
     setTimeout(waitForSlides, 1000);
   }
 
-  console.log('[SlidesTracker] Content script loaded');
+  console.log('[CueCard] Extension loaded');
 })();

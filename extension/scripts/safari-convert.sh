@@ -1,14 +1,14 @@
 #!/bin/bash
 # Safari Web Extension Converter Script
-# Converts the built extension for Safari using Xcode tools
+# Converts the CueCard extension for Safari using Xcode tools
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 SAFARI_SRC="$ROOT_DIR/dist/safari"
 SAFARI_XCODE="$ROOT_DIR/dist/safari-xcode"
 
-echo "Google Slides Tracker - Safari Converter"
-echo "========================================="
+echo "CueCard Extension - Safari Converter"
+echo "====================================="
 
 # Check if xcrun is available
 if ! command -v xcrun &> /dev/null; then
@@ -42,18 +42,18 @@ echo ""
 # Run the Safari web extension converter
 xcrun safari-web-extension-converter "$SAFARI_SRC" \
     --project-location "$SAFARI_XCODE" \
-    --app-name "SlidesTracker" \
-    --bundle-identifier "com.example.slidestracker" \
+    --app-name "CueCard Extension" \
+    --bundle-identifier "com.cuecard.extension" \
     --no-open \
     --force
 
 if [ $? -eq 0 ]; then
     echo ""
-    echo "========================================="
+    echo "====================================="
     echo "Safari extension project created successfully!"
     echo ""
     echo "Next steps:"
-    echo "  1. Open Xcode project: open '$SAFARI_XCODE/SlidesTracker/SlidesTracker.xcodeproj'"
+    echo "  1. Open Xcode project: open '$SAFARI_XCODE/CueCard Extension/CueCard Extension.xcodeproj'"
     echo "  2. Select your development team in Xcode"
     echo "  3. Build and run the app (Cmd+R)"
     echo "  4. Enable the extension in Safari > Preferences > Extensions"

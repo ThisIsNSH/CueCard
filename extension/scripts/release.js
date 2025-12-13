@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Release script - builds and packages extensions for distribution
+// Release script - builds and packages CueCard extension for distribution
 
 const fs = require('fs');
 const path = require('path');
@@ -32,7 +32,7 @@ function createZip(sourceDir, outputPath) {
 }
 
 function main() {
-  console.log(`\nGoogle Slides Tracker - Release Builder v${VERSION}`);
+  console.log(`\nCueCard Extension - Release Builder v${VERSION}`);
   console.log('='.repeat(50));
 
   // Build all extensions first
@@ -44,18 +44,12 @@ function main() {
 
   // Package Chrome extension
   console.log('\n2. Packaging Chrome extension...');
-  const chromeZip = path.join(RELEASES, `slides-tracker-chrome-v${VERSION}.zip`);
+  const chromeZip = path.join(RELEASES, `cuecard-extension-chrome-v${VERSION}.zip`);
   createZip(path.join(DIST, 'chrome'), chromeZip);
   console.log(`   Created: ${chromeZip}`);
 
-  // Package Firefox extension
-  console.log('\n3. Packaging Firefox extension...');
-  const firefoxZip = path.join(RELEASES, `slides-tracker-firefox-v${VERSION}.zip`);
-  createZip(path.join(DIST, 'firefox'), firefoxZip);
-  console.log(`   Created: ${firefoxZip}`);
-
   // Safari note
-  console.log('\n4. Safari packaging...');
+  console.log('\n3. Safari packaging...');
   console.log('   Safari requires Xcode to build the app.');
   console.log('   Run: npm run build:safari');
   console.log('   Then build in Xcode and export the app.');
@@ -83,14 +77,6 @@ function main() {
   console.log('  4. Fill in store listing details');
   console.log('  5. Submit for review (takes 1-3 days)');
 
-  console.log('\nFIREFOX ADD-ONS:');
-  console.log('  1. Go to: https://addons.mozilla.org/developers/');
-  console.log('  2. Create developer account (free)');
-  console.log('  3. Click "Submit a New Add-on"');
-  console.log('  4. Upload the Firefox ZIP');
-  console.log('  5. Fill in listing details');
-  console.log('  6. Submit for review (takes 1-7 days)');
-
   console.log('\nEDGE ADD-ONS:');
   console.log('  1. Go to: https://partner.microsoft.com/dashboard/microsoftedge/');
   console.log('  2. Create Microsoft Partner account (free)');
@@ -106,7 +92,6 @@ function main() {
   console.log('\nDIRECT DISTRIBUTION (no store):');
   console.log('  Users can install directly:');
   console.log('  - Chrome: Unzip and load unpacked in developer mode');
-  console.log('  - Firefox: Temporary install via about:debugging');
   console.log('');
 }
 

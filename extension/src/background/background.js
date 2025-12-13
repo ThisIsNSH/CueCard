@@ -1,5 +1,5 @@
-// Google Slides Tracker - Background Service Worker
-// Monitors connection status and manages extension state
+// CueCard Extension - Background Service Worker
+// Monitors connection status and sends slide data to the CueCard app
 
 const API_ENDPOINT = 'http://localhost:3642';
 let connectionStatus = 'unknown';
@@ -46,7 +46,7 @@ function updateBadge() {
     browserAPI.action.setBadgeText({ text: config.text });
     browserAPI.action.setBadgeBackgroundColor({ color: config.color });
   } catch (error) {
-    console.warn('[SlidesTracker Background] Failed to update badge:', error);
+    console.warn('[CueCard] Failed to update badge:', error);
   }
 }
 
@@ -65,13 +65,13 @@ async function sendSlideInfoToAPI(slideInfo) {
     });
 
     if (response.ok) {
-      console.log('[SlidesTracker Background] Successfully sent slide info:', slideInfo);
+      console.log('[CueCard] Slide info sent');
       return { success: true };
     }
-    console.warn(`[SlidesTracker Background] Server returned ${response.status}`);
+    console.warn(`[CueCard] Server returned ${response.status}`);
     return { success: false, error: `Server returned ${response.status}` };
   } catch (error) {
-    console.error('[SlidesTracker Background] Failed to send slide info:', error.message);
+    console.error('[CueCard] Failed to send slide info:', error.message);
     return { success: false, error: error.message };
   }
 }
@@ -79,7 +79,7 @@ async function sendSlideInfoToAPI(slideInfo) {
 // Listen for messages from content script
 browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'SLIDE_CHANGE') {
-    console.log('[SlidesTracker Background] Received slide change:', message.data);
+    console.log('[CueCard] Received slide change');
     // Make the API call from background script to avoid mixed content issues
     sendSlideInfoToAPI(message.data).then(result => {
       sendResponse(result);
@@ -100,4 +100,4 @@ setInterval(checkConnection, 30000); // Every 30 seconds
 // Initial check on startup
 checkConnection();
 
-console.log('[SlidesTracker Background] Service worker started');
+console.log('[CueCard] Extension service worker started');

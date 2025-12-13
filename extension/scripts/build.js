@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Build script for Google Slides Tracker extension
-// Builds extension for Chrome, Firefox, and Safari
+// Build script for CueCard Extension
+// Builds extension for Chrome and Safari (desktop only)
 
 const fs = require('fs');
 const path = require('path');
@@ -10,7 +10,6 @@ const DIST = path.join(ROOT, 'dist');
 
 const BROWSERS = {
   chrome: 'manifest.chrome.json',
-  firefox: 'manifest.firefox.json',
   safari: 'manifest.chrome.json' // Safari uses Chrome manifest as base
 };
 
@@ -79,8 +78,8 @@ function main() {
   const args = process.argv.slice(2);
   const targetBrowsers = args.length > 0 ? args : Object.keys(BROWSERS);
 
-  console.log('Google Slides Tracker - Extension Builder');
-  console.log('=========================================');
+  console.log('CueCard Extension - Builder');
+  console.log('===========================');
 
   for (const browser of targetBrowsers) {
     if (!BROWSERS[browser]) {
@@ -91,7 +90,7 @@ function main() {
     build(browser);
   }
 
-  console.log('\n=========================================');
+  console.log('\n===========================');
   console.log('Build complete!\n');
 
   console.log('Installation instructions:');
@@ -100,11 +99,6 @@ function main() {
   console.log('  2. Enable "Developer mode"');
   console.log('  3. Click "Load unpacked"');
   console.log(`  4. Select: ${path.join(DIST, 'chrome')}`);
-
-  console.log('\nFirefox:');
-  console.log('  1. Open about:debugging#/runtime/this-firefox');
-  console.log('  2. Click "Load Temporary Add-on"');
-  console.log(`  3. Select: ${path.join(DIST, 'firefox', 'manifest.json')}`);
 
   console.log('\nSafari:');
   console.log('  1. Run: npm run build:safari');

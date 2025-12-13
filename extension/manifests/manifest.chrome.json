@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Google Slides Tracker",
-  "version": "1.0.0",
-  "description": "Tracks Google Slides presentations and slide changes",
+  "name": "CueCard Extension",
+  "version": "1.0.1",
+  "description": "Browser extension for CueCard - syncs speaker notes from Google Slides",
 
   "permissions": [
     "activeTab",
