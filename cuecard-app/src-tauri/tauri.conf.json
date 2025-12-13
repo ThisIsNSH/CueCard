@@ -52,7 +52,7 @@
   "plugins": {
     "updater": {
       "endpoints": [
-        "https://github.com/YOUR_USERNAME/cuecard/releases/latest/download/latest.json"
+        "https://github.com/thisisnsh/cuecard/releases/latest/download/latest.json"
       ],
       "pubkey": ""
     }
