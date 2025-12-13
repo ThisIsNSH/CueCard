@@ -46,6 +46,15 @@
     "longDescription": "Speaker notes visible only to you — for presentations, meetings, dates and everything.",
     "macOS": {
       "minimumSystemVersion": "10.13"
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/YOUR_USERNAME/cuecard/releases/latest/download/latest.json"
+      ],
+      "pubkey": ""
     }
   }
 }
