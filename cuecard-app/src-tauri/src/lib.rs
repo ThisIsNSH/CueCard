@@ -585,19 +585,16 @@ async fn prefetch_all_notes(presentation_id: &str) -> Result<(), String> {
     };
 
     let mut notes_cache = SLIDE_NOTES.write();
-    let mut count = 0;
 
     for slide in slides {
         if let Some(obj_id) = slide.get("objectId").and_then(|o| o.as_str()) {
             if let Some(notes_text) = extract_notes_from_slide(slide) {
                 let key = format!("{}:{}", presentation_id, obj_id);
                 notes_cache.insert(key, notes_text);
-                count += 1;
             }
         }
     }
 
-    // Prefetched slide notes
     Ok(())
 }
 
