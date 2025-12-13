@@ -1,3 +1,12 @@
+//! CueCard - Speaker notes visible only to you
+//!
+//! This module contains the main backend logic for the CueCard application:
+//! - OAuth2 authentication with Google
+//! - Google Slides API integration
+//! - Local web server for browser extension communication
+//! - Tauri commands for frontend interaction
+//! - macOS window management (opacity, screenshot protection)
+
 use axum::{
     extract::Query,
     http::StatusCode,
@@ -18,6 +27,10 @@ use tower_http::cors::{Any, CorsLayer};
 #[macro_use]
 extern crate objc;
 
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
 // OAuth2 Configuration - Set these via environment variables
 const GOOGLE_AUTH_URL: &str = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL: &str = "https://oauth2.googleapis.com/token";
@@ -26,7 +39,11 @@ const REDIRECT_URI: &str = "http://127.0.0.1:3642/oauth/callback";
 const SCOPE_PROFILE: &str = "openid profile email";
 const SCOPE_SLIDES: &str = "https://www.googleapis.com/auth/presentations.readonly";
 
-// Global state
+// =============================================================================
+// GLOBAL STATE
+// =============================================================================
+
+// Global state using lazy initialization with thread-safe RwLock
 static CURRENT_SLIDE: Lazy<Arc<RwLock<Option<SlideData>>>> =
     Lazy::new(|| Arc::new(RwLock::new(None)));
 static SLIDE_NOTES: Lazy<Arc<RwLock<HashMap<String, String>>>> =
@@ -40,6 +57,11 @@ static OAUTH_TOKENS: Lazy<Arc<RwLock<Option<OAuthTokens>>>> =
 static PENDING_OAUTH_SCOPE: Lazy<Arc<RwLock<Option<String>>>> =
     Lazy::new(|| Arc::new(RwLock::new(None)));
 
+// =============================================================================
+// DATA TYPES
+// =============================================================================
+
+/// OAuth tokens received from Google authentication
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OAuthTokens {
     pub access_token: String,
@@ -87,6 +109,10 @@ struct GoogleTokenResponse {
     expires_in: Option<i64>,
     scope: Option<String>,
 }
+
+// =============================================================================
+// WEB SERVER HANDLERS
+// =============================================================================
 
 // Health check endpoint
 async fn health_handler() -> Json<serde_json::Value> {
@@ -168,6 +194,10 @@ async fn slides_handler(Json(slide_data): Json<SlideData>) -> Result<Json<ApiRes
         notes,
     }))
 }
+
+// =============================================================================
+// OAUTH2 AUTHENTICATION
+// =============================================================================
 
 // OAuth2 login - redirects to Google
 async fn oauth_login_handler() -> Result<Redirect, StatusCode> {
@@ -500,6 +530,10 @@ async fn get_valid_access_token() -> Option<String> {
     Some(access_token)
 }
 
+// =============================================================================
+// GOOGLE SLIDES API
+// =============================================================================
+
 // Prefetch all notes for a presentation
 async fn prefetch_all_notes(presentation_id: &str) -> Result<(), String> {
     let access_token = match get_valid_access_token().await {
@@ -735,6 +769,10 @@ async fn start_server() {
     axum::serve(listener, app).await.expect("Server error");
 }
 
+// =============================================================================
+// TAURI COMMANDS
+// =============================================================================
+
 // Tauri command to get current slide data
 #[tauri::command]
 fn get_current_slide() -> Option<SlideData> {
@@ -905,6 +943,10 @@ async fn refresh_notes(app: AppHandle) -> Result<Option<String>, String> {
     Ok(notes)
 }
 
+// =============================================================================
+// WINDOW MANAGEMENT (macOS)
+// =============================================================================
+
 // Tauri command to set window opacity/transparency
 #[tauri::command]
 fn set_window_opacity(app: AppHandle, opacity: f64) -> Result<(), String> {
@@ -956,6 +998,10 @@ fn set_screenshot_protection(app: AppHandle, enabled: bool) -> Result<(), String
 
     Ok(())
 }
+
+// =============================================================================
+// APPLICATION ENTRY POINT
+// =============================================================================
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
