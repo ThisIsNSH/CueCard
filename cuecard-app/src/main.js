@@ -89,7 +89,7 @@ async function saveUserProfile(email, name) {
 
 // Increment usage counter in Firestore
 async function incrementUsage(email, usageType) {
-  console.log("Incrementing usage for email:", email, "usageType:", usageType);
+  // Incrementing usage counter
   if (!email || !FIRESTORE_BASE_URL) return;
 
   const documentPath = `Profiles/${encodeURIComponent(email)}`;
@@ -142,7 +142,7 @@ async function getUserEmail() {
   if (!invoke) return null;
   try {
     const userInfo = await invoke("get_user_info");
-    console.log("User info:", userInfo);
+    // User info retrieved
     return userInfo?.email || null;
   } catch (e) {
     console.log("Could not get user email:", e);
@@ -237,7 +237,7 @@ async function getGrantedScopes() {
 // Save granted scopes to storage
 async function saveGrantedScopes(scopes) {
   await setStoredValue(STORAGE_KEYS.GRANTED_SCOPES, scopes);
-  console.log("Saved granted scopes:", scopes);
+  // Granted scopes saved
 }
 
 // Check if a specific scope is granted
@@ -331,11 +331,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   opacityValue = document.getElementById("opacity-value");
   screenCaptureToggle = document.getElementById("screen-capture-toggle");
 
-  console.log("DOM elements loaded:", {
-    authBtn: !!authBtn,
-    privacyLink: !!privacyLink,
-    websiteLink: !!websiteLink
-  });
+  // DOM elements loaded
 
   // Set up navigation handlers
   setupNavigation();
@@ -370,7 +366,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   // Listen for slide updates from the backend
   if (listen) {
     await listen("slide-update", (event) => {
-      console.log("Received slide update:", event.payload);
+      // Received slide update
       handleSlideUpdate(event.payload);
     });
   }
@@ -378,7 +374,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   // Listen for auth status changes
   if (listen) {
     await listen("auth-status", async (event) => {
-      console.log("Auth status changed:", event.payload);
+      // Auth status changed
 
       // Save granted scopes if provided
       if (event.payload.granted_scopes && Array.isArray(event.payload.granted_scopes)) {
@@ -462,7 +458,7 @@ function resetAllStates() {
 // Auth Handlers
 function setupAuth() {
   authBtn.addEventListener("click", async (e) => {
-    console.log("Auth button clicked", { isAuthenticated });
+    // Auth button clicked
     e.stopPropagation(); // Prevent event from bubbling to viewInitial
     if (isAuthenticated) {
       await handleLogout();
@@ -794,7 +790,7 @@ async function checkAuthStatus() {
         const scopes = await invoke("get_granted_scopes");
         if (scopes && Array.isArray(scopes)) {
           await saveGrantedScopes(scopes);
-          console.log("Synced granted scopes from backend:", scopes);
+          // Synced granted scopes
         }
       } catch (e) {
         console.log("Could not get granted scopes:", e);
@@ -927,7 +923,7 @@ async function handleLogin(scope = 'profile') {
       alert("Please run the app in Tauri mode");
       return;
     }
-    console.log(`Starting login with scope: ${scope}`);
+    // Starting login
     await invoke("start_login", { scope });
   } catch (error) {
     console.error("Error starting login:", error);
@@ -1138,8 +1134,6 @@ function displayNotes(text, slideData = null) {
 
 // Highlight timestamps and action tags in notes
 function highlightNotes(text) {
-  // Debug: log character codes to identify line break characters
-  console.log('Input chars:', [...text].map(c => c.charCodeAt(0)));
 
   // Normalize all line break types to \n first
   // Handles: \r\n (Windows), \r (old Mac), \n (Unix), 
@@ -1292,7 +1286,7 @@ async function loadStoredSettings() {
     }
   }
 
-  console.log("Loaded stored settings:", { opacity: currentOpacity, screenshotProtection: screenshotProtectionEnabled });
+  // Loaded stored settings
 }
 
 // Settings Handlers

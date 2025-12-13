@@ -100,7 +100,7 @@ async fn health_handler() -> Json<serde_json::Value> {
 
 // Slides endpoint (POST) - receives slide data from extension
 async fn slides_handler(Json(slide_data): Json<SlideData>) -> Result<Json<ApiResponse>, StatusCode> {
-    println!("Received slide change: {:?}", slide_data);
+    // Slide change received
 
     // Check if presentation changed - if so, prefetch all notes
     let presentation_changed = {
@@ -109,7 +109,7 @@ async fn slides_handler(Json(slide_data): Json<SlideData>) -> Result<Json<ApiRes
     };
 
     if presentation_changed {
-        println!("New presentation detected: {}", slide_data.presentation_id);
+        // New presentation detected
         // Update current presentation ID
         {
             let mut current_pres = CURRENT_PRESENTATION_ID.write();
@@ -454,7 +454,7 @@ fn save_tokens_to_store(app: &AppHandle) {
             if let Ok(json) = serde_json::to_value(t) {
                 let _ = store.set("oauth_tokens", json);
                 let _ = store.save();
-                println!("Saved OAuth tokens to storage");
+                // OAuth tokens saved
             }
         }
     }
@@ -465,7 +465,7 @@ fn clear_tokens_from_store(app: &AppHandle) {
     if let Ok(store) = app.store("cuecard-store.json") {
         let _ = store.delete("oauth_tokens");
         let _ = store.save();
-        println!("Cleared OAuth tokens from storage");
+        // OAuth tokens cleared
     }
 }
 
@@ -505,7 +505,7 @@ async fn prefetch_all_notes(presentation_id: &str) -> Result<(), String> {
     let access_token = match get_valid_access_token().await {
         Some(token) => token,
         None => {
-            println!("Not authenticated. Cannot prefetch notes.");
+            // Not authenticated, cannot prefetch notes
             return Err("Not authenticated".to_string());
         }
     };
@@ -563,7 +563,7 @@ async fn prefetch_all_notes(presentation_id: &str) -> Result<(), String> {
         }
     }
 
-    println!("Prefetched {} slide notes for presentation {}", count, presentation_id);
+    // Prefetched slide notes
     Ok(())
 }
 
@@ -595,7 +595,7 @@ async fn fetch_slide_notes(presentation_id: &str, slide_id: &str) -> Option<Stri
     let access_token = match get_valid_access_token().await {
         Some(token) => token,
         None => {
-            println!("Not authenticated. Please sign in with Google.");
+            // Not authenticated
             return None;
         }
     };
@@ -620,10 +620,7 @@ async fn fetch_slide_notes(presentation_id: &str, slide_id: &str) -> Option<Stri
     };
 
     if !response.status().is_success() {
-        let status = response.status();
-        let error_body = response.text().await.unwrap_or_default();
-        eprintln!("Slides API error: {} - Response body: {}", status, error_body);
-        eprintln!("Presentation ID: {}, Slide ID: {}", presentation_id, slide_id);
+        eprintln!("Slides API error: {}", response.status());
         return None;
     }
 
@@ -733,7 +730,7 @@ async fn start_server() {
         .await
         .expect("Failed to bind to port 3642");
 
-    println!("Server running on http://127.0.0.1:3642");
+    // Server started
 
     axum::serve(listener, app).await.expect("Server error");
 }
@@ -826,10 +823,7 @@ async fn get_user_info() -> Result<serde_json::Value, String> {
 // scope parameter can be "profile" or "slides"
 #[tauri::command]
 async fn start_login(app: AppHandle, scope: String) -> Result<(), String> {
-    println!("Starting OAuth2 login flow for scope: {}", scope);
-
     let client_id = env!("GOOGLE_CLIENT_ID");
-    println!("Using Client ID: {}", client_id);
 
     // Determine which scope(s) to request
     let scope_url = match scope.as_str() {
@@ -852,7 +846,7 @@ async fn start_login(app: AppHandle, scope: String) -> Result<(), String> {
         urlencoding::encode(REDIRECT_URI),
         urlencoding::encode(&scope_url)
     );
-    println!("Opening browser to URL: {}", auth_url);
+    // Opening browser for OAuth
 
     app.opener()
         .open_url(&auth_url, None::<&str>)
@@ -979,7 +973,7 @@ pub fn run() {
             if let Ok(store) = app.store("cuecard-store.json") {
                 if let Some(tokens_json) = store.get("oauth_tokens") {
                     if let Ok(tokens) = serde_json::from_value::<OAuthTokens>(tokens_json.clone()) {
-                        println!("Loaded OAuth tokens from storage");
+                        // OAuth tokens loaded from storage
                         let mut oauth = OAUTH_TOKENS.write();
                         *oauth = Some(tokens);
                     }
