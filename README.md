@@ -21,7 +21,7 @@ cuecard/
 ├── cuecard-app/          # Tauri desktop application (macOS)
 │   ├── src/              # Frontend (HTML, CSS, JavaScript)
 │   └── src-tauri/        # Rust backend
-└── extension/            # Browser extension (Chrome, Safari)
+└── cuecard-extension/            # Browser extension (Chrome, Safari)
     ├── src/              # Extension source code
     └── manifests/        # Browser-specific manifests
 ```
@@ -75,7 +75,7 @@ npm run tauri dev
 ### 4. Build the browser extension
 
 ```bash
-cd extension
+cd cuecard-extension
 npm run build
 ```
 
@@ -160,7 +160,7 @@ npm run tauri build  # Build for production
 ### Extension
 
 ```bash
-cd extension
+cd cuecard-extension
 npm run build              # Build for all browsers
 npm run build:chrome       # Build for Chrome only
 npm run build:safari       # Build for Safari only

@@ -14,7 +14,6 @@
     --accent-yellow: #febc2e;
     --accent-green: #19c332;
     --accent-pink: #ff6adf;
-    --accent-cyan: #1ab2c4;
 
     /* Typography */
     --font-display: 'Syne', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -78,7 +77,7 @@ body {
 
 /* Selection */
 ::selection {
-    background: var(--accent-cyan);
+    background: var(--accent-yellow);
     color: var(--bg-primary);
 }
 
@@ -90,7 +89,7 @@ a {
 }
 
 a:hover {
-    color: var(--accent-cyan);
+    color: var(--accent-yellow);
 }
 
 /* Navigation */
@@ -393,7 +392,7 @@ main {
 }
 
 .btn-primary:hover {
-    background: var(--accent-cyan);
+    background: var(--accent-yellow);
     color: var(--bg-primary);
     transform: translateY(-2px);
     box-shadow: 0 10px 40px rgba(26, 178, 196, 0.3);
@@ -583,7 +582,7 @@ main {
     font-family: var(--font-display);
     font-size: 0.875rem;
     font-weight: 700;
-    color: var(--accent-cyan);
+    color: var(--accent-yellow);
     padding: var(--space-xs) var(--space-sm);
     background: rgba(26, 178, 196, 0.1);
     border-radius: var(--radius-sm);
@@ -664,7 +663,7 @@ main {
 }
 
 .faq-answer a {
-    color: var(--accent-cyan);
+    color: var(--accent-yellow);
 }
 
 .faq-answer a:hover {
@@ -814,7 +813,7 @@ main {
 }
 
 .policy-content a {
-    color: var(--accent-cyan);
+    color: var(--accent-yellow);
 }
 
 .policy-content a:hover {

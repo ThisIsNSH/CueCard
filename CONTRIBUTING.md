@@ -38,7 +38,7 @@ Please be respectful and constructive in all interactions. We want to maintain a
    npm run tauri dev
 
    # Extension
-   cd extension
+   cd cuecard-extension
    npm run build
    ```
 

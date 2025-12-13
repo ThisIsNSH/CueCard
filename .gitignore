@@ -58,7 +58,7 @@ src-tauri/target/
 src-tauri/Cargo.lock
 
 # Safari Xcode project (generated)
-extension/dist/safari-xcode/
+cuecard-extension/dist/safari-xcode/
 
 # Misc
 *.suo
