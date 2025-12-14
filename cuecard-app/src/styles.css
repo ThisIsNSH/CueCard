@@ -297,6 +297,14 @@ body {
   line-height: 1;
 }
 
+.notes-input-highlight .timestamp.time-warning {
+  color: var(--accent-link);
+}
+
+.notes-input-highlight .timestamp.time-overtime {
+  color: #ff736a;
+}
+
 .notes-input-highlight .action-tag {
   font-size: 10px;
   font-weight: 600;
