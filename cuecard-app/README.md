@@ -1,35 +1,32 @@
 # CueCard App
 
-Desktop application for macOS that displays speaker notes in an always-on-top transparent window.
+Desktop client built with Tauri that keeps your speaker notes on top of every other window while staying invisible to screen sharing, screenshots, and recordings.
 
-## Features
+### Highlights
 
 - Always-on-top window visible across all workspaces
 - Screenshot protection (notes won't appear in screen shares)
 - Google OAuth for syncing notes
 - Auto-update support
 
-## Development
+### Architecture
 
-### Prerequisites
+- **Frontend:** vanilla HTML/JS in `src/`
+- **Tauri shell:** `src-tauri/` Rust crate exposes commands for auth, timers, notes, and window control
+- **Local store:** `tauri-plugin-store` caches Google and Firebase tokens, timers, and preferences
+- **Firebase REST bridge:** Rust code exchanges Google OAuth tokens for Firebase custom tokens and fetches notes from Firestore
 
-- Rust 1.70+
-- Node.js 18+ (for frontend)
-- Xcode Command Line Tools
+### Firebase Configuration
 
-### Setup
+The desktop app expects a `firebase-config.json` file that mirrors `firebase-config-example.json`. It is packaged as part of the Tauri bundle so the Rust backend can bootstrap Firebase SDK calls.
 
-1. Create `.env` file in the project root (see `.env.example`):
-   ```
-   GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
-   GOOGLE_CLIENT_SECRET=your_client_secret
-   FIRESTORE_PROJECT_ID=your-project-id
-   ```
-
-2. Install Tauri CLI:
+1. Copy the example file:
    ```bash
-   cargo install tauri-cli
+   cp firebase-config-example.json firebase-config.json
    ```
+2. Fill every field under the `firebase` key with the values from your Firebase project settings (Project Settings → General → Your apps).
+
+Without this file the app cannot exchange Google tokens for Firebase ID tokens, so syncing notes from the browser extension will fail.
 
 ### Run in Development
 

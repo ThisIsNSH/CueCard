@@ -2,183 +2,103 @@
 
 Speaker notes visible only to you — for presentations, meetings, dates and everything.
 
-CueCard is a macOS desktop application that displays your speaker notes in a floating window that stays on top of all other applications and is invisible to screen capture and recordings. Perfect for presentations, video calls, and any situation where you need a discreet teleprompter.
+CueCard is a lightweight desktop teleprompter that keeps your speaker notes in view without letting anyone else see them. Whether you’re giving a presentation, or leading a meeting, you can keep your talking points floating above everything else – invisible to screen shares and recordings.
 
-## Features
+---
 
-- **Screen Capture Protection** - Notes are invisible in screenshots and screen recordings
-- **Always On Top** - Floating window stays visible over all apps including fullscreen presentations
-- **Google Slides Integration** - Automatically syncs speaker notes from Google Slides presentations
-- **Manual Notes** - Paste your own notes for any occasion
-- **Timer Support** - Add countdown timers to your notes with `[time mm:ss]` syntax
-- **Adjustable Transparency** - Control window opacity to see content behind
-- **Non-Activating Window** - Click-through to other apps without losing focus
+### Why CueCard?
+- **Always on top, always private.** CueCard opens a floating window that stays above all other applications yet is hidden from screen sharing tools. Your audience sees only your slides; you see your notes.
+- **Works with Google Slides or your own text.** Use the companion browser extension to sync your existing Google Slides speaker notes, or just paste any text into the CueCard app.
+- **Free and open‑source.** CueCard is released under the MIT license, and the code is available on GitHub. It’s completely free to use.
 
-## Project Structure
+---
 
-```
-cuecard/
-├── cuecard-app/          # Tauri desktop application (macOS)
-│   ├── src/              # Frontend (HTML, CSS, JavaScript)
-│   └── src-tauri/        # Rust backend
-└── cuecard-extension/            # Browser extension (Chrome, Safari)
-    ├── src/              # Extension source code
-    └── manifests/        # Browser-specific manifests
-```
+### Watch the Demo
 
-## Prerequisites
+<iframe width="560" height="315" src="https://www.youtube.com/embed/D2xCqQFtK-k" title="CueCard Demo" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-- **macOS 10.13+** (High Sierra or later)
-- **Node.js 18+**
-- **Rust** (latest stable)
-- **Xcode** (for Safari extension and macOS builds)
+---
 
-## Setup
+### Features
 
-### 1. Clone the repository
+CueCard focuses on the essentials so you can focus on your delivery:
 
-```bash
-git clone https://github.com/your-username/cuecard.git
-cd cuecard
-```
+#### On Time, Every Time
 
-### 2. Configure environment variables
+Write your notes naturally or add simple `[time]` tags to schedule your speech. CueCard reads tags like `[time 00:15]` or `[time 03:00]` and shows a gentle on‑screen countdown so you stay on schedule. While you speak, these **time cues are highlighted** and the timer counts down
 
-Copy the example environment file and fill in your credentials:
+#### Full of Emotions
 
-```bash
-cp .env.example .env
-```
+Your tone matters just as much as your words. You can embed `[emotion]` tags directly in your notes to remind yourself to smile, emphasize a phrase or build hype. Tags like `[emotion smile]`, `[emotion emphasize]`, `[emotion excited]` and `[emotion hype]` show up as colored cues next to your text so you can **modulate your delivery without memorizing every shift in tone**.
 
-Edit `.env` with your Google OAuth credentials and Firestore project ID:
+#### Ghost Mode for Your Notes
 
-```env
-GOOGLE_CLIENT_ID=your_client_id_here.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your_client_secret_here
-FIRESTORE_PROJECT_ID=your-project-id
-```
+When you’re sharing your screen or recording a video, CueCard’s ghost mode ensures your **notes remain invisible to everyone but you**. With a single click you can toggle visibility so the floating card stays off the shared screen.
 
-**Getting Google OAuth Credentials:**
-1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-2. Create a new OAuth 2.0 Client ID
-3. Set the authorized redirect URI to `http://127.0.0.1:3642/oauth/callback`
-4. Enable the Google Slides API for your project
+#### Just Enough to See
 
-### 3. Build and run the desktop app
+**Adjust the transparency of the note card** with a simple slider. Dial it up for full clarity or fade it down until it’s barely noticeable – CueCard lets you find the perfect balance between visibility and discretion.
 
-```bash
-cd cuecard-app
-npm install
-npm run tauri dev
-```
+---
 
-### 4. Build the browser extension
+### Installation 
 
-```bash
-cd cuecard-extension
-npm run build
-```
+**Mac Desktop App**: 
+- Download the latest DMG from the [GitHub Releases](https://github.com/thisisnsh/cuecard/releases) page
+- Drag `CueCard` into your `Applications` folder.
 
-## Installation
+**Windows Desktop App**: 
+- Coming Soon
 
-### Desktop App (macOS)
+> Extension **is only required** for syncing Google Slides speaker notes. 
 
-Build the production app:
+**Chrome Extension**: 
+- Install CueCard directly from the Chrome Web Store. 
 
-```bash
-cd cuecard-app
-npm run tauri build
-```
+**Safari Extension**: 
+- Download the latest DMG from the [GitHub Releases](https://github.com/thisisnsh/cuecard/releases) page
+- Drag `CueCard Extension` into your `Applications` folder. 
+- After installation, open Safari and go to `Safari › Settings › Extensions` to enable the CueCard extension.
 
-The built `.app` and `.dmg` files will be in `cuecard-app/src-tauri/target/release/bundle/`.
+---
 
-### Browser Extension
+### Get Started
 
-#### Chrome / Edge
+#### View Google Slides Notes
 
-1. Run `npm run build` in the extension directory
-2. Open `chrome://extensions` (or `edge://extensions`)
-3. Enable "Developer mode"
-4. Click "Load unpacked"
-5. Select the `extension/dist/chrome` folder
+1. Open the **CueCard** app.
+2. Make sure the **CueCard browser extension** is installed and running.
+3. Click the **Google Slides** button in the app.
+4. Open your Google Slides deck to load the speaker notes.
+5. Start the slideshow in **Presenter View**, then close the default Google Slides notes window.
 
-#### Safari
+> **Tip:** If notes don’t appear immediately, move to the next slide and then return to the previous one.
 
-1. Run `npm run build:safari` in the extension directory
-2. Open the generated Xcode project: `open extension/dist/safari-xcode/CueCard\ Extension/CueCard\ Extension.xcodeproj`
-3. Select your development team in Xcode
-4. Build and run (Cmd+R)
-5. Enable the extension in Safari > Preferences > Extensions
+#### View Other Notes
 
-## Usage
+1. Open the **CueCard** app.
+2. Click the **Paste Your Notes** button.
+3. Paste your notes into the editor.
 
-### With Google Slides
+> No browser extension is required for pasted notes.
 
-1. Sign in with Google in the CueCard app
-2. Grant access to read your Google Slides presentations
-3. Install the browser extension
-4. Open a Google Slides presentation in your browser
-5. Your speaker notes will automatically appear in CueCard
+---
 
-### With Manual Notes
+### Repository Guide
 
-1. Click "Your Notes" in the CueCard app
-2. Paste your notes into the text area
-3. Use special syntax for timers: `[time 02:00]` for a 2-minute countdown
+- [`cuecard-app/README.md`](cuecard-app/README.md) – app details, Firebase configuration, build + release steps
+- [`cuecard-extension/README.md`](cuecard-extension/README.md) – browser extension architecture, build scripts, store packaging
+- [`cuecard-website/README.md`](cuecard-website/README.md) – static site powering cuecard.dev
 
-### Timer Syntax
+---
 
-Add countdown timers to your notes:
+### Links
 
-```
-[time 01:30] Introduction and greeting
-[time 03:00] Main content
-[time 00:30] Wrap up and questions
-```
+- Privacy Policy: [https://cuecard.dev/privacy/](https://cuecard.dev/privacy/)
+- Terms of Service: [https://cuecard.dev/terms/](https://cuecard.dev/terms/)
+- Contributing guide: [CONTRIBUTING.md](CONTRIBUTING.md)
+- MIT License: [LICENSE](LICENSE)
 
-Timers are cumulative - each `[time]` adds to the total presentation time.
+---
 
-### Emotion Tags
-
-Add visual cues for delivery:
-
-```
-[emotion pause] Take a breath here
-[emotion emphasize] Key point coming up
-```
-
-## Development
-
-### Desktop App
-
-```bash
-cd cuecard-app
-npm run tauri dev    # Run in development mode
-npm run tauri build  # Build for production
-```
-
-### Extension
-
-```bash
-cd cuecard-extension
-npm run build              # Build for all browsers
-npm run build:chrome       # Build for Chrome only
-npm run build:safari       # Build for Safari only
-npm run release            # Create release packages
-```
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
-
-## License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
-## Privacy
-
-CueCard is designed with privacy in mind:
-- Speaker notes are never stored on our servers
-- Google authentication is used only to access your own presentations
-- The app runs entirely locally on your machine
-- Screen capture protection ensures your notes stay private
+Reach out to support@cuecard.dev for any help. 
