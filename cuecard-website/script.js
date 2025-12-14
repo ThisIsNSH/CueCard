@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize Ghost Mode GIF animation
     initGhostModeAnimation();
+
+    // Initialize hero badge typewriter
+    initHeroBadgeTypewriter();
 });
 
 // Scroll Reveal Animation
@@ -196,6 +199,61 @@ function startTimestampCountdown(element, initialSeconds) {
         }
         updateDisplay();
     }, 1000);
+}
+
+// Hero badge typewriter animation
+function initHeroBadgeTypewriter() {
+    const heroBadge = document.querySelector('.hero-badge');
+    if (!heroBadge) return;
+
+    const messages = [
+        { text: 'Paste notes for any meeting', theme: 'green' },
+        { text: 'Sync notes from Google Slides', theme: 'yellow' },
+        { text: 'Free and Open Source', theme: 'white' }
+    ];
+
+    const textSpan = document.createElement('span');
+    textSpan.className = 'hero-badge-text';
+
+    heroBadge.textContent = '';
+    heroBadge.append(textSpan);
+
+    const themes = ['hero-badge--yellow', 'hero-badge--green', 'hero-badge--white'];
+    const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    const setTheme = (theme) => {
+        heroBadge.classList.remove(...themes);
+        heroBadge.classList.add(`hero-badge--${theme}`);
+    };
+
+    const typeText = async (text) => {
+        for (const char of text) {
+            textSpan.textContent += char;
+            await wait(60);
+        }
+    };
+
+    const deleteText = async () => {
+        while (textSpan.textContent.length > 0) {
+            textSpan.textContent = textSpan.textContent.slice(0, -1);
+            await wait(35);
+        }
+    };
+
+    const startTypewriter = async () => {
+        let index = 0;
+        while (true) {
+            const { text, theme } = messages[index];
+            setTheme(theme);
+            await typeText(text);
+            await wait(1500);
+            await deleteText();
+            await wait(400);
+            index = (index + 1) % messages.length;
+        }
+    };
+
+    startTypewriter();
 }
 
 function formatTimestamp(totalSeconds) {

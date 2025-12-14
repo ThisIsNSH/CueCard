@@ -200,19 +200,65 @@ main {
     align-items: center;
     gap: var(--space-sm);
     padding: var(--space-sm) var(--space-md);
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-xl);
     font-size: 0.875rem;
-    color: var(--text-secondary);
     margin-bottom: var(--space-xl);
+    border: 1px solid transparent;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
     animation: fadeInUp 0.6s ease-out;
+    min-height: 44px;
+    transition: background 0.5s ease, border-color 0.5s ease, color 0.5s ease, box-shadow 0.5s ease;
+}
+
+.hero-badge--yellow {
+    background: rgba(254, 188, 46, 0.12);
+    border-color: rgba(254, 188, 46, 0.4);
+    color: var(--accent-yellow);
+    box-shadow: 0 15px 35px rgba(254, 188, 46, 0.2);
+}
+
+.hero-badge--green {
+    background: rgba(25, 195, 50, 0.12);
+    border-color: rgba(25, 195, 50, 0.4);
+    color: var(--accent-green);
+    box-shadow: 0 15px 35px rgba(25, 195, 50, 0.2);
+}
+
+.hero-badge--white {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: var(--text-primary);
+    box-shadow: 0 15px 35px rgba(255, 255, 255, 0.15);
+}
+
+.hero-badge-text {
+    display: inline-block;
+    min-width: 140px;
+}
+
+.hero-badge-cursor {
+    width: 2px;
+    height: 1.1em;
+    background: currentColor;
+    display: inline-block;
+    animation: heroCursorBlink 0.9s steps(2) infinite;
+    margin-left: 4px;
+}
+
+@keyframes heroCursorBlink {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
 }
 
 .badge-dot {
     width: 8px;
     height: 8px;
-    background: var(--accent-green);
+    background: currentColor;
     border-radius: 50%;
     animation: blink 2s ease-in-out infinite;
 }
@@ -568,16 +614,7 @@ main {
         left: auto !important;
         right: auto !important;
         bottom: auto !important;
-    }
-
-    .pill-yellow {
-        order: -1;
-    }
-
-    .pill-green {
-        order: 1;
-        margin-bottom: var(--space-lg);
-    }
+    }    
 
     .video-hero {
         order: 0;
