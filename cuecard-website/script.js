@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize timestamp countdown demo
     initTimestampCountdowns();
+
+    // Initialize Ghost Mode GIF animation
+    initGhostModeAnimation();
 });
 
 // Scroll Reveal Animation
@@ -381,3 +384,125 @@ document.querySelectorAll('.btn-primary').forEach(btn => {
         });
     });
 });
+
+// Ghost Mode GIF Animation
+function initGhostModeAnimation() {
+    const demo = document.querySelector('.gif-demo-visibility');
+    if (!demo) return;
+
+    const screenArea = demo.querySelector('.demo-screen-area');
+    const floatingApp = demo.querySelector('.demo-floating-app');
+    const toggleTrack = demo.querySelector('.demo-toggle-track');
+    const toggleThumb = demo.querySelector('.demo-toggle-thumb');
+    const bannerOn = demo.querySelector('.demo-banner-on');
+    const bannerOff = demo.querySelector('.demo-banner-off');
+    const cursor = demo.querySelector('.demo-cursor');
+
+    if (!screenArea || !floatingApp || !toggleTrack || !toggleThumb || !bannerOn || !bannerOff) return;
+
+    // Animation states
+    const setToggleOn = () => {
+        toggleTrack.style.background = '#19c332';
+        toggleThumb.style.left = '22px';
+    };
+
+    const setToggleOff = () => {
+        toggleTrack.style.background = '#444';
+        toggleThumb.style.left = '2px';
+    };
+
+    const showApp = () => {
+        floatingApp.style.opacity = '1';
+    };
+
+    const hideApp = () => {
+        floatingApp.style.opacity = '0';
+    };
+
+    const showDashedBox = () => {
+        screenArea.style.borderColor = '#6fa8dc';
+    };
+
+    const hideDashedBox = () => {
+        screenArea.style.borderColor = 'transparent';
+    };
+
+    const showBannerOn = () => {
+        bannerOn.style.opacity = '1';
+        bannerOff.style.opacity = '0';
+    };
+
+    const showBannerOff = () => {
+        bannerOn.style.opacity = '0';
+        bannerOff.style.opacity = '1';
+    };
+
+    const showCursor = () => {
+        if (cursor) {
+            // Position cursor near the banner (bottom center area)
+            cursor.style.bottom = '15px';
+            cursor.style.left = 'calc(50% + 60px)';
+            cursor.style.opacity = '1';
+        }
+    };
+
+    const hideCursor = () => {
+        if (cursor) {
+            cursor.style.opacity = '0';
+        }
+    };
+
+    // Animation sequence
+    async function runAnimation() {
+        // Initial state: Toggle ON, screen sharing active
+        setToggleOn();
+        showApp();
+        showDashedBox();
+        showBannerOn();
+        hideCursor();
+
+        await sleep(1500);
+
+        // Step 1: Toggle OFF - CueCard hides (simulating it's hidden from screen share)
+        setToggleOff();
+        hideApp();
+
+        await sleep(1500);
+
+        // Step 2: Show cursor, then banner changes
+        showCursor();
+        await sleep(300);
+        showBannerOff();
+        hideDashedBox();
+        hideCursor();
+
+        await sleep(300);
+        showApp();
+
+        await sleep(1500);
+
+        // Step 3: Toggle ON
+        setToggleOn();
+
+        await sleep(1500);
+
+        // Step 4: Show cursor, then banner changes
+        showCursor();
+        await sleep(300);
+        showBannerOn();
+        showDashedBox();
+        hideCursor();
+
+        await sleep(1500);
+
+        // Loop
+        runAnimation();
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Start animation
+    runAnimation();
+}

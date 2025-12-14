@@ -208,13 +208,113 @@
                     <p class="use-case-desc">Paste your own notes for any meeting — interviews, standups, client calls</p>
                 </div>
             </div>
+        </section>        
+        
+        <!-- Features Section -->
+        <section class="features">
+            <div class="section-header">
+                <span class="section-tag">Features</span>
+                <h2 class="section-title">Everything you need, nothing you don't</h2>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-header">
+                        <span class="feature-number">01</span>
+                        <h3 class="feature-title">Ghost Mode for Your Notes</h3>
+                    </div>
+                    <p class="feature-desc">Hide from screen recordings or screen shares and keep speaker notes in front of your eyes. Toggle visibility instantly with a single click.</p>
+                    <div class="feature-demo gif-demo gif-demo-visibility">
+                        <!-- Screen share area with dashed border -->
+                        <div class="demo-screen-area">
+                            <!-- Slides window -->
+                            <div class="demo-slides-window">
+                                <div class="demo-slides-sidebar">
+                                    <div class="demo-slide-thumb active"></div>
+                                    <div class="demo-slide-thumb"></div>
+                                    <div class="demo-slide-thumb"></div>
+                                </div>
+                                <div class="demo-main-slide"></div>
+                            </div>
+                        </div>
+                        <!-- Floating CueCard app (outside screen area for ghost mode) -->
+                        <div class="demo-floating-app demo-app-visibility">
+                            <div class="demo-app-header">
+                                <div class="demo-traffic-lights">
+                                    <span class="demo-light red"></span>
+                                    <span class="demo-light yellow"></span>
+                                    <span class="demo-light green"></span>
+                                </div>
+                                <span class="demo-app-title">CueCard</span>
+                            </div>
+                            <div class="demo-app-content">
+                                <div class="demo-toggle">
+                                    <div class="demo-toggle-track">
+                                        <div class="demo-toggle-thumb"></div>
+                                    </div>
+                                </div>
+                                <span class="demo-toggle-label">Show In Screen Share</span>
+                            </div>
+                        </div>
+                        <!-- Screen sharing banners (toggle between them) -->
+                        <div class="demo-share-banner demo-banner-on">You are screen sharing</div>
+                        <div class="demo-share-banner demo-banner-off">Not screen sharing</div>
+                        <!-- Animated cursor -->
+                        <div class="demo-cursor"></div>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-header">
+                        <span class="feature-number">02</span>
+                        <h3 class="feature-title">Just Enough to See</h3>
+                    </div>
+                    <p class="feature-desc">Set the transparency exactly how you want it with a simple slider. Find the perfect balance between visibility and discretion.</p>
+                    <div class="feature-demo gif-demo gif-demo-transparency">
+                        <!-- Screen share area with dashed border -->
+                        <div class="demo-screen-area">
+                            <!-- Slides window -->
+                            <div class="demo-slides-window">
+                                <div class="demo-slides-sidebar">
+                                    <div class="demo-slide-thumb active"></div>
+                                    <div class="demo-slide-thumb"></div>
+                                    <div class="demo-slide-thumb"></div>
+                                </div>
+                                <div class="demo-main-slide"></div>
+                            </div>
+                            <!-- Floating CueCard app with transparency animation -->
+                            <div class="demo-floating-app demo-app-transparency">
+                                <div class="demo-app-header">
+                                    <div class="demo-traffic-lights">
+                                        <span class="demo-light red"></span>
+                                        <span class="demo-light yellow"></span>
+                                        <span class="demo-light green"></span>
+                                    </div>
+                                    <span class="demo-app-title">CueCard</span>
+                                </div>
+                                <div class="demo-app-content">
+                                    <div class="demo-slider">
+                                        <div class="demo-slider-track">
+                                            <div class="demo-slider-fill"></div>
+                                            <div class="demo-slider-thumb"></div>
+                                        </div>
+                                    </div>
+                                    <span class="demo-slider-label">Transparency</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Screen sharing banner -->
+                        <div class="demo-share-banner">You are screen sharing</div>
+                    </div>
+                </div>                
+            </div>
         </section>
 
         <!-- Syntax Section -->
         <section class="features syntax-notes">
             <div class="section-header">
-                <span class="section-tag">Syntax</span>
-                <h2 class="section-title">Simple syntax.<br>Smoother delivery.</h2>
+                <span class="section-tag">Features</span>
+                <h2 class="section-title">On Time, Every Time. Emotions Included.</h2>
             </div>
 
             <div class="features-grid">
@@ -223,7 +323,7 @@
                         <span class="feature-number">01</span>
                         <h3 class="feature-title">What You Write</h3>
                     </div>
-                    <p class="feature-desc">Write your talk once with simple <code>[time]</code> and <code>[emotion]</code> tags. CueCard keeps everything tidy so you can stay in flow.</p>
+                    <p class="feature-desc">Write your notes naturally on CueCard, or optionally add <code>[time]</code> and <code>[emotion]</code> tags to guide timing and tone.</p>
                     <div class="notes-preview notes-preview-raw" aria-label="Sample of raw speaker notes">
                         <div class="notes-content">
 [time 00:15]
@@ -243,7 +343,7 @@ It has a [emotion emphasize] timer and that emotion-injection thingy, [emotion e
                         <span class="feature-number">02</span>
                         <h3 class="feature-title">What You See</h3>
                     </div>
-                    <p class="feature-desc">CueCard highlights timestamps, links, and action cues while the on-screen timer gently counts down.</p>
+                    <p class="feature-desc">CueCard highlights timestamps, and action cues while the on-screen timer gently counts down.</p>
                     <div class="notes-preview notes-preview-highlighted" aria-live="off">
                         <div class="notes-content">
 <span class="timestamp" data-time="15">[00:15]</span>
@@ -254,95 +354,6 @@ It has a <span class="action-tag">[emphasize]</span> timer and that emotion-inje
 
 <span class="timestamp" data-time="105">[00:30]</span>
 <span class="action-tag">[hype]</span> Dude, you gotta try this out.
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Features Section -->
-        <section class="features">
-            <div class="section-header">
-                <span class="section-tag">Features</span>
-                <h2 class="section-title">Everything you need,<br/>nothing you don't</h2>
-            </div>
-
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-header">
-                        <span class="feature-number">01</span>
-                        <h3 class="feature-title">Ghost Mode for Your Notes</h3>
-                    </div>
-                    <p class="feature-desc">Hide from screen recordings or screen shares and keep speaker notes in front of your eyes. Toggle visibility instantly with a single click.</p>
-                    <div class="gif-placeholder feature-demo" data-label="GIF: Toggle visibility setting">
-                        <div class="placeholder-content">
-                            <div class="placeholder-icon">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                                    <line x1="1" y1="1" x2="23" y2="23"/>
-                                </svg>
-                            </div>
-                            <span>Visibility toggle demo</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-header">
-                        <span class="feature-number">02</span>
-                        <h3 class="feature-title">Just Enough to See</h3>
-                    </div>
-                    <p class="feature-desc">Set the transparency exactly how you want it with a simple slider. Find the perfect balance between visibility and discretion.</p>
-                    <div class="gif-placeholder feature-demo" data-label="GIF: Transparency slider">
-                        <div class="placeholder-content">
-                            <div class="placeholder-icon">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <circle cx="12" cy="12" r="10" opacity="0.3"/>
-                                    <circle cx="12" cy="12" r="6" opacity="0.6"/>
-                                    <circle cx="12" cy="12" r="2"/>
-                                </svg>
-                            </div>
-                            <span>Transparency slider demo</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-header">
-                        <span class="feature-number">03</span>
-                        <h3 class="feature-title">On Time, Every Time</h3>
-                    </div>
-                    <p class="feature-desc">Set and see the time to be spent on each part of your content. Stay on track with built-in timers for each section.</p>
-                    <div class="gif-placeholder feature-demo" data-label="GIF: Timer feature">
-                        <div class="placeholder-content">
-                            <div class="placeholder-icon">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <polyline points="12 6 12 12 16 14"/>
-                                </svg>
-                            </div>
-                            <span>Timer demo</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-header">
-                        <span class="feature-number">04</span>
-                        <h3 class="feature-title">Read Between the Lines</h3>
-                    </div>
-                    <p class="feature-desc">Inject emotions and emphasis cues into your text to sound more human. Tag sections with feelings and tone for natural delivery.</p>
-                    <div class="gif-placeholder feature-demo" data-label="GIF: Emotion tags feature">
-                        <div class="placeholder-content">
-                            <div class="placeholder-icon">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                                    <line x1="9" y1="9" x2="9.01" y2="9"/>
-                                    <line x1="15" y1="9" x2="15.01" y2="9"/>
-                                </svg>
-                            </div>
-                            <span>Emotion tags demo</span>
                         </div>
                     </div>
                 </div>

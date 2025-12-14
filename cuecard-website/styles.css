@@ -476,46 +476,6 @@ main {
     margin-bottom: var(--space-lg);
 }
 
-/* GIF Placeholder */
-.gif-placeholder {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 16/10;
-    background: var(--bg-secondary);
-    border: 2px dashed rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.gif-placeholder::before {
-    content: attr(data-label);
-    position: absolute;
-    bottom: var(--space-md);
-    left: var(--space-md);
-    right: var(--space-md);
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    text-align: center;
-}
-
-.placeholder-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-md);
-    color: var(--text-muted);
-}
-
-.placeholder-icon {
-    opacity: 0.5;
-}
-
-.placeholder-content span {
-    font-size: 0.875rem;
-}
 
 /* Section styling */
 .section-header {
@@ -602,9 +562,347 @@ main {
     margin-bottom: var(--space-lg);
 }
 
+.code-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    font-weight: 600;
+}
+
+.code-time {
+    color: var(--accent-green);
+    border-color: rgba(25, 195, 50, 0.4);
+}
+
+.code-emotion {
+    color: var(--accent-pink);
+    border-color: rgba(255, 106, 223, 0.4);
+}
+
 .feature-demo {
     aspect-ratio: 16/9;
     margin-top: auto;
+}
+
+/* ===== GIF Demo Animations ===== */
+.gif-demo {
+    position: relative;
+    background: #2d2d2d;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+}
+
+/* Screen share area */
+.demo-screen-area {
+    position: relative;
+    flex: 1;
+    border: 2px dashed #6fa8dc;
+    border-radius: 16px;
+    padding: 8px;
+    display: flex;
+    align-items: stretch;
+}
+
+/* Slides window */
+.demo-slides-window {
+    flex: 1;
+    background: #e8e8e8;
+    border-radius: 8px;
+    display: flex;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.demo-slides-sidebar {
+    width: 22%;
+    background: #d4d4d4;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.demo-slide-thumb {
+    aspect-ratio: 16/10;
+    background: #b0b0b0;
+    border-radius: 4px;
+}
+
+.demo-slide-thumb.active {
+    background: #f5c27a;
+}
+
+.demo-main-slide {
+    flex: 1;
+    background: #f5c27a;
+    margin: 8px;
+    border-radius: 8px;
+}
+
+/* Floating CueCard app */
+.demo-floating-app {
+    position: absolute;
+    background: #0d0d0d;
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    min-width: 200px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+.demo-app-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.demo-traffic-lights {
+    display: flex;
+    gap: 5px;
+}
+
+.demo-light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.demo-light.red { background: #ff5f57; }
+.demo-light.yellow { background: var(--accent-yellow); }
+.demo-light.green { background: var(--accent-green); }
+
+.demo-app-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.demo-app-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Toggle for visibility demo */
+.demo-toggle {
+    display: flex;
+    align-items: center;
+}
+
+.demo-toggle-track {
+    width: 44px;
+    height: 24px;
+    border-radius: 12px;
+    background: var(--accent-green);
+    position: relative;
+    transition: background 0.3s ease;
+}
+
+.demo-toggle-thumb {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    top: 2px;
+    left: 22px;
+    transition: left 0.3s ease;
+}
+
+.demo-toggle-label {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+/* Slider for transparency demo */
+.demo-slider {
+    display: flex;
+    align-items: center;
+}
+
+.demo-slider-track {
+    width: 100px;
+    height: 8px;
+    background: #444;
+    border-radius: 4px;
+    position: relative;
+}
+
+.demo-slider-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: #666;
+    border-radius: 4px;
+    animation: sliderFill 5s ease-in-out infinite;
+}
+
+.demo-slider-thumb {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: var(--accent-green);
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+    animation: sliderThumb 5s ease-in-out infinite;
+}
+
+.demo-slider-label {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+@keyframes sliderFill {
+    0%, 10% { width: 75%; }
+    40%, 60% { width: 25%; }
+    90%, 100% { width: 75%; }
+}
+
+@keyframes sliderThumb {
+    0%, 10% { left: 75px; }
+    40%, 60% { left: 12px; }
+    90%, 100% { left: 75px; }
+}
+
+/* ===== Visibility (Ghost Mode) Demo ===== */
+/* JS controls animation - CSS just provides transitions */
+.gif-demo-visibility .demo-screen-area {
+    transition: border-color 0.4s ease;
+}
+
+.gif-demo-visibility .demo-floating-app {
+    transition: opacity 0.4s ease;
+}
+
+/* ===== Transparency Demo ===== */
+.gif-demo-transparency .demo-floating-app {
+    animation: appTransparency 5s ease-in-out infinite;
+}
+
+@keyframes appTransparency {
+    0%, 10% { opacity: 1; }
+    40%, 60% { opacity: 0.4; }
+    90%, 100% { opacity: 1; }
+}
+
+/* ===== Screen sharing banners ===== */
+.demo-share-banner {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    padding: 8px 24px;
+    border-radius: 24px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Default banner (for transparency demo) */
+.gif-demo-transparency .demo-share-banner {
+    background: var(--accent-green);
+}
+
+/* Visibility demo - JS controls banner switching */
+.gif-demo-visibility .demo-banner-on,
+.gif-demo-visibility .demo-banner-off {
+    min-width: 160px;
+    text-align: center;
+}
+
+.gif-demo-visibility .demo-banner-on {
+    background: var(--accent-green);
+}
+
+.gif-demo-visibility .demo-banner-off {
+    background: var(--accent-red);
+    opacity: 0;
+}
+
+/* Animated cursor - macOS style */
+.demo-cursor {
+    position: absolute;
+    width: 17px;
+    height: 24px;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 100;
+    transition: opacity 0.2s ease;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='24' viewBox='0 0 17 24'%3E%3Cpath fill='%23fff' stroke='%23000' stroke-width='1.5' d='M1 1l14 10.5-6 1.5 4 9-3 1.5-4-9-5 4z'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+/* Responsive adjustments for demos */
+@media (max-width: 768px) {
+    .demo-floating-app {
+        min-width: 150px;
+        padding: 12px 14px;
+    }
+
+    .demo-app-header {
+        margin-bottom: 10px;
+    }
+
+    .demo-app-title {
+        font-size: 0.8rem;
+    }
+
+    .demo-toggle-label,
+    .demo-slider-label {
+        font-size: 0.7rem;
+    }
+
+    .demo-light {
+        width: 9px;
+        height: 9px;
+    }
+
+    .demo-toggle-track {
+        width: 36px;
+        height: 20px;
+    }
+
+    .demo-toggle-thumb {
+        width: 16px;
+        height: 16px;
+    }
+
+    .demo-slider-track {
+        width: 70px;
+    }
+
+    .demo-slider-thumb {
+        animation: sliderThumbMobile 5s ease-in-out infinite;
+    }
+
+    @keyframes sliderThumbMobile {
+        0%, 10% { left: 52px; }
+        40%, 60% { left: 8px; }
+        90%, 100% { left: 52px; }
+    }
+
+    .demo-share-banner {
+        font-size: 0.6rem;
+        padding: 6px 16px;
+    }
 }
 
 /* Syntax Notes Preview */
