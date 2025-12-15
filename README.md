@@ -6,81 +6,89 @@ CueCard is a lightweight desktop teleprompter that keeps your speaker notes in v
 
 <a href="https://www.youtube.com/watch?v=D2xCqQFtK-k"><strong>▶ Watch the Demo</strong></a>
 
-### Why CueCard?
+## Why CueCard?
 - **Always on top, always private.** CueCard opens a floating window that stays above all other applications yet is hidden from screen sharing tools. Your audience sees only your slides; you see your notes.
 - **Works with Google Slides or your own text.** Use the companion browser extension to sync your existing Google Slides speaker notes, or just paste any text into the CueCard app.
 - **Free and open‑source.** CueCard is released under the MIT license, and the code is available on GitHub. It’s completely free to use.
 
-![CueCard Notes](./cuecard-assets/cuecard-notes.png)
+![CueCard Options](./cuecard-assets/cuecard-options.png)
 
-### Features
+## Features
 
 CueCard focuses on the essentials so you can focus on your delivery:
 
-#### On Time, Every Time
+### On Time, Every Time
 
-Write your notes naturally or add simple `[time]` tags to schedule your speech. CueCard reads tags like `[time 00:15]` or `[time 03:00]` and shows a gentle on‑screen countdown so you stay on schedule. While you speak, these **time cues are highlighted** and the timer counts down
+* Write notes naturally or add simple `[time]` tags to control pacing
+* Use tags like `[time 00:15]` or `[time 03:00]` to schedule sections of your speech
+* CueCard shows a subtle on-screen countdown for each time cue
 
-#### Full of Emotions
+### Full of Emotions
 
-Your tone matters just as much as your words. You can embed `[emotion]` tags directly in your notes to remind yourself to smile, emphasize a phrase or build hype. Tags like `[emotion smile]`, `[emotion emphasize]`, `[emotion excited]` and `[emotion hype]` show up as colored cues next to your text so you can **modulate your delivery without memorizing every shift in tone**.
+* CueCard helps you adjust tone and energy naturally—without memorizing every change
+* Add `[emotion]` tags directly inside your notes to guide your delivery
+* Use tags like `[emotion smile]`, `[emotion emphasize]`, `[emotion excited]`, or `[emotion hype]`
+* Emotion cues appear as colored markers next to your text
 
-![CueCard Options](./cuecard-assets/cuecard-options.png)
+### Ghost Mode for Your Notes
 
-#### Ghost Mode for Your Notes
+* Keep your notes completely hidden from viewers during screen sharing or recording
+* Ghost Mode ensures only you can see the floating note card
+* Toggle visibility instantly with a single click
 
-When you’re sharing your screen or recording a video, CueCard’s ghost mode ensures your **notes remain invisible to everyone but you**. With a single click you can toggle visibility so the floating card stays off the shared screen.
+### Just Enough to See
 
-#### Just Enough to See
+* Adjust the transparency of the note card using a simple slider
+* Increase opacity for clear reading or fade it for subtle visibility
+* Find the perfect balance between readability and discretion
 
-**Adjust the transparency of the note card** with a simple slider. Dial it up for full clarity or fade it down until it’s barely noticeable – CueCard lets you find the perfect balance between visibility and discretion.
+![CueCard Notes](./cuecard-assets/cuecard-notes.png)
+## Get Started
 
-### Download CueCard 
+### Install CueCard
 
-**Mac Desktop App**: 
-- Download the latest DMG from the [GitHub Releases](https://github.com/thisisnsh/cuecard/releases) page
-- Drag `CueCard` into your `Applications` folder.
+- **Mac Desktop App**:
+  - Download the latest DMG from the [GitHub Releases](https://github.com/thisisnsh/cuecard/releases) page
+  - Drag `CueCard` into your `Applications` folder
 
-**Windows Desktop App**: 
-- Coming Soon
+- **Windows Desktop App**:
+  - Coming Soon
 
-> Extension **is only required** for syncing Google Slides speaker notes. 
+> The browser extension is **only required** for syncing Google Slides speaker notes.
 
-**Chrome Extension**: 
-- Install CueCard directly from the Chrome Web Store. 
+- **Chrome Extension**: 
+  - Install CueCard directly from the Chrome Web Store
 
-**Safari Extension**: 
-- Download the latest DMG from the [GitHub Releases](https://github.com/thisisnsh/cuecard/releases) page
-- Drag `CueCard Extension` into your `Applications` folder. 
-- After installation, open Safari and go to `Safari › Settings › Extensions` to enable the CueCard extension.
+- **Safari Extension**:
+  - Download the latest DMG from the [GitHub Releases](https://github.com/thisisnsh/cuecard/releases) page
+  - Drag `CueCard Extension` into your `Applications` folder
+  - Open Safari and go to `Safari › Settings › Extensions` to enable the CueCard extension
 
-### Get Started
+### View Google Slides Notes
 
-#### View Google Slides Notes
-
-1. Open the **CueCard** app.
-2. Make sure the **CueCard browser extension** is installed and running.
-3. Click the **Google Slides** button in the app.
-4. Open your Google Slides deck to load the speaker notes.
-5. Start the slideshow in **Presenter View**, then close the default Google Slides notes window.
+1. Open the **CueCard** app
+2. Ensure the **CueCard browser extension** is installed and running
+3. Click the **Google Slides** button in the app
+4. Open your Google Slides deck to load the speaker notes
+5. Start the slideshow in **Presenter View**, then close the default Google Slides notes window
 
 > **Tip:** If notes don’t appear immediately, move to the next slide and then return to the previous one.
 
-#### View Other Notes
+### View Other Notes
 
-1. Open the **CueCard** app.
-2. Click the **Paste Your Notes** button.
-3. Paste your notes into the editor.
+1. Open the **CueCard** app
+2. Click **Paste Your Notes**
+3. Paste your notes into the editor
 
 > No browser extension is required for pasted notes.
 
-### Repository Guide
+## Repository Guide
 
 - [`cuecard-app/README.md`](cuecard-app/README.md) – app details, Firebase configuration, build + release steps
 - [`cuecard-extension/README.md`](cuecard-extension/README.md) – browser extension architecture, build scripts, store packaging
 - [`cuecard-website/README.md`](cuecard-website/README.md) – static site powering cuecard.dev
 
-### Links
+## Links
 
 - Privacy Policy: [https://cuecard.dev/privacy/](https://cuecard.dev/privacy/)
 - Terms of Service: [https://cuecard.dev/terms/](https://cuecard.dev/terms/)
