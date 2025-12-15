@@ -216,7 +216,6 @@ let appStore = null;
 const STORAGE_KEYS = {
   SETTINGS_OPACITY: 'settings_opacity',
   SETTINGS_SCREENSHOT_PROTECTION: 'settings_screenshot_protection',
-  SETTINGS_FLOAT_FULLSCREEN: 'settings_float_fullscreen',
   ADD_NOTES_CONTENT: 'add_notes_content'
 };
 
@@ -312,7 +311,7 @@ let refreshBtn, refreshSeparator;
 let notesInputHighlight;
 let timerSeparator, timerStartSeparator, timerPauseSeparator;
 let btnStart, btnPause, btnReset;
-let opacitySlider, opacityValue, screenCaptureToggle, floatFullscreenToggle;
+let opacitySlider, opacityValue, screenCaptureToggle;
 
 // State
 let isAuthenticated = false;
@@ -323,7 +322,6 @@ let manualNotes = ''; // Notes pasted by the user
 let currentSlideData = null; // Store current slide data
 let currentOpacity = 100; // Store current opacity value (10-100)
 let screenshotProtectionEnabled = true; // Default: protected (not shown in capture)
-let floatAboveFullscreenEnabled = true; // Default: float above fullscreen apps
 
 // Timer State
 let timerState = 'stopped'; // 'stopped', 'running', 'paused'
@@ -373,7 +371,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   opacitySlider = document.getElementById("opacity-slider");
   opacityValue = document.getElementById("opacity-value");
   screenCaptureToggle = document.getElementById("screen-capture-toggle");
-  floatFullscreenToggle = document.getElementById("float-fullscreen-toggle");
 
   // DOM elements loaded
 
@@ -1340,34 +1337,6 @@ async function loadStoredSettings() {
         console.error("Error applying stored screenshot protection:", error);
       }
     }
-  } else if (invoke) {
-    // No stored value yet; enforce the default (protected)
-    try {
-      await invoke("set_screenshot_protection", { enabled: screenshotProtectionEnabled });
-    } catch (error) {
-      console.error("Error applying default screenshot protection:", error);
-    }
-  }
-
-  // Load stored float above fullscreen setting
-  const storedFloatFullscreen = await getStoredValue(STORAGE_KEYS.SETTINGS_FLOAT_FULLSCREEN);
-  if (storedFloatFullscreen !== null && storedFloatFullscreen !== undefined) {
-    floatAboveFullscreenEnabled = storedFloatFullscreen;
-    // Apply the stored float fullscreen setting
-    if (invoke) {
-      try {
-        await invoke("set_float_on_top", { enabled: storedFloatFullscreen });
-      } catch (error) {
-        console.error("Error applying stored float fullscreen:", error);
-      }
-    }
-  } else if (invoke) {
-    // No stored value yet; enforce the default (float above fullscreen)
-    try {
-      await invoke("set_float_on_top", { enabled: floatAboveFullscreenEnabled });
-    } catch (error) {
-      console.error("Error applying default float fullscreen:", error);
-    }
   }
 
   // Loaded stored settings
@@ -1414,26 +1383,6 @@ function setupSettings() {
     // Save to persistent storage
     await setStoredValue(STORAGE_KEYS.SETTINGS_SCREENSHOT_PROTECTION, screenshotProtectionEnabled);
   });
-
-  // Float above fullscreen toggle handler
-  if (floatFullscreenToggle) {
-    floatFullscreenToggle.addEventListener("change", async (e) => {
-      const floatEnabled = e.target.checked;
-      floatAboveFullscreenEnabled = floatEnabled;
-
-      // Update float on top via Tauri
-      if (invoke) {
-        try {
-          await invoke("set_float_on_top", { enabled: floatEnabled });
-        } catch (error) {
-          console.error("Error setting float on top:", error);
-        }
-      }
-
-      // Save to persistent storage
-      await setStoredValue(STORAGE_KEYS.SETTINGS_FLOAT_FULLSCREEN, floatAboveFullscreenEnabled);
-    });
-  }
 }
 
 // Load current settings values
@@ -1459,10 +1408,5 @@ async function loadCurrentSettings() {
   // The screenshotProtectionEnabled state tracks if protection is on
   if (screenCaptureToggle) {
     screenCaptureToggle.checked = !screenshotProtectionEnabled;
-  }
-
-  // Float above fullscreen toggle: default is ON
-  if (floatFullscreenToggle) {
-    floatFullscreenToggle.checked = floatAboveFullscreenEnabled;
   }
 }
