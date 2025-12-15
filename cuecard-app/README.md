@@ -31,67 +31,49 @@ Without this file the app cannot exchange Google tokens for Firebase ID tokens, 
 ### Run in Development
 
 ```bash
-cargo tauri dev
+npm run tauri dev
 ```
 
 ### Build for Production
 
 ```bash
-cargo tauri build
+npm run tauri build
 ```
 
 Output is written to `src-tauri/target/release/bundle/`.
 
 ## Release Process
 
-### macOS
+### MacOS (Signing + Updater)
 
-1. Build the release:
+1. Generate signing keys (first time only):
    ```bash
-   cargo tauri build
+   npm run tauri signer generate -- -w ~/.tauri/cuecard.key
+   ``` 
+   
+2. Build with signing:
+   ```bash
+   APPLE_SIGNING_IDENTITY="" \
+   APPLE_ID="" \
+   APPLE_PASSWORD="" \
+   APPLE_TEAM_ID="" \
+   TAURI_SIGNING_PRIVATE_KEY="" \
+   TAURI_SIGNING_PRIVATE_KEY_PASSWORD="" \
+   npm run tauri build -- --target universal-apple-darwin
    ```
+   This generates `latest.json` for the updater
 
-2. Locate build artifacts in `src-tauri/target/release/bundle/`:
-   - `dmg/CueCard_<version>_aarch64.dmg` - Disk image for distribution
+3. Locate build artifacts in `src-tauri/target/universal-apple-darwin/release/bundle/`:
+   - `dmg/CueCard_<version>_universal.dmg` - Disk image for distribution
    - `macos/CueCard.app` - Application bundle
-
-3. For auto-update support:
-   - Generate signing keys (first time only):
-     ```bash
-     cargo tauri signer generate -w ~/.tauri/cuecard.key
-     ```
-   - Build with signing:
-     ```bash
-     TAURI_SIGNING_PRIVATE_KEY=$(cat ~/.tauri/cuecard.key) cargo tauri build
-     ```
-   - This generates `latest.json` for the updater
 
 4. Create GitHub Release:
    - Tag the release: `git tag v<version>`
    - Push tag: `git push origin v<version>`
    - Create release on GitHub
    - Upload:
-     - `CueCard_<version>_aarch64.dmg`
+     - `CueCard_<version>_universal.dmg`
      - `latest.json` (for auto-update)
-
-### Signing (Optional)
-
-For distribution outside the App Store, you may want to notarize the app:
-
-1. Codesign the app:
-   ```bash
-   codesign --deep --force --verify --verbose \
-     --sign "Developer ID Application: Your Name (TEAM_ID)" \
-     src-tauri/target/release/bundle/macos/CueCard.app
-   ```
-
-2. Notarize with Apple:
-   ```bash
-   xcrun notarytool submit CueCard.dmg \
-     --apple-id your@email.com \
-     --team-id TEAM_ID \
-     --password @keychain:AC_PASSWORD
-   ```
 
 ### Notes
 
