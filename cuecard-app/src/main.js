@@ -307,7 +307,7 @@ let viewInitial, viewAddNotes, viewNotes, viewSettings;
 let linkGoBack, backSeparator;
 let notesInput, notesContent;
 let welcomeHeading, welcomeSubtext;
-let privacyLink, websiteLink, websiteSeparator;
+let bugLink, websiteLink, websiteSeparator;
 let settingsLink, settingsSeparator;
 let refreshBtn, refreshSeparator;
 let notesInputHighlight;
@@ -357,7 +357,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   notesContent = document.getElementById("notes-content");
   welcomeHeading = document.getElementById("welcome-heading");
   welcomeSubtext = document.getElementById("welcome-subtext");
-  privacyLink = document.getElementById("privacy-link");
+  bugLink = document.getElementById("bug-link");
   websiteLink = document.getElementById("website-link");
   websiteSeparator = document.getElementById("website-separator");
   settingsLink = document.getElementById("settings-link");
@@ -1084,19 +1084,16 @@ async function showView(viewName) {
   // Show/hide privacy, website, and settings links based on view
   if (viewName === 'initial') {
     // Initial view: show Visit Site, Privacy Policy, Settings
-    privacyLink.classList.remove('hidden');
     websiteLink.classList.remove('hidden');
     websiteSeparator.classList.remove('hidden');
   } else if (viewName === 'settings') {
     // Settings view: show Visit Site, Privacy Policy (no Settings button)
-    privacyLink.classList.remove('hidden');
     websiteLink.classList.remove('hidden');
     websiteSeparator.classList.remove('hidden');
     settingsLink.classList.add('hidden');
     settingsSeparator.classList.add('hidden');
   } else {
     // Notes and Add-Notes views: hide all footer links except go back
-    privacyLink.classList.add('hidden');
     websiteLink.classList.add('hidden');
     websiteSeparator.classList.add('hidden');
   }
@@ -1287,18 +1284,18 @@ function setupHeader() {
 
 // Footer Handlers
 function setupFooter() {
-  privacyLink.addEventListener("click", async (e) => {
+  bugLink.addEventListener("click", async (e) => {
     e.preventDefault();
-    console.log("Privacy link clicked");
+    console.log("Bug link clicked");
     try {
       if (!openUrl) {
         console.error("Tauri opener API not available");
-        window.open("https://cuecard.dev/privacy", "_blank", "noopener,noreferrer");
+        window.open("https://github.com/ThisIsNSH/CueCard/issues/new", "_blank", "noopener,noreferrer");
         return;
       }
-      await openUrl("https://cuecard.dev/privacy");
+      await openUrl("https://github.com/ThisIsNSH/CueCard/issues/new");
     } catch (error) {
-      console.error("Error opening privacy policy:", error);
+      console.error("Error opening bug report:", error);
     }
   });
 

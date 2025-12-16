@@ -6,6 +6,7 @@
   --color-yellow: #febc2e;
   --color-green: #19c332;
   --color-pink: #ff6adf;
+  --color-red: #ff605c;
 
   /* Typography */
   --font-family: -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -181,7 +182,6 @@ body {
 #view-initial {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   height: 100%;
   padding-top: 24px;
 }
@@ -589,8 +589,6 @@ body {
   gap: 8px;
   padding: 18px 18px 0px 18px;
   background: rgba(0, 0, 0, var(--bg-opacity));
-  opacity: 0;
-  transform: translateY(-10px);
   transition: opacity 0.2s ease, transform 0.2s ease;
   pointer-events: none;
   cursor: grab;
@@ -601,8 +599,6 @@ body {
 }
 
 .app-container:hover .app-header {
-  opacity: 1;
-  transform: translateY(0);
   pointer-events: auto;
 }
 
@@ -629,10 +625,10 @@ body {
   pointer-events: none;
 }
 
-.header-link {
+.close-btn {
   font-size: 12px;
   font-weight: 500;
-  color: var(--color-pink);
+  color: var(--color-red);
   background: none;
   border: none;
   cursor: pointer;
@@ -642,7 +638,7 @@ body {
   letter-spacing: 0.25px;
 }
 
-.header-link:hover {
+.close-btn:hover {
   opacity: 0.8;
 }
 
