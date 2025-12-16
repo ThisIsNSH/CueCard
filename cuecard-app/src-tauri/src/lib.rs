@@ -19,7 +19,8 @@ use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter, Manager, WebviewWindow};
+use tauri_nspanel::{tauri_panel, WebviewWindowExt, PanelLevel, StyleMask, CollectionBehavior};
 use tauri_plugin_opener::OpenerExt;
 use tauri_plugin_store::StoreExt;
 use tower_http::cors::{Any, CorsLayer};
@@ -1353,27 +1354,92 @@ async fn refresh_notes(app: AppHandle) -> Result<Option<String>, String> {
 
 #[tauri::command]
 fn set_window_opacity(app: AppHandle, opacity: f64) -> Result<(), String> {
-    // TODO: Set window opacity (0.0 to 1.0)
-    // Just make app background transparent not the content itself
+    use cocoa::appkit::NSWindow;
+    use cocoa::base::id;
+
+    let window = app
+        .get_webview_window("main")
+        .ok_or("Failed to get main window")?;
+
+    let clamped_opacity = opacity.max(0.1).min(1.0);
+
+    let ns_window = window
+        .ns_window()
+        .map_err(|e| format!("Failed to get NSWindow: {}", e))? as id;
+    unsafe {
+        ns_window.setAlphaValue_(clamped_opacity);
+    }
+
     Ok(())
 }
 
 #[tauri::command]
 fn get_window_opacity(app: AppHandle) -> Result<f64, String> {
-    // TODO: Get window opacity (0.0 to 1.0)
-    Ok(1.0)
+    use cocoa::appkit::NSWindow;
+    use cocoa::base::id;
+
+    let window = app
+        .get_webview_window("main")
+        .ok_or("Failed to get main window")?;
+    let ns_window = window
+        .ns_window()
+        .map_err(|e| format!("Failed to get NSWindow: {}", e))? as id;
+    let opacity = unsafe { ns_window.alphaValue() };
+    Ok(opacity)
 }
 
 #[tauri::command]
-fn set_screenshot_protection(app: AppHandle, enabled: bool) -> Result<(), String> {
+fn set_screenshot_protection(app: AppHandle, enabled: bool) -> Result<(), String> {    
     let window = app
         .get_webview_window("main")
         .ok_or("Failed to get main window")?;
     window
         .set_content_protected(enabled)
-        .map_err(|e| format!("Failed to update content protection: {}", e))?;
-    // TODO: Enable screenshot protection for mac
+        .map_err(|e| format!("Failed to update content protection: {}", e))?;        
     Ok(())
+}
+
+// =============================================================================
+// MACOS SCREENSHOT PROTECTION
+// =============================================================================
+
+#[cfg(target_os = "macos")]
+#[allow(deprecated, unexpected_cfgs)]
+fn init_nspanel(app_handle: &AppHandle) {
+    tauri_panel! {
+        panel!(CueCardPanel {
+            config: {
+                can_become_key_window: true,
+                is_floating_panel: true
+            }
+        })
+    }
+
+    let window: WebviewWindow = app_handle.get_webview_window("main").unwrap();
+
+    let panel = window.to_panel::<CueCardPanel>().unwrap();
+
+    // Set floating window level
+    panel.set_level(PanelLevel::Floating.value());
+
+    // Prevent panel from activating the app (required for fullscreen display)
+    panel.set_style_mask(
+        StyleMask::empty()
+            .nonactivating_panel()
+            .resizable()  
+            .into()
+    );
+
+    // Allow panel to display over fullscreen windows and join all spaces
+    panel.set_collection_behavior(
+        CollectionBehavior::new()
+            .full_screen_auxiliary()
+            .can_join_all_spaces()
+            .into()
+    );
+
+    // Prevent panel from hiding when app deactivates
+    panel.set_hides_on_deactivate(false);
 }
 
 // =============================================================================
@@ -1382,11 +1448,21 @@ fn set_screenshot_protection(app: AppHandle, enabled: bool) -> Result<(), String
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::default().build())
-        .plugin(tauri_plugin_updater::Builder::default().build())
-        .setup(|app| {
+        .plugin(tauri_plugin_updater::Builder::default().build());
+
+    #[cfg(target_os = "macos")]
+    {
+        builder = builder.plugin(tauri_nspanel::init());
+    }
+
+    builder
+        .setup(|app| {            
+            // Set activation policy to Accessory to prevent the app icon from showing on the dock
+            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+
             // Store app handle for emitting events
             {
                 let mut handle = APP_HANDLE.write();
@@ -1407,7 +1483,9 @@ pub fn run() {
             // Load stored tokens from persistent storage
             load_tokens_from_store(app.handle());
 
-            // TODO: Enable screenshot protection and full-screen overlay by default
+            // Enable screenshot protection on macOS
+            #[cfg(target_os = "macos")]
+            init_nspanel(app.app_handle());
 
             // Start the web server in a background thread
             std::thread::spawn(|| {

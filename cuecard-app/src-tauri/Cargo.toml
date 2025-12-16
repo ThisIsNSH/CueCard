@@ -37,3 +37,7 @@ urlencoding = "2.1"
 
 # Date/time handling
 chrono = "0.4"
+
+# macOS
+cocoa = "0.25"
+tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2.1" }

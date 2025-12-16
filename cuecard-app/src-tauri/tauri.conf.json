@@ -12,20 +12,24 @@
     "windows": [
       {
         "title": "CueCard",
-        "width": 600,
-        "height": 300,
-        "resizable": true,
-        "minWidth": 600,
-        "minHeight": 300,
-        "center": true,
-        "alwaysOnTop": true,
-        "transparent": true,
-        "decorations": true,
-        "visibleOnAllWorkspaces": true,
-        "skipTaskbar": true,
-        "focus": false,
+        "theme": "Dark",
+
         "acceptFirstMouse": true,
-        "theme": "Dark"
+        "alwaysOnTop": true,
+        "center": true,
+        "contentProtected": true,
+        "decorations": false,
+        "focus": false,
+        "fullscreen": false,
+        "resizable": true,
+        "skipTaskbar": true,
+        "transparent": true,
+        "visibleOnAllWorkspaces": true,
+
+        "height": 300,
+        "width": 600,
+        "minHeight": 300,
+        "minWidth": 600
       }
     ],
     "security": {
@@ -34,7 +38,10 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["dmg", "app"],
+    "targets": [
+      "dmg",
+      "app"
+    ],
     "resources": [
       "../firebase-config.json"
     ],

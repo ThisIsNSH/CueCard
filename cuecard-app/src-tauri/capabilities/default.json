@@ -10,6 +10,8 @@
     "core:window:allow-maximize",
     "core:window:allow-unmaximize",
     "core:window:allow-is-maximized",
+    "core:window:allow-start-dragging",
+    "core:window:deny-internal-toggle-maximize",
     "opener:default",
     "store:default"
   ]
