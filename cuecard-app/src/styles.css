@@ -589,6 +589,44 @@ body {
   gap: 8px;
   padding: 18px 18px 0px 18px;
   background: rgba(0, 0, 0, var(--bg-opacity));
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+  cursor: grab;
+}
+
+.app-header:active {
+  cursor: grabbing;
+}
+
+.app-container:hover .app-header {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.drag-handle {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  cursor: move;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s ease;
+  opacity: 0.6;
+}
+
+.drag-handle:hover {
+  opacity: 1;
+}
+
+.drag-handle svg {
+  pointer-events: none;
 }
 
 .header-link {
