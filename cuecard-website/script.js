@@ -207,16 +207,19 @@ function initHeroBadgeTypewriter() {
     if (!heroBadge) return;
 
     const messages = [
-        { text: 'Sync notes from Google Slides', theme: 'yellow' },
         { text: 'Paste notes for any meeting', theme: 'green' },
+        { text: 'Sync notes from Google Slides', theme: 'yellow' },
         { text: 'Free and Open Source', theme: 'white' }
     ];
 
+    // Create span for animated text
     const textSpan = document.createElement('span');
     textSpan.className = 'hero-badge-text';
+    textSpan.textContent = messages[0].text;
 
+    // Clear badge and append span
     heroBadge.textContent = '';
-    heroBadge.append(textSpan);
+    heroBadge.appendChild(textSpan);
 
     const themes = ['hero-badge--yellow', 'hero-badge--green', 'hero-badge--white'];
     const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -241,7 +244,10 @@ function initHeroBadgeTypewriter() {
     };
 
     const startTypewriter = async () => {
-        let index = 0;
+        let index = 1;
+        await wait(1000);
+        await deleteText();
+        await wait(400);
         while (true) {
             const { text, theme } = messages[index];
             setTheme(theme);
