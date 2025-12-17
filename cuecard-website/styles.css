@@ -786,19 +786,22 @@ main {
 /* ===== GIF Demo Animations ===== */
 .gif-demo {
     position: relative;
-    background: #2d2d2d;
-    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-lg);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    padding: 12px;
+    padding: var(--space-lg);
+    margin-top: var(--space-md);
 }
 
 /* Screen share area */
 .demo-screen-area {
     position: relative;
     flex: 1;
-    border: 2px dashed #6fa8dc;
+    border: 2px solid var(--accent-green);
     border-radius: 16px;
     padding: 8px;
     display: flex;
@@ -831,12 +834,12 @@ main {
 }
 
 .demo-slide-thumb.active {
-    background: #f5c27a;
+    background: var(--accent-yellow);
 }
 
 .demo-main-slide {
     flex: 1;
-    background: #f5c27a;
+    background: var(--accent-yellow);
     margin: 8px;
     border-radius: 8px;
 }
@@ -874,8 +877,6 @@ main {
 }
 
 .demo-light.red { background: #ff5f57; }
-.demo-light.yellow { background: var(--accent-yellow); }
-.demo-light.green { background: var(--accent-green); }
 
 .demo-app-title {
     font-family: var(--font-display);

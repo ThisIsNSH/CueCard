@@ -578,9 +578,6 @@ function createDownloadCard(asset) {
 
     card.innerHTML = `
         <div class="download-card-header">
-            <div class="download-card-icon">
-                ${icon}
-            </div>
             <div class="download-card-info">
                 <div class="download-card-name">${asset.name}</div>
                 <div class="download-card-meta">
@@ -766,7 +763,7 @@ function initGhostModeAnimation() {
     };
 
     const showDashedBox = () => {
-        screenArea.style.borderColor = '#6fa8dc';
+        screenArea.style.borderColor = '#19c332';
     };
 
     const hideDashedBox = () => {
