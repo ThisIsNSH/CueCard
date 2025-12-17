@@ -314,28 +314,28 @@ body {
 }
 
 /* Gradient overlays for notes input */
-#view-add-notes::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 24px;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, var(--bg-opacity)) 0%, transparent 100%);
-  pointer-events: none;
-  z-index: 1;
-}
+#view-add-notes {
+  position: relative;
 
-#view-add-notes::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 24px;
-  background: linear-gradient(to top, rgba(0, 0, 0, var(--bg-opacity)) 0%, transparent 100%);
-  pointer-events: none;
-  z-index: 1;
+  /* Mask for fade in/out */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0px,
+    black 24px,
+    black calc(100% - 24px),
+    transparent 100%
+  );
+
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0px,
+    black 24px,
+    black calc(100% - 24px),
+    transparent 100%
+  );
+
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
 }
 
 /* Notes Display View */
@@ -360,28 +360,28 @@ body {
 }
 
 /* Gradient overlays for notes display */
-#view-notes::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 24px;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, var(--bg-opacity)) 0%, transparent 100%);
-  pointer-events: none;
-  z-index: 1;
-}
+#view-notes {
+  position: relative;
 
-#view-notes::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 24px;
-  background: linear-gradient(to top, rgba(0, 0, 0, var(--bg-opacity)) 0%, transparent 100%);
-  pointer-events: none;
-  z-index: 1;
+  /* Mask for fade in/out */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0px,
+    black 24px,
+    black calc(100% - 24px),
+    transparent 100%
+  );
+
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0px,
+    black 24px,
+    black calc(100% - 24px),
+    transparent 100%
+  );
+
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
 }
 
 /* Syntax Highlighting for Notes */
@@ -588,7 +588,7 @@ body {
   justify-content: flex-start;
   gap: 8px;
   padding: 18px 18px 0px 18px;
-  background: rgba(0, 0, 0, var(--bg-opacity));
+  background: linear-gradient(to bottom, rgba(0, 0, 0, var(--bg-opacity)) 0%, transparent 100%);
   transition: opacity 0.2s ease, transform 0.2s ease;
   pointer-events: none;
   cursor: grab;
@@ -596,6 +596,10 @@ body {
 
 .app-header:active {
   cursor: grabbing;
+}
+
+.app-header:hover {
+  background: linear-gradient(to bottom, rgba(36, 36, 36, var(--bg-opacity)) 0%, transparent 100%);
 }
 
 .app-container:hover .app-header {
@@ -625,7 +629,7 @@ body {
   pointer-events: none;
 }
 
-.close-btn {
+.btn-close {
   font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
@@ -638,11 +642,11 @@ body {
   letter-spacing: 0.25px;
 }
 
-.close-btn:hover {
+.btn-close:hover {
   color: var(--color-red);
 }
 
-.download-updates-btn {
+.btn-download-updates {
   font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
@@ -665,7 +669,7 @@ body {
   }
 }
 
-.download-updates-btn:hover {
+.btn-download-updates:hover {
   animation-play-state: paused; 
   opacity: 0.8;
 }
@@ -677,7 +681,7 @@ body {
   justify-content: flex-start;
   gap: 8px;
   padding: 0 18px 18px 18px;
-  background: rgba(0, 0, 0, var(--bg-opacity));
+  background: linear-gradient(to top, rgba(0, 0, 0, var(--bg-opacity)) 0%, transparent 100%);
 }
 
 .footer-link {
