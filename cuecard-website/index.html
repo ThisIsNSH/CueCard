@@ -146,7 +146,15 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                 </svg>
-                Star on GitHub
+                <span class="star-count" id="github-stars">Star</span>
+            </a>
+            <a href="#download" class="nav-link download-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Download CueCard
             </a>
         </div>
     </nav>
@@ -166,7 +174,7 @@
                 and everything.
             </p>
             <div class="hero-cta">
-                <a href="https://github.com/thisisnsh/cuecard/releases" class="btn btn-primary">
+                <a href="#download" class="btn btn-primary">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="7 10 12 15 17 10"/>
@@ -183,7 +191,7 @@
             </div> 
             <br>
             <p class="hero-note">
-                <em><a href="https://github.com/thisisnsh/cuecard/releases" target="_blank" rel="noopener" class="hero-note-link">CueCard Extension</a> required for Google Slides integration</em>
+                Undetectable on Zoom, Microsoft Teams,<br>Google Meet and more.
             </p>
         </section>
 
@@ -204,8 +212,58 @@
                     <div class="video-glow"></div>
                 </div>
             </div>
-        </section>        
+        </section>
         
+        <!-- Syntax Section -->
+        <section class="features syntax-notes">
+            <div class="section-header">
+                <span class="section-tag">Syntax</span>
+                <h2 class="section-title">On Time, Every Time. Emotions Included.</h2>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-header">
+                        <span class="feature-number">01</span>
+                        <h3 class="feature-title">What You Write</h3>
+                    </div>
+                    <p class="feature-desc">Write your notes naturally on CueCard, or optionally add <code>[time]</code> and <code>[emotion]</code> tags to guide timing and tone.</p>
+                    <div class="notes-preview notes-preview-raw" aria-label="Sample of raw speaker notes">
+                        <div class="notes-content">
+[time 00:15]
+Imagine your notes floating above the deck. [emotion smile] I've been using CueCard to do that.
+
+[time 00:10]
+It has a [emotion emphasize] timer and that emotion-injection thingy, [emotion excited] which makes me sound way more human.
+
+[time 00:05]
+[emotion hype] Dude, you gotta try this out.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-header">
+                        <span class="feature-number">02</span>
+                        <h3 class="feature-title">What You See</h3>
+                    </div>
+                    <p class="feature-desc">CueCard highlights timestamps, and action cues while the on-screen timer gently counts down.</p>
+                    <div class="notes-preview notes-preview-raw" aria-live="off">
+                        <div class="notes-content">
+<span class="timestamp" data-time="15">[00:15]</span>
+Imagine your notes floating above the deck. <span class="action-tag">[smile]</span> I've been using CueCard to do that.
+
+<span class="timestamp" data-time="75">[00:25]</span>
+It has a <span class="action-tag">[emphasize]</span> timer and that emotion-injection thingy, [emotion excited] which makes me sound way more human.
+
+<span class="timestamp" data-time="105">[00:30]</span>
+<span class="action-tag">[hype]</span> Dude, you gotta try this out.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Features Section -->
         <section class="features">
             <div class="section-header">
@@ -304,54 +362,34 @@
                     </div>
                 </div>                
             </div>
-        </section>
+        </section>             
 
-        <!-- Syntax Section -->
-        <section class="features syntax-notes">
+        <!-- Download Section -->
+        <section class="download-section" id="download">
             <div class="section-header">
-                <span class="section-tag">Features</span>
-                <h2 class="section-title">On Time, Every Time. Emotions Included.</h2>
+                <span class="section-tag">Download</span>
+                <h2 class="section-title">Ready to present<br/>like a pro?</h2>
+                <p class="section-desc">Download CueCard and never fumble through a presentation again.</p>
+
+                <p class="download-stats">
+                    <span class="total-downloads" id="total-downloads"></span>
+                </p>
             </div>
 
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-header">
-                        <span class="feature-number">01</span>
-                        <h3 class="feature-title">What You Write</h3>
-                    </div>
-                    <p class="feature-desc">Write your notes naturally on CueCard, or optionally add <code>[time]</code> and <code>[emotion]</code> tags to guide timing and tone.</p>
-                    <div class="notes-preview notes-preview-raw" aria-label="Sample of raw speaker notes">
-                        <div class="notes-content">
-[time 00:15]
-Imagine your notes floating above the deck. [emotion smile] I've been using CueCard to do that.
-
-[time 00:10]
-It has a [emotion emphasize] timer and that emotion-injection thingy, [emotion excited] which makes me sound way more human.
-
-[time 00:05]
-[emotion hype] Dude, you gotta try this out.
-                        </div>
-                    </div>
+            <div class="download-container">
+                <div class="release-selector">
+                    <label for="release-select">Release:</label>
+                    <select id="release-select" class="release-dropdown">
+                        <option value="">Loading releases...</option>
+                    </select>
                 </div>
 
-                <div class="feature-card">
-                    <div class="feature-header">
-                        <span class="feature-number">02</span>
-                        <h3 class="feature-title">What You See</h3>
-                    </div>
-                    <p class="feature-desc">CueCard highlights timestamps, and action cues while the on-screen timer gently counts down.</p>
-                    <div class="notes-preview notes-preview-raw" aria-live="off">
-                        <div class="notes-content">
-<span class="timestamp" data-time="15">[00:15]</span>
-Imagine your notes floating above the deck. <span class="action-tag">[smile]</span> I've been using CueCard to do that.
+                <div class="download-grid" id="download-grid">
+                    <div class="download-loading">Loading releases...</div>
+                </div>
 
-<span class="timestamp" data-time="75">[00:25]</span>
-It has a <span class="action-tag">[emphasize]</span> timer and that emotion-injection thingy, [emotion excited] which makes me sound way more human.
-
-<span class="timestamp" data-time="105">[00:30]</span>
-<span class="action-tag">[hype]</span> Dude, you gotta try this out.
-                        </div>
-                    </div>
+                <div class="release-notes" id="release-notes">
+                    <!-- Release notes will be populated by JavaScript -->
                 </div>
             </div>
         </section>
@@ -399,22 +437,6 @@ It has a <span class="action-tag">[emphasize]</span> timer and that emotion-inje
                         <p>Absolutely. All your notes and Google tokens are stored locally on your device. Check our <a href="./privacy/">Privacy Policy</a> for details.</p>
                     </div>
                 </details>
-            </div>
-        </section>
-
-        <!-- CTA Section -->
-        <section class="cta-section">
-            <div class="cta-content">
-                <h2 class="cta-title">Ready to present<br/>like a pro?</h2>
-                <p class="cta-desc">Download CueCard and never fumble through a presentation again.</p>
-                <a href="https://github.com/thisisnsh/cuecard/releases" class="btn btn-primary btn-large">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="7 10 12 15 17 10"/>
-                        <line x1="12" y1="15" x2="12" y2="3"/>
-                    </svg>
-                    Download CueCard
-                </a>
             </div>
         </section>
     </main>
