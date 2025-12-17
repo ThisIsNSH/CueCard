@@ -1,0 +1,24 @@
+name: ❓ General Issue
+description: For questions, discussions, or issues that don't fit other categories
+title: "[GENERAL] "
+labels: ["question"]
+assignees: "thisisnsh"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ❓ General Issue
+
+        **Before submitting:**
+        - [x] I have searched for similar issues and didn't find a duplicate
+        - [x] I have tried the latest version of CueCard
+        - [x] I have read the README and documentation
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Please describe your question or issue
+      placeholder: "Describe what you need help with..."
+    validations:
+      required: true

@@ -1,0 +1,37 @@
+name: ✨ Feature Request
+description: Suggest a new feature or enhancement
+title: "[FEATURE] "
+labels: ["enhancement"]
+assignees: "thisisnsh"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ✨ Feature Request
+
+        **Before submitting:**
+        - [x] I have searched for similar feature requests and didn't find a duplicate
+        - [x] I have tried the latest version of CueCard
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Nice to have
+        - Would be helpful
+        - Important for my workflow
+        - Critical for my use case
+        - Game-changing / must-have
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Please describe the feature request in detail
+      placeholder: "Describe the feature you'd like to see..."
+    validations:
+      required: true
