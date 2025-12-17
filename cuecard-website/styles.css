@@ -354,6 +354,16 @@ main {
     animation: fadeInUp 0.6s ease-out 0.25s both;
 }
 
+.hero-note a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.hero-note a:hover {
+    color: var(--text-primary);
+}
+
 .hero-note-link {
     color: var(--text-secondary);
     text-decoration: underline;

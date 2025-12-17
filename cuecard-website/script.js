@@ -71,8 +71,14 @@ function initSmoothScroll() {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
             e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
+            const href = this.getAttribute('href');
+            const target = document.querySelector(href);
             if (target) {
+                // If target is a details element, open it
+                if (target.tagName === 'DETAILS' && !target.open) {
+                    target.open = true;
+                }
+
                 target.scrollIntoView({
                     behavior: 'smooth',
                     block: 'start'
