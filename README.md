@@ -1,88 +1,90 @@
-# CueCard
+<div align="center">
 
-Speaker notes visible only to you — for presentations, meetings, dates and everything.
+# CueCard ![Work In Progress](https://img.shields.io/badge/Work%20in%20Progress-yellow)
 
-CueCard is a lightweight cross-platform desktop teleprompter (macOS & Windows) that keeps your speaker notes in view without letting anyone else see them. Whether you're giving a presentation, or leading a meeting, you can keep your talking points floating above everything else – invisible to screen shares and recordings.
+**Speaker notes visible only to you — for presentations, meetings, and everything in between.**
 
-<a href="https://www.youtube.com/watch?v=D2xCqQFtK-k"><strong>▶ Watch the Demo</strong></a>
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
+[![Made with Tauri](https://img.shields.io/badge/Made%20with-Tauri-FFC131?logo=tauri&logoColor=white)](https://tauri.app/)
+[![macOS](https://img.shields.io/badge/macOS-11%2B-000000?logo=apple&logoColor=white)](https://cuecard.dev/#download)
+[![Windows](https://img.shields.io/badge/Windows-10%2B-0078D6?logo=windows&logoColor=white)](https://cuecard.dev/#download)
+
+[![Website](https://img.shields.io/badge/Website-cuecard.dev-blue)](https://cuecard.dev)
+[![Demo Video](https://img.shields.io/badge/▶_Watch-Demo-red?logo=youtube)](https://www.youtube.com/watch?v=D2xCqQFtK-k)
+
+![CueCard Hero](cuecard-assets/cuecard.gif)
+
+</div>
+
+<br>
+
+## About CueCard
+
+CueCard is a **lightweight cross-platform desktop teleprompter** (macOS & Windows) that keeps your speaker notes in view without letting anyone else see them. Whether you're giving a presentation, leading a meeting, or recording content, you can keep your talking points floating above everything else — **invisible to screen shares and recordings**.
+
+**Perfect for:**
+- 🎤 Presentations and public speaking
+- 🎥 Video recordings and live streams
+- 💼 Online meetings and demos
+- 🎓 Teaching and lectures
+- 📹 Content creation
+
+<br>
+
+## Download CueCard
+
+<div align="center">
+
+### Desktop App
+
+[![Download for macOS](https://img.shields.io/badge/Download-macOS-000000?style=for-the-badge&logo=apple&logoColor=white)](https://cuecard.dev/#download)
+[![Download for Windows](https://img.shields.io/badge/Download-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://cuecard.dev/#download)
+
+### Browser Extension
+
+[![Chrome Web Store](https://img.shields.io/badge/Chrome-Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chrome.google.com/webstore)
+[![Firefox Add-ons](https://img.shields.io/badge/Firefox-Add--on-FF7139?style=for-the-badge&logo=firefox&logoColor=white)](https://addons.mozilla.org/)
+[![Safari Extension](https://img.shields.io/badge/Safari-Extension-006CFF?style=for-the-badge&logo=safari&logoColor=white)](https://github.com/thisisnsh/cuecard/releases)
+
+*Browser extension is only required for Google Slides integration*
+
+</div>
+
+<br>
 
 ## Why CueCard?
+
 - **Always on top, always private.** CueCard opens a floating window that stays above all other applications yet is hidden from screen sharing tools. Your audience sees only your slides; you see your notes.
 - **Works with Google Slides or your own text.** Use the companion browser extension to sync your existing Google Slides speaker notes, or just paste any text into the CueCard app.
-- **Free and open‑source.** CueCard is released under the MIT license, and the code is available on GitHub. It’s completely free to use.
+- **Free and open-source.** CueCard is released under the MIT license, and the code is available on GitHub. It's completely free to use.
 
-![CueCard Options](./cuecard-assets/cuecard-options.png)
+<br>
 
 ## Features
 
-CueCard focuses on the essentials so you can focus on your delivery:
+CueCard focuses on the essentials so you can focus on your delivery.
 
 ### On Time, Every Time
 
-* Write notes naturally or add simple `[time]` tags to control pacing
-* Use tags like `[time 00:15]` or `[time 03:00]` to schedule sections of your speech
-* CueCard shows a subtle on-screen countdown for each time cue
+Write notes naturally or add simple `[time]` tags to control pacing. Use tags like `[time 00:15]` or `[time 03:00]` to schedule sections of your speech. CueCard shows a subtle on-screen countdown for each time cue.
 
 ### Full of Emotions
 
-* CueCard helps you adjust tone and energy naturally—without memorizing every change
-* Add `[emotion]` tags directly inside your notes to guide your delivery
-* Use tags like `[emotion smile]`, `[emotion emphasize]`, `[emotion excited]`, or `[emotion hype]`
-* Emotion cues appear as colored markers next to your text
+CueCard helps you adjust tone and energy naturally—without memorizing every change. Add `[emotion]` tags directly inside your notes to guide your delivery. Use tags like `[emotion smile]`, `[emotion emphasize]`, `[emotion excited]`, or `[emotion hype]`. Emotion cues appear as colored markers next to your text.
 
-### Ghost Mode for Your Notes
+### Ghost Mode
 
-* Keep your notes completely hidden from viewers during screen sharing or recording
-* Ghost Mode ensures only you can see the floating note card
-* Toggle visibility instantly with a single click
+Keep your notes completely hidden from viewers during screen sharing or recording. Ghost Mode ensures only you can see the floating note card. Toggle visibility instantly with a single click.
 
 ### Just Enough to See
 
-* Adjust the transparency of the note card using a simple slider
-* Increase opacity for clear reading or fade it for subtle visibility
-* Find the perfect balance between readability and discretion
+Adjust the transparency of the note card using a simple slider. Increase opacity for clear reading or fade it for subtle visibility. Find the perfect balance between readability and discretion.
 
-![CueCard Notes](./cuecard-assets/cuecard-notes.png)
-## Get Started
+<br>
 
-### Install CueCard Desktop App
+## How to Use CueCard
 
-- **macOS**:
-  - [Download](https://cuecard.dev/#download) the latest **DMG**
-  - Open the DMG and drag **CueCard** into your **Applications** folder
-  - Requires **macOS 11 or later**
-  - Supports **Intel and Apple Silicon** (Universal binary)
-
-- **Windows**:
-  - [Download](https://cuecard.dev/#download) the latest installer
-  - Choose the installer that matches your system:
-    - **`CueCard_<version>_x64-setup.exe`** — 64-bit Intel / AMD (most PCs)
-    - **`CueCard_<version>_arm64-setup.exe`** — ARM64 devices (Surface, Snapdragon)
-  - For enterprise or managed environments, an MSI installer is also available:
-    - **`CueCard_<version>_x64.msi`**
-    - **`CueCard_<version>_arm64.msi`**
-  - Run the installer and follow the setup wizard
-  - Requires **Windows 10 or later**
-
-  > The Windows installer may show a SmartScreen warning if not yet code-signed.  
-  > Click **More info → Run anyway** if prompted.
-
-### Install CueCard Extension
-
-The browser extension is **only required** for syncing Google Slides speaker notes.
-
-- **Chrome Extension**:
-  - Install CueCard directly from the Chrome Web Store
-
-- **Firefox Extension**:
-  - Install CueCard directly from [Firefox Add-ons](https://addons.mozilla.org/)
-
-- **Safari Extension**:
-  - Download the latest DMG from the [GitHub Releases](https://github.com/thisisnsh/cuecard/releases) page
-  - Drag `CueCard Extension` into your `Applications` folder
-  - Open Safari and go to `Safari › Settings › Extensions` to enable the CueCard extension
-
-### View Google Slides Notes
+### Using Google Slides Speaker Notes
 
 1. Open the **CueCard** app
 2. Ensure the **CueCard browser extension** is installed and running
@@ -90,27 +92,56 @@ The browser extension is **only required** for syncing Google Slides speaker not
 4. Open your Google Slides deck to load the speaker notes
 5. Start the slideshow in **Presenter View**, then close the default Google Slides notes window
 
-> **Tip:** If notes don’t appear immediately, move to the next slide and then return to the previous one.
+> **Tip:** If notes don't appear immediately, move to the next slide and then return to the previous one.
 
-### View Other Notes
+### Using Custom Text Notes
 
 1. Open the **CueCard** app
 2. Click **Paste Your Notes**
-3. Paste your notes into the editor
+3. Paste or type your notes into the editor
+4. Your notes will appear in the floating window
 
-> No browser extension is required for pasted notes.
+> **No browser extension is required for pasted notes.**
 
-## Repository Guide
+<br>
 
-- [`cuecard-app/README.md`](cuecard-app/README.md) – app details, Firebase configuration, build + release steps
-- [`cuecard-extension/README.md`](cuecard-extension/README.md) – browser extension architecture, build scripts, store packaging
-- [`cuecard-website/README.md`](cuecard-website/README.md) – static site powering cuecard.dev
+## For Developers
 
-## Links
+If you're interested in contributing to CueCard or building it from source, check out these guides:
 
-- Privacy Policy: [https://cuecard.dev/privacy/](https://cuecard.dev/privacy/)
-- Terms of Service: [https://cuecard.dev/terms/](https://cuecard.dev/terms/)
-- Contributing guide: [CONTRIBUTING.md](CONTRIBUTING.md)
-- MIT License: [LICENSE](LICENSE)
+| Component | Description | Documentation |
+|-----------|-------------|---------------|
+| **Desktop App** | Tauri-based desktop application for macOS & Windows | [`cuecard-app/README.md`](cuecard-app/README.md) |
+| **Browser Extension** | Chrome, Firefox, and Safari extensions for Google Slides | [`cuecard-extension/README.md`](cuecard-extension/README.md) |
+| **Website** | Static marketing site at cuecard.dev | [`cuecard-website/README.md`](cuecard-website/README.md) |
 
-For help or support, contact **[support@cuecard.dev](mailto:support@cuecard.dev)**.
+<br>
+
+## Contributing
+
+We welcome contributions! CueCard is open source and built by the community.
+
+- Read our [Contributing Guide](CONTRIBUTING.md) to get started
+- Check out [open issues](https://github.com/thisisnsh/cuecard/issues) for ways to contribute
+- Submit bug reports and feature requests
+
+<br>
+
+## Support & Contact
+
+**Need help?**
+- Email: [support@cuecard.dev](mailto:support@cuecard.dev)
+- Issues: [GitHub Issues](https://github.com/thisisnsh/cuecard/issues)
+
+**Legal & Resources:**
+- [Privacy Policy](https://cuecard.dev/privacy/)
+- [Terms of Service](https://cuecard.dev/terms/)
+- [MIT License](LICENSE)
+
+<div align="center">
+
+**Built with [Tauri](https://tauri.app/) • Licensed under [MIT](LICENSE) • Made with ❤️ for speakers everywhere**
+
+[![Star on GitHub](https://img.shields.io/github/stars/thisisnsh/cuecard?style=social)](https://github.com/thisisnsh/cuecard)
+
+</div>
