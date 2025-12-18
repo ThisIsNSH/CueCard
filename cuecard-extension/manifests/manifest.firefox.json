@@ -7,8 +7,16 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "extension@cuecard.dev",
-      "strict_min_version": "91.0"
+      "strict_min_version": "91.0",
+      "data_collection_permissions": {
+        "required": ["websiteContent", "browsingActivity"]
+      }
     }
+  },
+
+  "developer": {
+    "name": "CueCard",
+    "url": "https://cuecard.dev"
   },
 
   "permissions": [
