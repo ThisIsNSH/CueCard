@@ -21,7 +21,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager, WebviewWindow};
 #[cfg(target_os = "macos")]
-use tauri_nspanel::{tauri_panel, WebviewWindowExt, PanelLevel, StyleMask, CollectionBehavior};
+use tauri_nspanel::{tauri_panel, CollectionBehavior, PanelLevel, StyleMask, WebviewWindowExt};
 use tauri_plugin_opener::OpenerExt;
 use tauri_plugin_store::StoreExt;
 use tower_http::cors::{Any, CorsLayer};
@@ -37,7 +37,8 @@ const REDIRECT_URI: &str = "http://127.0.0.1:3642/oauth/callback";
 
 // Firebase REST API endpoints
 const FIREBASE_SIGNUP_URL: &str = "https://identitytoolkit.googleapis.com/v1/accounts:signUp";
-const FIREBASE_SIGNIN_IDP_URL: &str = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp";
+const FIREBASE_SIGNIN_IDP_URL: &str =
+    "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp";
 const FIREBASE_TOKEN_URL: &str = "https://securetoken.googleapis.com/v1/token";
 
 // Scopes
@@ -188,8 +189,7 @@ static SLIDE_NOTES: Lazy<Arc<RwLock<HashMap<String, String>>>> =
     Lazy::new(|| Arc::new(RwLock::new(HashMap::new())));
 static CURRENT_PRESENTATION_ID: Lazy<Arc<RwLock<Option<String>>>> =
     Lazy::new(|| Arc::new(RwLock::new(None)));
-static APP_HANDLE: Lazy<Arc<RwLock<Option<AppHandle>>>> =
-    Lazy::new(|| Arc::new(RwLock::new(None)));
+static APP_HANDLE: Lazy<Arc<RwLock<Option<AppHandle>>>> = Lazy::new(|| Arc::new(RwLock::new(None)));
 
 // Firebase and OAuth state
 static FIREBASE_CONFIG: Lazy<Arc<RwLock<Option<FirebaseConfig>>>> =
@@ -224,25 +224,23 @@ fn load_firebase_config(app: &AppHandle) -> Result<FirebaseConfig, String> {
         Some(std::path::PathBuf::from("../../firebase-config.json")),
     ];
 
-    for path_opt in possible_paths {
-        if let Some(path) = path_opt {
-            if path.exists() {
-                let content = std::fs::read_to_string(&path)
-                    .map_err(|e| format!("Failed to read firebase-config.json: {}", e))?;
-                let config_file: FirebaseConfigFile = serde_json::from_str(&content)
-                    .map_err(|e| format!("Failed to parse firebase-config.json: {}", e))?;
+    for path in possible_paths.into_iter().flatten() {
+        if path.exists() {
+            let content = std::fs::read_to_string(&path)
+                .map_err(|e| format!("Failed to read firebase-config.json: {}", e))?;
+            let config_file: FirebaseConfigFile = serde_json::from_str(&content)
+                .map_err(|e| format!("Failed to parse firebase-config.json: {}", e))?;
 
-                let config = FirebaseConfig {
-                    api_key: config_file.firebase.api_key,
-                    auth_domain: config_file.firebase.auth_domain,
-                    project_id: config_file.firebase.project_id,
-                    storage_bucket: config_file.firebase.storage_bucket,
-                    messaging_sender_id: config_file.firebase.messaging_sender_id,
-                    app_id: config_file.firebase.app_id,
-                };
+            let config = FirebaseConfig {
+                api_key: config_file.firebase.api_key,
+                auth_domain: config_file.firebase.auth_domain,
+                project_id: config_file.firebase.project_id,
+                storage_bucket: config_file.firebase.storage_bucket,
+                messaging_sender_id: config_file.firebase.messaging_sender_id,
+                app_id: config_file.firebase.app_id,
+            };
 
-                return Ok(config);
-            }
+            return Ok(config);
         }
     }
 
@@ -343,7 +341,9 @@ async fn fetch_oauth_credentials(firebase_token: &str) -> Result<OAuthCredential
 }
 
 /// Exchange Google ID token for Firebase ID token
-async fn exchange_google_token_for_firebase(google_id_token: &str) -> Result<FirebaseTokens, String> {
+async fn exchange_google_token_for_firebase(
+    google_id_token: &str,
+) -> Result<FirebaseTokens, String> {
     let config = FIREBASE_CONFIG
         .read()
         .clone()
@@ -616,7 +616,7 @@ fn save_firebase_tokens_to_store(app: &AppHandle) {
         let tokens = FIREBASE_TOKENS.read();
         if let Some(ref t) = *tokens {
             if let Ok(json) = serde_json::to_value(t) {
-                let _ = store.set("firebase_tokens", json);
+                store.set("firebase_tokens", json);
                 let _ = store.save();
             }
         }
@@ -628,7 +628,7 @@ fn save_slides_tokens_to_store(app: &AppHandle) {
         let tokens = SLIDES_TOKENS.read();
         if let Some(ref t) = *tokens {
             if let Ok(json) = serde_json::to_value(t) {
-                let _ = store.set("slides_tokens", json);
+                store.set("slides_tokens", json);
                 let _ = store.save();
             }
         }
@@ -640,7 +640,7 @@ fn save_oauth_credentials_to_store(app: &AppHandle) {
         let creds = OAUTH_CREDENTIALS.read();
         if let Some(ref c) = *creds {
             if let Ok(json) = serde_json::to_value(c) {
-                let _ = store.set("oauth_credentials", json);
+                store.set("oauth_credentials", json);
                 let _ = store.save();
             }
         }
@@ -1332,17 +1332,17 @@ async fn refresh_notes(app: AppHandle) -> Result<Option<String>, String> {
 }
 
 // =============================================================================
-// WINDOW MANAGEMENT 
+// WINDOW MANAGEMENT
 // =============================================================================
 
 #[tauri::command]
-fn set_screenshot_protection(app: AppHandle, enabled: bool) -> Result<(), String> {    
+fn set_screenshot_protection(app: AppHandle, enabled: bool) -> Result<(), String> {
     let window = app
         .get_webview_window("main")
         .ok_or("Failed to get main window")?;
     window
         .set_content_protected(enabled)
-        .map_err(|e| format!("Failed to update content protection: {}", e))?;        
+        .map_err(|e| format!("Failed to update content protection: {}", e))?;
     Ok(())
 }
 
@@ -1370,19 +1370,14 @@ fn init_nspanel(app_handle: &AppHandle) {
     panel.set_level(PanelLevel::Floating.value());
 
     // Prevent panel from activating the app (required for fullscreen display)
-    panel.set_style_mask(
-        StyleMask::empty()
-            .nonactivating_panel()
-            .resizable()  
-            .into()
-    );
+    panel.set_style_mask(StyleMask::empty().nonactivating_panel().resizable().into());
 
     // Allow panel to display over fullscreen windows and join all spaces
     panel.set_collection_behavior(
         CollectionBehavior::new()
             .full_screen_auxiliary()
             .can_join_all_spaces()
-            .into()
+            .into(),
     );
 
     // Prevent panel from hiding when app deactivates
@@ -1397,9 +1392,8 @@ fn init_nspanel(app_handle: &AppHandle) {
 fn init_windows_window(app_handle: &AppHandle) {
     use windows::Win32::Foundation::HWND;
     use windows::Win32::UI::WindowsAndMessaging::{
-        GetWindowLongW, SetWindowLongW, SetWindowPos,
-        GWL_EXSTYLE, HWND_TOPMOST, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE,
-        WS_EX_TOOLWINDOW, WS_EX_APPWINDOW, WS_EX_NOACTIVATE,
+        GetWindowLongW, SetWindowLongW, SetWindowPos, GWL_EXSTYLE, HWND_TOPMOST, SWP_NOACTIVATE,
+        SWP_NOMOVE, SWP_NOSIZE, WS_EX_APPWINDOW, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
     };
 
     let window = app_handle.get_webview_window("main").unwrap();
@@ -1423,7 +1417,10 @@ fn init_windows_window(app_handle: &AppHandle) {
             let _ = SetWindowPos(
                 hwnd,
                 HWND_TOPMOST,
-                0, 0, 0, 0,
+                0,
+                0,
+                0,
+                0,
                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
             );
         }
@@ -1439,7 +1436,7 @@ pub fn run() {
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::default().build())
-        .plugin(tauri_plugin_updater::Builder::default().build()) 
+        .plugin(tauri_plugin_updater::Builder::default().build())
         .plugin(tauri_plugin_process::init());
 
     #[cfg(target_os = "macos")]

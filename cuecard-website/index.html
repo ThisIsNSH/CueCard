@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CueCard - Speaker Notes Visible Only to You</title>
-    <meta name="description" content="Speaker notes visible only to you - for presentations, meetings, dates, and everything. Sync notes from Google Slides and view them discreetly.">
+    <meta name="description"
+        content="Speaker notes visible only to you - for presentations, meetings, dates, and everything. Sync notes from Google Slides and view them discreetly.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/png" href="/assets/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
@@ -15,11 +19,11 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
     <link rel="manifest" href="/assets/site.webmanifest" />
 </head>
+
 <body>
     <svg aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden;">
         <symbol id="cuecard-logo" viewBox="0 0 571 614">
-            <path fill="#FFFFFF" opacity="1.000000" stroke="none" 
-            	d="
+            <path fill="#FFFFFF" opacity="1.000000" stroke="none" d="
             M287.988312,537.146179 
             	C283.303528,537.101196 278.618774,537.056213 273.091858,536.996460 
             	C267.495850,537.036133 262.742035,537.090576 257.988190,537.145020 
@@ -129,14 +133,14 @@
             	C384.062042,442.297363 384.476898,444.521027 383.993561,446.528442 
             	C381.209167,458.092926 376.394562,468.593597 367.037781,476.436737 
             	C360.274078,482.106354 353.038208,486.929688 343.317139,488.605103 
-            z"/>
+            z" />
         </symbol>
     </svg>
     <div class="noise-overlay"></div>
 
     <nav class="nav">
         <a href="/" class="nav-logo">
-                        <svg class="logo-icon" viewBox="0 0 571 614" width="32" height="32" aria-hidden="true">
+            <svg class="logo-icon" viewBox="0 0 571 614" width="32" height="32" aria-hidden="true">
                 <use href="#cuecard-logo" />
             </svg>
             <span>CueCard</span>
@@ -144,15 +148,16 @@
         <div class="nav-links">
             <a href="https://github.com/thisisnsh/cuecard" target="_blank" rel="noopener" class="nav-link github-link">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    <path
+                        d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                 </svg>
                 <span class="star-count" id="github-stars">Star</span>
             </a>
             <a href="#download" class="nav-link download-link" id="nav-download-link">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
                 <span id="nav-download-count">Download</span>
             </a>
@@ -176,19 +181,21 @@
             <div class="hero-cta">
                 <a href="#download" class="btn btn-primary" id="hero-download-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="7 10 12 15 17 10"/>
-                        <line x1="12" y1="15" x2="12" y2="3"/>
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
                     </svg>
                     <span id="hero-download-text">Download CueCard</span>
                 </a>
-                <a href="https://github.com/thisisnsh/cuecard" target="_blank" class="btn btn-secondary" id="hero-source-btn">
+                <a href="https://github.com/thisisnsh/cuecard" target="_blank" class="btn btn-secondary"
+                    id="hero-source-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        <path
+                            d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                     </svg>
                     <span id="hero-stars-text">View Source</span>
                 </a>
-            </div> 
+            </div>
             <br>
             <p class="hero-note">
                 <a href="#faq-undetectable">Undetectable on Zoom, Microsoft Teams,<br>Google Meet and more.</a>
@@ -197,14 +204,11 @@
 
         <!-- Use Cases Section -->
         <section class="use-cases">
-            <div class="use-cases-container">                
+            <div class="use-cases-container">
                 <!-- Video Hero -->
                 <div class="video-hero">
                     <div class="video-wrapper">
-                        <iframe
-                            src="https://www.youtube.com/embed/D2xCqQFtK-k"
-                            title="CueCard Demo"
-                            frameborder="0"
+                        <iframe src="https://www.youtube.com/embed/D2xCqQFtK-k" title="CueCard Demo" frameborder="0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowfullscreen>
                         </iframe>
@@ -213,7 +217,7 @@
                 </div>
             </div>
         </section>
-        
+
         <!-- Syntax Section -->
         <section class="features syntax-notes">
             <div class="section-header">
@@ -227,17 +231,20 @@
                         <span class="feature-number">01</span>
                         <h3 class="feature-title">What You Write</h3>
                     </div>
-                    <p class="feature-desc">Write your notes naturally on CueCard, or optionally add <code>[time]</code> and <code>[emotion]</code> tags to guide timing and tone.</p>
+                    <p class="feature-desc">Write your notes naturally on CueCard, or optionally add <code>[time]</code>
+                        and <code>[emotion]</code> tags to guide timing and tone.</p>
                     <div class="notes-preview notes-preview-raw" aria-label="Sample of raw speaker notes">
                         <div class="notes-content">
-[time 00:15]
-Imagine your notes floating above the deck. [emotion smile] I've been using CueCard to do that.
+                            [time 00:15]
+                            Imagine your notes floating above the deck. [emotion smile] I've 
+                            been using CueCard to do that.
 
-[time 00:10]
-It has a [emotion emphasize] timer and that emotion-injection thingy, [emotion excited] which makes me sound way more human.
+                            [time 00:10]
+                            It has a [emotion emphasize] timer and that emotion-injection
+                            thingy, [emotion excited] which makes me sound way more human.
 
-[time 00:05]
-[emotion hype] Dude, you gotta try this out.
+                            [time 00:05]
+                            [emotion hype] Dude, you gotta try this out.
                         </div>
                     </div>
                 </div>
@@ -247,17 +254,20 @@ It has a [emotion emphasize] timer and that emotion-injection thingy, [emotion e
                         <span class="feature-number">02</span>
                         <h3 class="feature-title">What You See</h3>
                     </div>
-                    <p class="feature-desc">CueCard highlights timestamps, and action cues while the on-screen timer gently counts down.</p>
+                    <p class="feature-desc">CueCard highlights timestamps, and action cues while the on-screen timer
+                        gently counts down.</p>
                     <div class="notes-preview notes-preview-raw" aria-live="off">
                         <div class="notes-content">
-<span class="timestamp" data-time="15">[00:15]</span>
-Imagine your notes floating above the deck. <span class="action-tag">[smile]</span> I've been using CueCard to do that.
+                            <span class="timestamp" data-time="15">[00:15]</span>
+                            Imagine your notes floating above the deck. <span class="action-tag">[smile]</span> I've
+                            been using CueCard to do that.
 
-<span class="timestamp" data-time="75">[00:25]</span>
-It has a <span class="action-tag">[emphasize]</span> timer and that emotion-injection thingy, [emotion excited] which makes me sound way more human.
+                            <span class="timestamp" data-time="75">[00:25]</span>
+                            It has a <span class="action-tag">[emphasize]</span> timer and that emotion-injection
+                            thingy, <span class="action-tag">[excited]</span> which makes me sound way more human.
 
-<span class="timestamp" data-time="105">[00:30]</span>
-<span class="action-tag">[hype]</span> Dude, you gotta try this out.
+                            <span class="timestamp" data-time="105">[00:30]</span>
+                            <span class="action-tag">[hype]</span> Dude, you gotta try this out.
                         </div>
                     </div>
                 </div>
@@ -277,7 +287,8 @@ It has a <span class="action-tag">[emphasize]</span> timer and that emotion-inje
                         <span class="feature-number">01</span>
                         <h3 class="feature-title">Ghost Mode for Your Notes</h3>
                     </div>
-                    <p class="feature-desc">Hide from screen recordings or screen shares and keep speaker notes in front of your eyes. Toggle visibility instantly with a single click.</p>
+                    <p class="feature-desc">Hide from screen recordings or screen shares and keep speaker notes in front
+                        of your eyes. Toggle visibility instantly with a single click.</p>
                     <div class="feature-demo gif-demo gif-demo-visibility">
                         <!-- Screen share area with dashed border -->
                         <div class="demo-screen-area">
@@ -321,7 +332,8 @@ It has a <span class="action-tag">[emphasize]</span> timer and that emotion-inje
                         <span class="feature-number">02</span>
                         <h3 class="feature-title">Just Enough to See</h3>
                     </div>
-                    <p class="feature-desc">Set the transparency exactly how you want it with a simple slider. Find the perfect balance between visibility and discretion.</p>
+                    <p class="feature-desc">Set the transparency exactly how you want it with a simple slider. Find the
+                        perfect balance between visibility and discretion.</p>
                     <div class="feature-demo gif-demo gif-demo-transparency">
                         <!-- Screen share area with dashed border -->
                         <div class="demo-screen-area">
@@ -356,15 +368,15 @@ It has a <span class="action-tag">[emphasize]</span> timer and that emotion-inje
                         <!-- Screen sharing banner -->
                         <div class="demo-share-banner">You are screen sharing</div>
                     </div>
-                </div>                
+                </div>
             </div>
-        </section>             
+        </section>
 
         <!-- Download Section -->
         <section class="download-section" id="download">
             <div class="section-header">
                 <span class="section-tag">Download</span>
-                <h2 class="section-title">Ready to present<br/>like a pro?</h2>
+                <h2 class="section-title">Ready to present<br />like a pro?</h2>
                 <p class="section-desc">Download CueCard and never fumble through a presentation again.</p>
 
                 <p class="download-stats">
@@ -394,14 +406,15 @@ It has a <span class="action-tag">[emphasize]</span> timer and that emotion-inje
         <section class="faq">
             <div class="section-header">
                 <span class="section-tag">FAQ</span>
-                <h2 class="section-title">Questions?<br/>We've got answers.</h2>
+                <h2 class="section-title">Questions?<br />We've got answers.</h2>
             </div>
 
             <details class="faq-item">
                 <summary class="faq-question">
                     <span>Is it free?</span>
-                    <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M6 9l6 6 6-6"/>
+                    <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M6 9l6 6 6-6" />
                     </svg>
                 </summary>
                 <div class="faq-answer">
@@ -413,17 +426,19 @@ It has a <span class="action-tag">[emphasize]</span> timer and that emotion-inje
                     </p>
                 </div>
             </details>
-            
+
             <details class="faq-item" id="faq-undetectable" open>
                 <summary class="faq-question">
                     <span>Is CueCard undetectable during meetings?</span>
-                    <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M6 9l6 6 6-6"/>
+                    <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M6 9l6 6 6-6" />
                     </svg>
                 </summary>
                 <div class="faq-answer">
                     <p>
-                        Yes, it's designed to be undetectable on Zoom, Teams, Google Meet, and similar apps. Test it in a practice call first to ensure it works with your setup.
+                        Yes, it's designed to be undetectable on Zoom, Teams, Google Meet, and similar apps. Test it in
+                        a practice call first to ensure it works with your setup.
                         <a href="https://github.com/ThisIsNSH/CueCard/issues" target="_blank">Report Issues</a>
                     </p>
                 </div>
@@ -432,13 +447,18 @@ It has a <span class="action-tag">[emphasize]</span> timer and that emotion-inje
             <details class="faq-item">
                 <summary class="faq-question">
                     <span>Do I need a browser extension for Google Slides?</span>
-                    <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M6 9l6 6 6-6"/>
+                    <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M6 9l6 6 6-6" />
                     </svg>
                 </summary>
                 <div class="faq-answer">
                     <p>
-                        Yes, to sync notes from Google Slides you'll need the browser extension. Available for Safari <a href="#download">(via the Extension app)</a>, Google Chrome <a href="https://chromewebstore.google.com/search/cuecard" target="_blank">(via Web Store)</a>, and Firefox <a href="https://addons.mozilla.org/firefox/addon/cuecard/" target="_blank">(via Add-ons)</a>.
+                        Yes, to sync notes from Google Slides you'll need the browser extension. Available for Safari <a
+                            href="#download">(via the Extension app)</a>, Google Chrome <a
+                            href="https://chromewebstore.google.com/search/cuecard" target="_blank">(via Web Store)</a>,
+                        and Firefox <a href="https://addons.mozilla.org/firefox/addon/cuecard/" target="_blank">(via
+                            Add-ons)</a>.
                     </p>
                 </div>
             </details>
@@ -446,13 +466,15 @@ It has a <span class="action-tag">[emphasize]</span> timer and that emotion-inje
             <details class="faq-item">
                 <summary class="faq-question">
                     <span>Can I use CueCard without Google Slides?</span>
-                    <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M6 9l6 6 6-6"/>
+                    <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M6 9l6 6 6-6" />
                     </svg>
                 </summary>
                 <div class="faq-answer">
                     <p>
-                        Yes! You can type or paste notes directly into CueCard for any meeting. Google Slides sync is optional.
+                        Yes! You can type or paste notes directly into CueCard for any meeting. Google Slides sync is
+                        optional.
                     </p>
                 </div>
             </details>
@@ -460,13 +482,15 @@ It has a <span class="action-tag">[emphasize]</span> timer and that emotion-inje
             <details class="faq-item">
                 <summary class="faq-question">
                     <span>How do the timer and emotion tags work?</span>
-                    <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M6 9l6 6 6-6"/>
+                    <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M6 9l6 6 6-6" />
                     </svg>
                 </summary>
                 <div class="faq-answer">
                     <p>
-                        Add <code>[time mm:ss]</code> to set timing for each section, and <code>[emotion name]</code> to remind yourself of tone cues. Both are optional.
+                        Add <code>[time mm:ss]</code> to set timing for each section, and <code>[emotion name]</code> to
+                        remind yourself of tone cues. Both are optional.
                     </p>
                 </div>
             </details>
@@ -474,13 +498,15 @@ It has a <span class="action-tag">[emphasize]</span> timer and that emotion-inje
             <details class="faq-item">
                 <summary class="faq-question">
                     <span>Can others see my notes during screen sharing?</span>
-                    <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M6 9l6 6 6-6"/>
+                    <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M6 9l6 6 6-6" />
                     </svg>
                 </summary>
                 <div class="faq-answer">
                     <p>
-                        No. Turn off 'Show in Screen Capture' option in Settings to hide CueCard from screen shares completely.
+                        No. Turn off 'Show in Screen Capture' option in Settings to hide CueCard from screen shares
+                        completely.
                     </p>
                 </div>
             </details>
@@ -488,8 +514,9 @@ It has a <span class="action-tag">[emphasize]</span> timer and that emotion-inje
             <details class="faq-item">
                 <summary class="faq-question">
                     <span>Is my data safe?</span>
-                    <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M6 9l6 6 6-6"/>
+                    <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M6 9l6 6 6-6" />
                     </svg>
                 </summary>
                 <div class="faq-answer">
@@ -506,9 +533,9 @@ It has a <span class="action-tag">[emphasize]</span> timer and that emotion-inje
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-brand">
-                            <svg class="logo-icon" viewBox="0 0 571 614" width="24" height="24" aria-hidden="true">
-                <use href="#cuecard-logo" />
-            </svg>
+                <svg class="logo-icon" viewBox="0 0 571 614" width="24" height="24" aria-hidden="true">
+                    <use href="#cuecard-logo" />
+                </svg>
                 <span>CueCard</span>
             </div>
             <div class="footer-links">
@@ -526,4 +553,5 @@ It has a <span class="action-tag">[emphasize]</span> timer and that emotion-inje
 
     <script src="script.js"></script>
 </body>
+
 </html>

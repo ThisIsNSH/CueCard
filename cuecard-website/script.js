@@ -69,7 +69,7 @@ function initScrollReveal() {
 // Smooth Scroll for Anchor Links
 function initSmoothScroll() {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
+        anchor.addEventListener('click', function (e) {
             e.preventDefault();
             const href = this.getAttribute('href');
             const target = document.querySelector(href);

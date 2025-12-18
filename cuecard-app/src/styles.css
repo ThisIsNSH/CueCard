@@ -22,7 +22,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   overflow: hidden;
   background: transparent;
@@ -140,7 +141,7 @@ body {
   opacity: 38%;
 }
 
-.gsi-material-button:not(:disabled):active .gsi-material-button-state, 
+.gsi-material-button:not(:disabled):active .gsi-material-button-state,
 .gsi-material-button:not(:disabled):focus .gsi-material-button-state {
   background-color: white;
   opacity: 12%;
@@ -318,21 +319,17 @@ body {
   position: relative;
 
   /* Mask for fade in/out */
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0px,
-    black 24px,
-    black calc(100% - 24px),
-    transparent 100%
-  );
+  -webkit-mask-image: linear-gradient(to bottom,
+      transparent 0px,
+      black 24px,
+      black calc(100% - 24px),
+      transparent 100%);
 
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0px,
-    black 24px,
-    black calc(100% - 24px),
-    transparent 100%
-  );
+  mask-image: linear-gradient(to bottom,
+      transparent 0px,
+      black 24px,
+      black calc(100% - 24px),
+      transparent 100%);
 
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
@@ -364,21 +361,17 @@ body {
   position: relative;
 
   /* Mask for fade in/out */
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0px,
-    black 24px,
-    black calc(100% - 24px),
-    transparent 100%
-  );
+  -webkit-mask-image: linear-gradient(to bottom,
+      transparent 0px,
+      black 24px,
+      black calc(100% - 24px),
+      transparent 100%);
 
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0px,
-    black 24px,
-    black calc(100% - 24px),
-    transparent 100%
-  );
+  mask-image: linear-gradient(to bottom,
+      transparent 0px,
+      black 24px,
+      black calc(100% - 24px),
+      transparent 100%);
 
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
@@ -398,12 +391,14 @@ body {
 
 /* Warning state: when time < 00:10 */
 .notes-content .timestamp.time-warning {
-  color: var(--color-yellow); /* Yellow */
+  color: var(--color-yellow);
+  /* Yellow */
 }
 
 /* Overtime state: when time < 00:00 (counting up) */
 .notes-content .timestamp.time-overtime {
-  color: #ff736a; /* Red */
+  color: #ff736a;
+  /* Red */
 }
 
 .notes-content .action-tag {
@@ -566,9 +561,11 @@ body {
     transform: scaleX(0);
     opacity: 0;
   }
+
   50% {
     opacity: 1;
   }
+
   100% {
     transform: scaleX(1);
     opacity: 1;
@@ -661,16 +658,19 @@ body {
 }
 
 @keyframes blink {
-  0%, 100% {
-    color: var(--text-secondary);  
+
+  0%,
+  100% {
+    color: var(--text-secondary);
   }
+
   50% {
     color: var(--color-yellow);
   }
 }
 
 .btn-download-updates:hover {
-  animation-play-state: paused; 
+  animation-play-state: paused;
   opacity: 0.8;
 }
 
@@ -923,11 +923,11 @@ body {
   border-radius: 50%;
 }
 
-.toggle-switch input:checked + .toggle-slider {
+.toggle-switch input:checked+.toggle-slider {
   background-color: var(--color-green);
   opacity: 1;
 }
 
-.toggle-switch input:checked + .toggle-slider:before {
+.toggle-switch input:checked+.toggle-slider:before {
   transform: translateX(20px);
 }

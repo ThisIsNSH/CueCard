@@ -42,7 +42,9 @@
 }
 
 /* Reset & Base */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -217,8 +219,17 @@ main {
 }
 
 @keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 0.5; }
-    50% { transform: scale(1.1); opacity: 0.8; }
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
 }
 
 .hero-badge {
@@ -272,10 +283,12 @@ main {
 }
 
 @keyframes heroCursorBlink {
+
     0%,
     100% {
         opacity: 1;
     }
+
     50% {
         opacity: 0;
     }
@@ -290,8 +303,15 @@ main {
 }
 
 @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
 }
 
 .hero-title {
@@ -333,8 +353,17 @@ main {
 }
 
 @keyframes titleGlow {
-    0%, 100% { opacity: 0.6; filter: blur(40px); }
-    50% { opacity: 0.9; filter: blur(60px); }
+
+    0%,
+    100% {
+        opacity: 0.6;
+        filter: blur(40px);
+    }
+
+    50% {
+        opacity: 0.9;
+        filter: blur(60px);
+    }
 }
 
 .hero-subtitle {
@@ -416,9 +445,11 @@ main {
         transform: scaleX(0);
         opacity: 0;
     }
+
     50% {
         opacity: 1;
     }
+
     100% {
         transform: scaleX(1);
         opacity: 1;
@@ -465,6 +496,7 @@ main {
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -542,7 +574,8 @@ main {
 .video-wrapper {
     position: relative;
     width: 100%;
-    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    padding-bottom: 56.25%;
+    /* 16:9 aspect ratio */
     border-radius: var(--radius-lg);
     overflow: hidden;
     background: var(--bg-card);
@@ -633,9 +666,12 @@ main {
 }
 
 @keyframes floatPill {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translateY(0);
     }
+
     50% {
         transform: translateY(-8px);
     }
@@ -668,7 +704,7 @@ main {
         left: auto !important;
         right: auto !important;
         bottom: auto !important;
-    }    
+    }
 
     .video-hero {
         order: 0;
@@ -886,7 +922,9 @@ main {
     border-radius: 50%;
 }
 
-.demo-light.red { background: #ff5f57; }
+.demo-light.red {
+    background: #ff5f57;
+}
 
 .demo-app-title {
     font-family: var(--font-display);
@@ -975,15 +1013,39 @@ main {
 }
 
 @keyframes sliderFill {
-    0%, 10% { width: 75%; }
-    40%, 60% { width: 25%; }
-    90%, 100% { width: 75%; }
+
+    0%,
+    10% {
+        width: 75%;
+    }
+
+    40%,
+    60% {
+        width: 25%;
+    }
+
+    90%,
+    100% {
+        width: 75%;
+    }
 }
 
 @keyframes sliderThumb {
-    0%, 10% { left: 75px; }
-    40%, 60% { left: 12px; }
-    90%, 100% { left: 75px; }
+
+    0%,
+    10% {
+        left: 75px;
+    }
+
+    40%,
+    60% {
+        left: 12px;
+    }
+
+    90%,
+    100% {
+        left: 75px;
+    }
 }
 
 /* ===== Visibility (Ghost Mode) Demo ===== */
@@ -1002,9 +1064,21 @@ main {
 }
 
 @keyframes appTransparency {
-    0%, 10% { opacity: 1; }
-    40%, 60% { opacity: 0.4; }
-    90%, 100% { opacity: 1; }
+
+    0%,
+    10% {
+        opacity: 1;
+    }
+
+    40%,
+    60% {
+        opacity: 0.4;
+    }
+
+    90%,
+    100% {
+        opacity: 1;
+    }
 }
 
 /* ===== Screen sharing banners ===== */
@@ -1100,9 +1174,21 @@ main {
     }
 
     @keyframes sliderThumbMobile {
-        0%, 10% { left: 52px; }
-        40%, 60% { left: 8px; }
-        90%, 100% { left: 52px; }
+
+        0%,
+        10% {
+            left: 52px;
+        }
+
+        40%,
+        60% {
+            left: 8px;
+        }
+
+        90%,
+        100% {
+            left: 52px;
+        }
     }
 
     .demo-share-banner {
@@ -1141,7 +1227,7 @@ main {
     font-size: 1rem;
     line-height: 1.6;
     color: var(--text-secondary);
-    white-space: pre-wrap;
+    white-space: pre-line;
 }
 
 .syntax-notes .notes-preview-highlighted .notes-content {
@@ -1225,12 +1311,29 @@ main {
     animation: timerLoop 12s linear infinite;
 }
 
-.syntax-timer .timer-state:nth-child(1) { animation-delay: 0s; }
-.syntax-timer .timer-state:nth-child(2) { animation-delay: 2s; }
-.syntax-timer .timer-state:nth-child(3) { animation-delay: 4s; }
-.syntax-timer .timer-state:nth-child(4) { animation-delay: 6s; }
-.syntax-timer .timer-state:nth-child(5) { animation-delay: 8s; }
-.syntax-timer .timer-state:nth-child(6) { animation-delay: 10s; }
+.syntax-timer .timer-state:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.syntax-timer .timer-state:nth-child(2) {
+    animation-delay: 2s;
+}
+
+.syntax-timer .timer-state:nth-child(3) {
+    animation-delay: 4s;
+}
+
+.syntax-timer .timer-state:nth-child(4) {
+    animation-delay: 6s;
+}
+
+.syntax-timer .timer-state:nth-child(5) {
+    animation-delay: 8s;
+}
+
+.syntax-timer .timer-state:nth-child(6) {
+    animation-delay: 10s;
+}
 
 .syntax-timer .timer-state.overtime {
     color: #ff736a;
@@ -1241,18 +1344,22 @@ main {
         opacity: 0;
         transform: translateY(6px);
     }
+
     10% {
         opacity: 1;
         transform: translateY(0);
     }
+
     25% {
         opacity: 1;
         transform: translateY(0);
     }
+
     35% {
         opacity: 0;
         transform: translateY(-6px);
     }
+
     100% {
         opacity: 0;
         transform: translateY(-6px);
@@ -1555,9 +1662,17 @@ main {
     margin-bottom: var(--space-sm);
 }
 
-.release-notes-content h1 { font-size: 1.5rem; }
-.release-notes-content h2 { font-size: 1.25rem; }
-.release-notes-content h3 { font-size: 1.1rem; }
+.release-notes-content h1 {
+    font-size: 1.5rem;
+}
+
+.release-notes-content h2 {
+    font-size: 1.25rem;
+}
+
+.release-notes-content h3 {
+    font-size: 1.1rem;
+}
 
 .release-notes-content p {
     margin-bottom: var(--space-md);

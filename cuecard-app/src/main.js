@@ -1065,7 +1065,7 @@ async function showView(viewName) {
   if (currentView === 'add-notes') {
     await saveNotesToStorage();
   }
-      
+
   previousView = currentView;
   currentView = viewName;
 
