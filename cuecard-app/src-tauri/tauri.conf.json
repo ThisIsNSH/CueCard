@@ -16,7 +16,6 @@
         "acceptFirstMouse": true,
         "alwaysOnTop": true,
         "center": true,
-        "contentProtected": true,
         "decorations": false,
         "focus": false,
         "fullscreen": false,
