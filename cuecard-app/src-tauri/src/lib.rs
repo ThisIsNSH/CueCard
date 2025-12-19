@@ -209,19 +209,14 @@ static PENDING_OAUTH_SCOPE: Lazy<Arc<RwLock<Option<String>>>> =
 
 /// Load Firebase configuration from firebase-config.json
 fn load_firebase_config(app: &AppHandle) -> Result<FirebaseConfig, String> {
-    // Try to find firebase-config.json in the resource directory or app directory
-    let config_path = app
-        .path()
-        .resource_dir()
-        .map(|p| p.join("firebase-config.json"))
-        .ok();
+    // Try to find firebase-config.json in the resource directory (bundled app)
+    // or relative paths (development mode)
+    let resource_dir = app.path().resource_dir().ok();
 
-    // Also try the current directory and parent directories
     let possible_paths = vec![
-        config_path,
+        resource_dir.as_ref().map(|p| p.join("firebase-config.json")),
         Some(std::path::PathBuf::from("firebase-config.json")),
-        Some(std::path::PathBuf::from("../firebase-config.json")),
-        Some(std::path::PathBuf::from("../../firebase-config.json")),
+        Some(std::path::PathBuf::from("src-tauri/firebase-config.json")),
     ];
 
     for path in possible_paths.into_iter().flatten() {

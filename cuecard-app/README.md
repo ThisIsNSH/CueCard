@@ -29,15 +29,16 @@ Desktop client built with Tauri that keeps your speaker notes on top of every ot
 
 ### Firebase Configuration
 
-The desktop app expects a `firebase-config.json` file that mirrors `firebase-config-example.json`. It is packaged as part of the Tauri bundle so the Rust backend can bootstrap Firebase SDK calls.
+The desktop app requires a `firebase-config.json` file in the `src-tauri/` directory. This file is bundled into the app and used by the Rust backend for Firebase authentication.
 
 1. Copy the example file:
    ```bash
-   cp firebase-config-example.json firebase-config.json
+   cd src-tauri
+   cp firebase-config.example.json firebase-config.json
    ```
 2. Fill every field under the `firebase` key with the values from your Firebase project settings (Project Settings → General → Your apps).
 
-Without this file the app cannot exchange Google tokens for Firebase ID tokens, so syncing notes from the browser extension will fail.
+**Note:** The build will fail if `firebase-config.json` is missing. This ensures configuration issues are caught at build time rather than runtime.
 
 ### Run in Development
 
@@ -88,16 +89,16 @@ Note: 32-bit (x86) Windows builds are intentionally not supported.
 
 Tauri 2.x no longer auto-generates `latest.json` files. You must create them manually for each platform/architecture before uploading to GitHub Releases.
 
-**Template files in `latest/` folder:**
-- `latest/darwin-x86_64-latest.example.json` — macOS (universal binary serves both x86_64 and aarch64)
-- `latest/windows-x86_64-latest.example.json` — Windows x64
-- `latest/windows-aarch64-latest.example.json` — Windows ARM64
+**Template files in `src-tauri/latest/` folder:**
+- `src-tauri/latest/darwin-x86_64-latest.example.json` — macOS (universal binary serves both x86_64 and aarch64)
+- `src-tauri/latest/windows-x86_64-latest.example.json` — Windows x64
+- `src-tauri/latest/windows-aarch64-latest.example.json` — Windows ARM64
 
 **To create a manifest:**
 
 1. Copy the appropriate example file:
    ```bash
-   cp latest/darwin-x86_64-latest.example.json latest/darwin-x86_64-latest.json
+   cp src-tauri/latest/darwin-x86_64-latest.example.json src-tauri/latest/darwin-x86_64-latest.json
    ```
 
 2. Update the fields:
@@ -155,8 +156,8 @@ Tauri 2.x no longer auto-generates `latest.json` files. You must create them man
 
 4. Generate the updater manifest:
    ```bash
-   cp latest/darwin-x86_64-latest.example.json latest/darwin-x86_64-latest.json
-   # Edit latest/darwin-x86_64-latest.json with correct version, notes, pub_date, and signature
+   cp src-tauri/latest/darwin-x86_64-latest.example.json src-tauri/latest/darwin-x86_64-latest.json
+   # Edit src-tauri/latest/darwin-x86_64-latest.json with correct version, notes, pub_date, and signature
    ```
 
 5. Create GitHub Release:
@@ -169,7 +170,7 @@ Tauri 2.x no longer auto-generates `latest.json` files. You must create them man
       | `src-tauri/target/universal-apple-darwin/release/bundle/dmg/CueCard_<version>_universal.dmg` | `CueCard_<version>_universal.dmg` | Manual installer for users |
       | `src-tauri/target/universal-apple-darwin/release/bundle/macos/CueCard.app.tar.gz`            | `CueCard.app.tar.gz`              | **Updater payload**        |
       | `src-tauri/target/universal-apple-darwin/release/bundle/macos/CueCard.app.tar.gz.sig`        | `CueCard.app.tar.gz.sig`          | Updater signature          |
-      | `latest/darwin-x86_64-latest.json`                                                           | `darwin-x86_64-latest.json`       | macOS updater feed         |
+      | `src-tauri/latest/darwin-x86_64-latest.json`                                                           | `darwin-x86_64-latest.json`       | macOS updater feed         |
 
 
 ### Windows
@@ -232,12 +233,12 @@ Tauri 2.x no longer auto-generates `latest.json` files. You must create them man
 5. Generate the updater manifests:
    ```bash
    # Windows x64
-   cp latest/windows-x86_64-latest.example.json latest/windows-x86_64-latest.json
-   # Edit latest/windows-x86_64-latest.json with correct version, notes, pub_date, and signature
+   cp src-tauri/latest/windows-x86_64-latest.example.json src-tauri/latest/windows-x86_64-latest.json
+   # Edit src-tauri/latest/windows-x86_64-latest.json with correct version, notes, pub_date, and signature
 
    # Windows ARM64
-   cp latest/windows-aarch64-latest.example.json latest/windows-aarch64-latest.json
-   # Edit latest/windows-aarch64-latest.json with correct version, notes, pub_date, and signature
+   cp src-tauri/latest/windows-aarch64-latest.example.json src-tauri/latest/windows-aarch64-latest.json
+   # Edit src-tauri/latest/windows-aarch64-latest.json with correct version, notes, pub_date, and signature
    ```
 
 6. Create GitHub Release:
@@ -251,7 +252,7 @@ Tauri 2.x no longer auto-generates `latest.json` files. You must create them man
       | `src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/CueCard_<version>_x64-setup.exe.sig` | `CueCard_<version>_x64-setup.exe.sig` | Updater signature                 |
       | `src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/CueCard_<version>_x64.msi`            | `CueCard_<version>_x64.msi`           | MSI installer (manual only)       |
       | `src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/CueCard_<version>_x64.msi.sig`        | `CueCard_<version>_x64.msi.sig`       | MSI signature                     |
-      | `latest/windows-x86_64-latest.json`                                                               | `windows-x86_64-latest.json`          | Windows x64 updater feed          |
+      | `src-tauri/latest/windows-x86_64-latest.json`                                                               | `windows-x86_64-latest.json`          | Windows x64 updater feed          |
    - Upload: (ARM64)
       | Local build artifact path                                                                            | Upload as                               | Notes                             |
       | ---------------------------------------------------------------------------------------------------- | --------------------------------------- | --------------------------------- |
@@ -259,7 +260,7 @@ Tauri 2.x no longer auto-generates `latest.json` files. You must create them man
       | `src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/CueCard_<version>_arm64-setup.exe.sig` | `CueCard_<version>_arm64-setup.exe.sig` | Updater signature                 |
       | `src-tauri/target/aarch64-pc-windows-msvc/release/bundle/msi/CueCard_<version>_arm64.msi`            | `CueCard_<version>_arm64.msi`           | MSI installer (manual only)       |
       | `src-tauri/target/aarch64-pc-windows-msvc/release/bundle/msi/CueCard_<version>_arm64.msi.sig`        | `CueCard_<version>_arm64.msi.sig`       | MSI signature                     |
-      | `latest/windows-aarch64-latest.json`                                                                 | `windows-aarch64-latest.json`           | Windows ARM64 updater feed        |
+      | `src-tauri/latest/windows-aarch64-latest.json`                                                                 | `windows-aarch64-latest.json`           | Windows ARM64 updater feed        |
 
 
 ### Notes

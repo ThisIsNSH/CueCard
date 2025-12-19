@@ -32,20 +32,10 @@ jobs:
         run: npm install
 
       - name: Create firebase config
-        working-directory: cuecard-app
-        shell: bash
-        run: |
-          echo '${{ secrets.FIREBASE_CONFIG }}' > firebase-config.json
-          echo "File size: $(wc -c < firebase-config.json) bytes"
-          echo "File exists: $(test -f firebase-config.json && echo yes || echo no)"
-
-      - name: Verify firebase config location
         working-directory: cuecard-app/src-tauri
         shell: bash
         run: |
-          echo "Checking from src-tauri directory:"
-          ls -la ../firebase-config.json || echo "../firebase-config.json not found"
-          pwd
+          echo '${{ secrets.FIREBASE_CONFIG }}' > firebase-config.json
 
       - name: Build x64
         working-directory: cuecard-app
