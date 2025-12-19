@@ -482,6 +482,8 @@ async function initGitHubData() {
 }
 
 function getSampleReleaseData() {
+    return [];
+
     const sampleVersion = '1.0.0';
     const sampleDate = new Date().toISOString();
 
