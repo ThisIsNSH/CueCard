@@ -36,6 +36,8 @@ jobs:
         shell: bash
         run: |
           echo '${{ secrets.FIREBASE_CONFIG }}' > firebase-config.json
+          echo "File size: $(wc -c < firebase-config.json) bytes"
+          echo "File exists: $(test -f firebase-config.json && echo yes || echo no)"
 
       - name: Build x64
         working-directory: cuecard-app
