@@ -24,6 +24,7 @@
         "skipTaskbar": true,
         "transparent": true,
         "visibleOnAllWorkspaces": true,
+        "contentProtected": true,
         "height": 300,
         "width": 600,
         "minHeight": 300,

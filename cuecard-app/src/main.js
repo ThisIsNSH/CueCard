@@ -218,7 +218,7 @@ let appStore = null;
 // Storage keys
 const STORAGE_KEYS = {
   SETTINGS_OPACITY: 'settings_opacity',
-  SETTINGS_SCREENSHOT_PROTECTION: 'settings_screenshot_protection',
+  SETTINGS_SHOW_IN_SCREENSHOT: 'settings_show_in_screenshot',
   ADD_NOTES_CONTENT: 'add_notes_content'
 };
 
@@ -325,7 +325,7 @@ let previousView = null; // 'initial', 'add-notes', 'notes', 'settings'
 let manualNotes = ''; // Notes pasted by the user
 let currentSlideData = null; // Store current slide data
 let currentOpacity = 100; // Store current opacity value (10-100)
-let screenshotProtectionEnabled = true; // Default: protected (not shown in capture)
+let showInScreenshot = false; // Default: false = hidden from screenshots
 
 // Timer State
 let timerState = 'stopped'; // 'stopped', 'running', 'paused'
@@ -1428,31 +1428,39 @@ function setupFooter() {
 // SETTINGS MANAGEMENT
 // =============================================================================
 
+// Default settings values
+const DEFAULT_OPACITY = 100;
+const DEFAULT_SHOW_IN_SCREENSHOT = false; // false = hidden from screenshots
+
 // Load stored settings from persistent storage
 async function loadStoredSettings() {
-  // Load stored opacity
+  // Load stored opacity or use default
   const storedOpacity = await getStoredValue(STORAGE_KEYS.SETTINGS_OPACITY);
   if (storedOpacity !== null && storedOpacity !== undefined) {
     currentOpacity = storedOpacity;
-    // Apply the stored opacity via CSS variable
-    document.documentElement.style.setProperty('--bg-opacity', storedOpacity / 100);
+  } else {
+    currentOpacity = DEFAULT_OPACITY;
+    await setStoredValue(STORAGE_KEYS.SETTINGS_OPACITY, DEFAULT_OPACITY);
   }
+  // Apply opacity via CSS variable
+  document.documentElement.style.setProperty('--bg-opacity', currentOpacity / 100);
 
-  // Load stored screenshot protection setting
-  const storedProtection = await getStoredValue(STORAGE_KEYS.SETTINGS_SCREENSHOT_PROTECTION);
-  if (storedProtection !== null && storedProtection !== undefined) {
-    screenshotProtectionEnabled = storedProtection;
-    // Apply the stored screenshot protection
-    if (invoke) {
-      try {
-        await invoke("set_screenshot_protection", { enabled: storedProtection });
-      } catch (error) {
-        console.error("Error applying stored screenshot protection:", error);
-      }
+  // Load stored show in screenshot setting or use default
+  const storedShowInScreenshot = await getStoredValue(STORAGE_KEYS.SETTINGS_SHOW_IN_SCREENSHOT);
+  if (storedShowInScreenshot !== null && storedShowInScreenshot !== undefined) {
+    showInScreenshot = storedShowInScreenshot;
+  } else {
+    showInScreenshot = DEFAULT_SHOW_IN_SCREENSHOT;
+    await setStoredValue(STORAGE_KEYS.SETTINGS_SHOW_IN_SCREENSHOT, DEFAULT_SHOW_IN_SCREENSHOT);
+  }
+  // Apply screenshot protection via Rust (protection = !showInScreenshot)
+  if (invoke) {
+    try {
+      await invoke("set_screenshot_protection", { enabled: !showInScreenshot });
+    } catch (error) {
+      console.error("Error applying screenshot protection:", error);
     }
   }
-
-  // Loaded stored settings
 }
 
 // Settings Handlers
@@ -1474,21 +1482,19 @@ function setupSettings() {
 
   // Screen capture toggle handler
   screenCaptureToggle.addEventListener("change", async (e) => {
-    const showInCapture = e.target.checked;
-    screenshotProtectionEnabled = !showInCapture;
+    showInScreenshot = e.target.checked;
 
-    // Update screenshot protection via Tauri
-    // When "show in capture" is ON, protection should be OFF (enabled = false)
+    // Update screenshot protection via Tauri (protection = !showInScreenshot)
     if (invoke) {
       try {
-        await invoke("set_screenshot_protection", { enabled: !showInCapture });
+        await invoke("set_screenshot_protection", { enabled: !showInScreenshot });
       } catch (error) {
         console.error("Error setting screenshot protection:", error);
       }
     }
 
     // Save to persistent storage
-    await setStoredValue(STORAGE_KEYS.SETTINGS_SCREENSHOT_PROTECTION, screenshotProtectionEnabled);
+    await setStoredValue(STORAGE_KEYS.SETTINGS_SHOW_IN_SCREENSHOT, showInScreenshot);
   });
 }
 
@@ -1505,9 +1511,8 @@ async function loadCurrentSettings() {
     opacityValue.textContent = `${opacityPercent}%`;
   }
 
-  // Screen capture toggle: default is OFF (protected), so checkbox unchecked
-  // The screenshotProtectionEnabled state tracks if protection is on
+  // Screen capture toggle: checkbox reflects showInScreenshot directly
   if (screenCaptureToggle) {
-    screenCaptureToggle.checked = !screenshotProtectionEnabled;
+    screenCaptureToggle.checked = showInScreenshot;
   }
 }
