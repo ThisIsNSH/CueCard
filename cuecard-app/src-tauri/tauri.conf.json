@@ -59,7 +59,7 @@
     "macOS": {
       "minimumSystemVersion": "11.0",
       "dmg": {
-        "background": "../../cuecard-assets/dmg-background.png"
+        "background": "icons/dmg-background.png"
       }
     },
     "windows": {
