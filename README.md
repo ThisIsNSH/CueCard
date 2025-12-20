@@ -40,13 +40,15 @@ CueCard is a **lightweight cross-platform desktop teleprompter** (macOS & Window
 [![Download for macOS](https://img.shields.io/badge/Download-macOS-000000?style=for-the-badge&logo=apple&logoColor=white)](https://cuecard.dev/#download)
 [![Download for Windows](https://img.shields.io/badge/Download-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://cuecard.dev/#download)
 
-### 🔌 Browser Extension
+### 🔌 Browser Extensions
 
-[![Chrome Web Store](https://img.shields.io/badge/Chrome-Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chrome.google.com/webstore)
-[![Firefox Add-ons](https://img.shields.io/badge/Firefox-Add--on-FF7139?style=for-the-badge&logo=firefox&logoColor=white)](https://addons.mozilla.org/)
-[![Safari Extension](https://img.shields.io/badge/Safari-Extension-006CFF?style=for-the-badge&logo=safari&logoColor=white)](https://github.com/thisisnsh/cuecard/releases)
+[![Safari Extension](https://img.shields.io/badge/Safari-Extension-006CFF?style=for-the-badge&logo=safari&logoColor=white)](https://cuecard.dev/#download)
+[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://cuecard.dev/#download)
+[![Firefox Extension](https://img.shields.io/badge/Firefox-Extension-FF7139?style=for-the-badge&logo=firefox&logoColor=white)](https://cuecard.dev/#download)
 
 *Browser extension is only required for Google Slides integration*
+
+**All downloads and installation instructions are available at [cuecard.dev](https://cuecard.dev/#download)**
 
 </div>
 
