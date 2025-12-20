@@ -498,41 +498,55 @@ function getSampleReleaseData() {
                 // macOS
                 {
                     name: `CueCard_${sampleVersion}_universal.dmg`,
-                    size: 45 * 1024 * 1024, // 45 MB
+                    size: 45 * 1024 * 1024,
                     download_count: 1250,
-                    browser_download_url: '#'
-                },
-                // Safari Extension
-                {
-                    name: `CueCard_Extension_${sampleVersion}_universal.dmg`,
-                    size: 12 * 1024 * 1024, // 12 MB
-                    download_count: 890,
                     browser_download_url: '#'
                 },
                 // Windows x64
                 {
                     name: `CueCard_${sampleVersion}_x64-setup.exe`,
-                    size: 38 * 1024 * 1024, // 38 MB
+                    size: 38 * 1024 * 1024,
                     download_count: 2340,
                     browser_download_url: '#'
                 },
                 {
                     name: `CueCard_${sampleVersion}_x64.msi`,
-                    size: 40 * 1024 * 1024, // 40 MB
+                    size: 40 * 1024 * 1024,
                     download_count: 890,
                     browser_download_url: '#'
                 },
                 // Windows ARM64
                 {
                     name: `CueCard_${sampleVersion}_arm64-setup.exe`,
-                    size: 36 * 1024 * 1024, // 36 MB
+                    size: 36 * 1024 * 1024,
                     download_count: 450,
                     browser_download_url: '#'
                 },
                 {
                     name: `CueCard_${sampleVersion}_arm64.msi`,
-                    size: 38 * 1024 * 1024, // 38 MB
+                    size: 38 * 1024 * 1024,
                     download_count: 220,
+                    browser_download_url: '#'
+                },
+                // Safari Extension
+                {
+                    name: `CueCard_${sampleVersion}_safari.dmg`,
+                    size: 12 * 1024 * 1024,
+                    download_count: 890,
+                    browser_download_url: '#'
+                },
+                // Chrome Extension
+                {
+                    name: `CueCard_${sampleVersion}_chrome.zip`,
+                    size: 2 * 1024 * 1024,
+                    download_count: 560,
+                    browser_download_url: '#'
+                },
+                // Firefox Extension
+                {
+                    name: `CueCard_${sampleVersion}_firefox.zip`,
+                    size: 2 * 1024 * 1024,
+                    download_count: 340,
                     browser_download_url: '#'
                 },
                 // Files that should be filtered out
@@ -694,11 +708,38 @@ function displayDownloadAssets(assets) {
         return;
     }
 
-    // Filter to only show .dmg, .exe, .msi files
-    const allowedExtensions = ['.dmg', '.exe', '.msi'];
+    // Filter assets based on specific combinations:
+    // - "universal" + "dmg" -> macOS
+    // - "x64" + "exe" -> Windows Personal x64
+    // - "x64" + "msi" -> Windows Enterprise x64
+    // - "arm" + "exe" -> Windows Personal ARM
+    // - "arm" + "msi" -> Windows Enterprise ARM
+    // - "safari" + "dmg" -> Safari Extension
+    // - "chrome" + "zip" -> Chrome Extension
+    // - "firefox" + "zip" -> Firefox Extension
     const filteredAssets = assets.filter(asset => {
         const name = asset.name.toLowerCase();
-        return allowedExtensions.some(ext => name.endsWith(ext));
+        const ext = name.split('.').pop();
+
+        // macOS: universal + dmg
+        if (name.includes('universal') && ext === 'dmg') return true;
+
+        // Windows x64: x64 + (exe or msi)
+        if (name.includes('x64') && (ext === 'exe' || ext === 'msi')) return true;
+
+        // Windows ARM: arm + (exe or msi)
+        if (name.includes('arm') && (ext === 'exe' || ext === 'msi')) return true;
+
+        // Safari: safari + dmg
+        if (name.includes('safari') && ext === 'dmg') return true;
+
+        // Chrome: chrome + zip
+        if (name.includes('chrome') && ext === 'zip') return true;
+
+        // Firefox: firefox + zip
+        if (name.includes('firefox') && ext === 'zip') return true;
+
+        return false;
     });
 
     if (filteredAssets.length === 0) {
@@ -711,8 +752,8 @@ function displayDownloadAssets(assets) {
 
     grid.innerHTML = '';
 
-    // Render platform cards in 2x2 grid: Row 1 = macOS + Safari, Row 2 = Windows x64 + Windows ARM
-    const platformOrder = ['macos', 'safari', 'windows_x64', 'windows_arm'];
+    // Render platform cards
+    const platformOrder = ['windows_x64', 'windows_arm', 'macos', 'safari', 'chrome', 'firefox'];
     platformOrder.forEach(platformKey => {
         if (platforms[platformKey] && platforms[platformKey].assets.length > 0) {
             const card = createPlatformCard(platformKey, platforms[platformKey]);
@@ -723,56 +764,122 @@ function displayDownloadAssets(assets) {
 
 function groupAssetsByPlatform(assets) {
     const platforms = {
-        macos: {
-            name: 'macOS',
-            subtitle: 'Native macOS application',
-            icon: getMacIcon(),
-            assets: [],
-            totalSize: 0
-        },
-        safari: {
-            name: 'Safari Extension',
-            subtitle: 'Browser extension for Safari',
-            icon: getSafariIcon(),
-            assets: [],
-            totalSize: 0
-        },
         windows_x64: {
             name: 'Windows x64',
             subtitle: 'For Intel & AMD processors',
             icon: getWindowsIcon(),
             assets: [],
-            totalSize: 0
+            totalSize: 0,
+            instructions: [
+                'Download EXE (personal) or MSI (enterprise)',
+                'Run the installer and follow prompts',
+                'If SmartScreen appears, click "More info" then "Run anyway"',
+                'Launch CueCard from Start Menu'
+            ]
         },
         windows_arm: {
             name: 'Windows ARM',
-            subtitle: 'For Surface & Snapdragon',
+            subtitle: 'For Surface & Snapdragon devices',
             icon: getWindowsIcon(),
             assets: [],
-            totalSize: 0
+            totalSize: 0,
+            instructions: [
+                'Download EXE (personal) or MSI (enterprise)',
+                'Run the installer and follow prompts',
+                'If SmartScreen appears, click "More info" then "Run anyway"',
+                'Launch CueCard from Start Menu'
+            ]
+        },
+        macos: {
+            name: 'macOS',
+            subtitle: 'Universal (Intel + Apple Silicon)',
+            icon: getMacIcon(),
+            assets: [],
+            totalSize: 0,
+            instructions: [
+                'Open the downloaded .dmg file',
+                'Drag CueCard to your Applications folder',
+                'Open CueCard from Applications',
+                'If prompted, click "Open" to confirm'
+            ]
+        },
+        safari: {
+            name: 'Safari Extension',
+            subtitle: 'Sync notes from Google Slides',
+            icon: getSafariIcon(),
+            assets: [],
+            totalSize: 0,
+            instructions: [
+                'Open the downloaded .dmg file',
+                'Drag CueCard Extension to Applications',
+                'Open CueCard Extension app once to install the Safari extension',
+                'Go to Safari → Settings → Extensions and enable CueCard',
+                'You can close the app after enabling — it only needs to run once'
+            ]
+        },
+        chrome: {
+            name: 'Chrome Extension',
+            subtitle: 'Sync notes from Google Slides',
+            icon: getChromeIcon(),
+            assets: [],
+            totalSize: 0,
+            instructions: [
+                'Download and extract the ZIP file',
+                'Open Chrome and go to chrome://extensions',
+                'Enable "Developer mode" in the top right',
+                'Click "Load unpacked" and select the extracted folder',
+            ],
+            badge: 'Coming to Web Store'
+        },
+        firefox: {
+            name: 'Firefox Extension',
+            subtitle: 'Sync notes from Google Slides',
+            icon: getFirefoxIcon(),
+            assets: [],
+            totalSize: 0,
+            instructions: [
+                'Download the ZIP file',
+                'Open Firefox and go to about:debugging#/runtime/this-firefox',
+                'Click "Load Temporary Add-on"',
+                'Select the ZIP file (no need to extract)',
+            ],
+            badge: 'Coming to Add-ons'
         }
     };
 
     assets.forEach(asset => {
         const name = asset.name.toLowerCase();
         const ext = name.split('.').pop();
-        const isExtension = name.includes('extension');
-        const isArm = name.includes('arm64') || name.includes('aarch64');
 
-        if (isExtension && ext === 'dmg') {
-            platforms.safari.assets.push(asset);
-            platforms.safari.totalSize += asset.size;
-        } else if (ext === 'dmg') {
+        // macOS: universal + dmg (not safari)
+        if (name.includes('universal') && ext === 'dmg' && !name.includes('safari')) {
             platforms.macos.assets.push(asset);
             platforms.macos.totalSize += asset.size;
-        } else if (ext === 'exe' || ext === 'msi') {
-            if (isArm) {
-                platforms.windows_arm.assets.push(asset);
-                platforms.windows_arm.totalSize += asset.size;
-            } else {
-                platforms.windows_x64.assets.push(asset);
-                platforms.windows_x64.totalSize += asset.size;
-            }
+        }
+        // Safari: safari + dmg
+        else if (name.includes('safari') && ext === 'dmg') {
+            platforms.safari.assets.push(asset);
+            platforms.safari.totalSize += asset.size;
+        }
+        // Chrome: chrome + zip
+        else if (name.includes('chrome') && ext === 'zip') {
+            platforms.chrome.assets.push(asset);
+            platforms.chrome.totalSize += asset.size;
+        }
+        // Firefox: firefox + zip
+        else if (name.includes('firefox') && ext === 'zip') {
+            platforms.firefox.assets.push(asset);
+            platforms.firefox.totalSize += asset.size;
+        }
+        // Windows x64: x64 + (exe or msi)
+        else if (name.includes('x64') && (ext === 'exe' || ext === 'msi')) {
+            platforms.windows_x64.assets.push(asset);
+            platforms.windows_x64.totalSize += asset.size;
+        }
+        // Windows ARM: arm + (exe or msi)
+        else if (name.includes('arm') && (ext === 'exe' || ext === 'msi')) {
+            platforms.windows_arm.assets.push(asset);
+            platforms.windows_arm.totalSize += asset.size;
         }
     });
 
@@ -799,6 +906,24 @@ function createPlatformCard(platformKey, platform) {
         `;
     }).join('');
 
+    // Build instructions accordion
+    const instructionsHtml = platform.instructions ? `
+        <details class="install-instructions">
+            <summary class="install-instructions-summary">
+                <span>Installation Instructions</span>
+                <svg class="install-instructions-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9l6 6 6-6"/>
+                </svg>
+            </summary>
+            <ol class="install-instructions-list">
+                ${platform.instructions.map(step => `<li>${step}</li>`).join('')}
+            </ol>
+        </details>
+    ` : '';
+
+    // Add badge if present (for Chrome/Firefox "Coming to Store" labels)
+    const badgeHtml = platform.badge ? `<span class="platform-badge">${platform.badge}</span>` : '';
+
     card.innerHTML = `
         <div class="platform-card-header">
             <div class="platform-icon">${platform.icon}</div>
@@ -808,6 +933,8 @@ function createPlatformCard(platformKey, platform) {
         <div class="platform-downloads">
             ${downloadButtons}
         </div>
+        ${instructionsHtml}
+        ${badgeHtml}
     `;
 
     return card;
@@ -815,8 +942,8 @@ function createPlatformCard(platformKey, platform) {
 
 function getDownloadButtonLabel(filename, size, platformKey) {
     const name = filename.toLowerCase();
-    const ext = name.split('.').pop();
-    const sizeStr = formatFileSize(size);
+    const ext = name.split('.').pop().toUpperCase();
+    const sizeStr = formatFileSize(size).replace(' ', '');
 
     // Extract version from filename (e.g., CueCard_1.0.1_universal.dmg -> 1.0.1)
     // Supports 1, 1.1, or 1.2.3 formats and normalizes to X.Y.Z
@@ -827,54 +954,35 @@ function getDownloadButtonLabel(filename, size, platformKey) {
         const major = parts[0] || '0';
         const minor = parts[1] || '0';
         const patch = parts[2] || '0';
-        version = `(v${major}.${minor}.${patch})`;
+        version = `v${major}.${minor}.${patch}`;
     }
 
-    if (platformKey === 'macos') {
-        if (name.includes('universal')) {
-            return {
-                label: `Universal ${version} - ${sizeStr}`,
-                subtitle: 'Intel + Apple Silicon'
-            };
-        } else if (name.includes('arm64') || name.includes('aarch64')) {
-            return {
-                label: `Apple Silicon ${version} - ${sizeStr}`,
-                subtitle: null
-            };
-        } else if (name.includes('x64') || name.includes('x86_64')) {
-            return {
-                label: `Intel ${version} - ${sizeStr}`,
-                subtitle: null
-            };
-        }
-        return { label: `Download ${version} - ${sizeStr}`, subtitle: null };
-    }
+    // Format: size EXT (version)
+    // e.g., "45MB DMG (v1.0.0)" with version styled differently
+    const versionPart = version ? ` <span class="btn-version">(${version})</span>` : '';
 
-    if (platformKey === 'safari') {
-        if (name.includes('universal')) {
-            return {
-                label: `Universal ${version} - ${sizeStr}`,
-                subtitle: 'Intel + Apple Silicon'
-            };
-        }
-        return { label: `Download ${version} - ${sizeStr}`, subtitle: null };
+    if (platformKey === 'macos' || platformKey === 'safari') {
+        return {
+            label: `${sizeStr} DMG${versionPart}`,
+            subtitle: null
+        };
     }
 
     if (platformKey === 'windows_x64' || platformKey === 'windows_arm') {
-        if (ext === 'exe') {
-            return {
-                label: `EXE Personal ${version} - ${sizeStr}`,
-                subtitle: null
-            };
-        } else if (ext === 'msi') {
-            return {
-                label: `MSI Enterprise ${version} - ${sizeStr}`,
-                subtitle: null
-            };
-        }
+        return {
+            label: `${sizeStr} ${ext}${versionPart}`,
+            subtitle: null
+        };
     }
 
-    return { label: `Download ${version} - ${sizeStr}`, subtitle: null };
+    if (platformKey === 'chrome' || platformKey === 'firefox') {
+        return {
+            label: `${sizeStr} ZIP${versionPart}`,
+            subtitle: null
+        };
+    }
+
+    return { label: `${sizeStr} ${ext}${versionPart}`, subtitle: null };
 }
 
 function getAssetDisplayInfo(filename) {
@@ -964,6 +1072,22 @@ function getWindowsIcon() {
 function getSafariIcon() {
     return `<svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5.5-2.5l7.5-3.5 3.5-7.5-7.5 3.5-3.5 7.5zm5.5-6a1 1 0 110 2 1 1 0 010-2z"/>
+    </svg>`;
+}
+
+function getChromeIcon() {
+    return `<svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
+        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="12" cy="12" r="4" fill="currentColor"/>
+        <path d="M21.17 8H12" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <path d="M7.4 19.45L12 12" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <path d="M7.4 4.55L12 12" stroke="currentColor" stroke-width="1.5" fill="none"/>
+    </svg>`;
+}
+
+function getFirefoxIcon() {
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32" fill="currentColor" aria-hidden="true">
+        <path d="M12 2c-2.64 0-5.1 1.03-6.97 2.9C3.16 6.78 2 9.3 2 12c0 2.7 1.16 5.22 3.03 7.1C6.9 20.97 9.36 22 12 22c3.07 0 5.9-1.4 7.77-3.84.9-1.18 1.41-2.62 1.41-4.16 0-3.37-2.38-6.3-5.64-6.97-.45-.1-.9-.14-1.35-.14-.38 0-.76.04-1.13.1.64.35 1.2.84 1.63 1.42.53.7.82 1.55.82 2.42 0 2.25-1.82 4.07-4.07 4.07-2.25 0-4.07-1.82-4.07-4.07 0-1.4.7-2.64 1.77-3.38-.3.05-.6.12-.9.2-.7.2-1.34.53-1.9.97C7.02 7.08 6.2 8.5 6.2 10.1c0 3.2 2.6 5.8 5.8 5.8 3.2 0 5.8-2.6 5.8-5.8 0-1.93-.95-3.64-2.42-4.7C14.45 4.8 13.25 4.5 12 4.5c-.6 0-1.2.07-1.77.2C10.8 3.1 11.4 2 12 2z"/>
     </svg>`;
 }
 
