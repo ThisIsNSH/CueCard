@@ -691,10 +691,10 @@ function groupAssetsByPlatform(assets) {
             assets: [],
             totalSize: 0,
             instructions: [
-                'Download the ZIP file',
+                'Download and extract the ZIP file',
                 'Open Firefox and go to about:debugging#/runtime/this-firefox',
                 'Click "Load Temporary Add-on"',
-                'Select the ZIP file (no need to extract)',
+                'Select manifest.json in the extracted folder',
             ],
             badge: 'Coming to Add-ons'
         }
