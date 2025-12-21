@@ -43,6 +43,10 @@ jobs:
           # Import certificate
           echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
           security import certificate.p12 -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+
+          # Allow codesign to access the certificate without user interaction
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
           security list-keychain -d user -s $KEYCHAIN_PATH
 
           # Clean up
@@ -53,12 +57,17 @@ jobs:
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          # Debug: List available identities
+          security find-identity -v -p codesigning
+
           # Build for macOS only (not iOS)
           xcodebuild archive \
             -project "CueCard Extension.xcodeproj" \
             -scheme "CueCard Extension (macOS)" \
             -archivePath "$RUNNER_TEMP/CueCard.xcarchive" \
             -destination "generic/platform=macOS" \
+            -allowProvisioningUpdates \
+            CODE_SIGN_STYLE=Automatic \
             DEVELOPMENT_TEAM="${APPLE_TEAM_ID}"
 
           # Export the app
