@@ -454,7 +454,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (currentSlideData) {
           showView('notes');
         } else {
-          displayNotes('Open a Google Slides presentation to see notes here...');
+          displayNotes('Open a Google Slides presentation to see notes here.\n[note Install CueCard Extension to sync notes]');
           window.title = 'No Slide Open';
           showView('notes');
         }
@@ -1029,7 +1029,7 @@ function updateAuthUI(authenticated, name = '') {
           showView('notes');
         } else {
           // Show notes view with default message when no slide is open
-          displayNotes('Open a Google Slides presentation to see notes here...');
+          displayNotes('Open a Google Slides presentation to see notes here.\n[note Install CueCard Extension to sync notes]');
           window.title = 'No Slide Open';
           showView('notes');
         }
@@ -1320,6 +1320,9 @@ function highlightNotes(text) {
   // Pattern for "Google Slides" - replace with link
   const slidesPattern = /Google Slides/gi;
 
+  // Pattern for "CueCard" - replace with link
+  const cuecardPattern = /CueCard/gi;
+
   // Replace [time mm:ss] - add line break BEFORE it, time starts a new line
   safe = safe.replace(timePattern, (match, minutes, seconds) => {
     const timeInSeconds = parseInt(minutes) * 60 + parseInt(seconds);
@@ -1338,8 +1341,13 @@ function highlightNotes(text) {
   });
 
   // Replace "Google Slides" with link
-  safe = safe.replace(slidesPattern, (match) => {
-    return `<a href="https://slides.google.com" class="slides-link" id="slides-link" target="_blank" rel="noopener noreferrer">${match}</a>`;
+  // safe = safe.replace(slidesPattern, (match) => {
+  //   return `<a href="https://slides.google.com" class="slides-link" id="slides-link" target="_blank" rel="noopener noreferrer">${match}</a>`;
+  // });
+
+  // Replace "CueCard" with link
+  safe = safe.replace(cuecardPattern, (match) => {
+    return `<a href="https://cuecard.dev/#download" class="slides-link" id="slides-link" target="_blank" rel="noopener noreferrer">${match}</a>`;
   });
 
   // Convert line breaks
