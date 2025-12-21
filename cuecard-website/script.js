@@ -446,6 +446,112 @@ async function initGitHubData() {
 
 function getSampleReleaseData() {
     return [];
+
+    const sampleVersion = '1.0.0';
+    const sampleDate = new Date().toISOString();
+
+    return [
+        {
+            tag_name: `v${sampleVersion}`,
+            name: `CueCard ${sampleVersion}`,
+            prerelease: false,
+            published_at: sampleDate,
+            body: `## What's New\n\n- Initial release of CueCard\n- Ghost mode for hiding from screen recordings\n- Google Slides sync support\n- Timer and note tags\n\n## Installation\n\nDownload the appropriate installer for your platform below.`,
+            assets: [
+                // macOS
+                {
+                    name: `CueCard_${sampleVersion}_universal.dmg`,
+                    size: 45 * 1024 * 1024,
+                    download_count: 1250,
+                    browser_download_url: '#'
+                },
+                // Windows x64
+                {
+                    name: `CueCard_${sampleVersion}_x64-setup.exe`,
+                    size: 38 * 1024 * 1024,
+                    download_count: 2340,
+                    browser_download_url: '#'
+                },
+                {
+                    name: `CueCard_${sampleVersion}_x64.msi`,
+                    size: 40 * 1024 * 1024,
+                    download_count: 890,
+                    browser_download_url: '#'
+                },
+                // Windows ARM64
+                {
+                    name: `CueCard_${sampleVersion}_arm64-setup.exe`,
+                    size: 36 * 1024 * 1024,
+                    download_count: 450,
+                    browser_download_url: '#'
+                },
+                {
+                    name: `CueCard_${sampleVersion}_arm64.msi`,
+                    size: 38 * 1024 * 1024,
+                    download_count: 220,
+                    browser_download_url: '#'
+                },
+                // Safari Extension
+                {
+                    name: `CueCard_${sampleVersion}_safari.dmg`,
+                    size: 12 * 1024 * 1024,
+                    download_count: 890,
+                    browser_download_url: '#'
+                },
+                // Chrome Extension
+                {
+                    name: `CueCard_${sampleVersion}_chrome.zip`,
+                    size: 2 * 1024 * 1024,
+                    download_count: 560,
+                    browser_download_url: '#'
+                },
+                // Firefox Extension
+                {
+                    name: `CueCard_${sampleVersion}_firefox.zip`,
+                    size: 2 * 1024 * 1024,
+                    download_count: 340,
+                    browser_download_url: '#'
+                },
+                // Files that should be filtered out
+                {
+                    name: `CueCard.app.tar.gz`,
+                    size: 42 * 1024 * 1024,
+                    download_count: 100,
+                    browser_download_url: '#'
+                },
+                {
+                    name: `CueCard.app.tar.gz.sig`,
+                    size: 1024,
+                    download_count: 50,
+                    browser_download_url: '#'
+                },
+                {
+                    name: `darwin-x86_64-latest.json`,
+                    size: 512,
+                    download_count: 200,
+                    browser_download_url: '#'
+                },
+                {
+                    name: `windows-x86_64-latest.json`,
+                    size: 512,
+                    download_count: 150,
+                    browser_download_url: '#'
+                },
+                {
+                    name: `CueCard_${sampleVersion}_x64-setup.exe.sig`,
+                    size: 1024,
+                    download_count: 30,
+                    browser_download_url: '#'
+                },
+                {
+                    name: `CueCard_${sampleVersion}_x64.msi.sig`,
+                    size: 1024,
+                    download_count: 25,
+                    browser_download_url: '#'
+                }
+            ]
+        }
+    ];
 }
 
 async function fetchGitHubStars() {
