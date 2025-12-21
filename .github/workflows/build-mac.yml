@@ -73,6 +73,50 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npm run tauri build -- --target universal-apple-darwin
 
+      - name: Create DMG
+        working-directory: cuecard-app/src-tauri
+        run: |
+          # Install create-dmg
+          brew install create-dmg
+
+          # Read version from tauri.conf.json
+          VERSION=$(node -p "require('./tauri.conf.json').version")
+
+          # Find the .app bundle
+          APP_PATH=$(find target/universal-apple-darwin/release/bundle/macos -name "*.app" -type d | head -n 1)
+          APP_NAME=$(basename "$APP_PATH")
+
+          # Create DMG with custom background and settings
+          create-dmg \
+            --volname "CueCard" \
+            --background "icons/dmg-background.png" \
+            --window-pos 200 120 \
+            --window-size 660 400 \
+            --icon-size 100 \
+            --icon "$APP_NAME" 180 170 \
+            --app-drop-link 480 170 \
+            "$RUNNER_TEMP/CueCard_${VERSION}_universal.dmg" \
+            "$APP_PATH"
+
+      - name: Notarize DMG
+        working-directory: cuecard-app/src-tauri
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          VERSION=$(node -p "require('./tauri.conf.json').version")
+
+          # Submit DMG for notarization
+          xcrun notarytool submit "$RUNNER_TEMP/CueCard_${VERSION}_universal.dmg" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
+
+          # Staple the notarization
+          xcrun stapler staple "$RUNNER_TEMP/CueCard_${VERSION}_universal.dmg"
+
       - name: Generate latest.json
         working-directory: cuecard-app/src-tauri
         shell: bash
@@ -98,8 +142,11 @@ jobs:
 
       - name: Prepare artifacts
         run: |
+          VERSION=$(node -p "require('./cuecard-app/src-tauri/tauri.conf.json').version")
           mkdir -p artifacts
-          cp cuecard-app/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg artifacts/
+          # Use own DMG instead of the one created by Tauri. 
+          # One created by Tauri is notarized but does not contain the correct background image.
+          cp "$RUNNER_TEMP/CueCard_${VERSION}_universal.dmg" artifacts/
           cp cuecard-app/src-tauri/target/universal-apple-darwin/release/bundle/macos/*.tar.gz artifacts/
           cp cuecard-app/src-tauri/target/universal-apple-darwin/release/bundle/macos/*.tar.gz.sig artifacts/
           cp cuecard-app/src-tauri/latest/darwin-x86_64-latest.json artifacts/
