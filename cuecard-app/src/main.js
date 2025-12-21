@@ -507,7 +507,6 @@ function resetAllStates() {
   // Stop and reset all timers
   stopAllTimers();
   timerState = 'stopped';
-  originalTimerValues = [];
 
   // Update timer button visibility
   updateTimerButtonVisibility();
