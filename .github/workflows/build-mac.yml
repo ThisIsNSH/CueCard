@@ -23,7 +23,9 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install Rust targets
-        run: rustup target add universal-apple-darwin
+        run: |
+          rustup target add x86_64-apple-darwin
+          rustup target add aarch64-apple-darwin
 
       - name: Install dependencies
         working-directory: cuecard-app
