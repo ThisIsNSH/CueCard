@@ -335,6 +335,47 @@ main {
     display: block;
 }
 
+.hero-gif-loader {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 1;
+    transition: opacity var(--transition-fast);
+}
+
+.hero-gif-card.hero-gif-loaded .hero-gif-loader {
+    opacity: 0;
+}
+
+.hero-gif-loader-circle {
+    width: 56px;
+    height: 56px;
+    border-radius: 999px;
+    background: #ffffff;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.hero-gif-loader-icon {
+    color: #0d0d0d;
+    animation: heroGifSpin 1s linear infinite;
+}
+
+@keyframes heroGifSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .gif-demo-link {
     position: absolute;
     bottom: -18px;

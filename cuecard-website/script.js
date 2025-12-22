@@ -34,6 +34,7 @@ function initHeroGifLoading() {
     const heroGif = document.getElementById('hero-gif');
     if (!heroGif) return;
 
+    const heroGifCard = document.getElementById('hero-gif-card');
     const gifSrc = heroGif.dataset.gifSrc;
     if (!gifSrc) return;
 
@@ -42,6 +43,11 @@ function initHeroGifLoading() {
     gifImage.onload = () => {
         // Once loaded, swap to the actual gif
         heroGif.src = gifSrc;
+        if (heroGifCard) {
+            setTimeout(() => {
+                heroGifCard.classList.add('hero-gif-loaded');
+            }, 2000);
+        }
     };
     gifImage.src = gifSrc;
 }
