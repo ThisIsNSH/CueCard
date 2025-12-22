@@ -1392,8 +1392,9 @@ fn init_nspanel(app_handle: &AppHandle) {
 fn init_windows_window(app_handle: &AppHandle) {
     use windows::Win32::Foundation::HWND;
     use windows::Win32::UI::WindowsAndMessaging::{
-        GetWindowLongW, SetWindowLongW, SetWindowPos, GWL_EXSTYLE, HWND_TOPMOST, SWP_NOACTIVATE,
-        SWP_NOMOVE, SWP_NOSIZE, WS_EX_APPWINDOW, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
+        GetWindowLongW, SetWindowLongW, SetWindowPos, GWL_EXSTYLE, GWL_STYLE, HWND_TOPMOST,
+        SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, WS_CAPTION, WS_EX_APPWINDOW,
+        WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
     };
 
     let window = app_handle.get_webview_window("main").unwrap();
@@ -1403,6 +1404,11 @@ fn init_windows_window(app_handle: &AppHandle) {
         let hwnd = HWND(hwnd.0 as *mut std::ffi::c_void);
 
         unsafe {
+            // Strip caption style to avoid the native title bar showing through.
+            let style = GetWindowLongW(hwnd, GWL_STYLE);
+            let new_style = style & !(WS_CAPTION.0 as i32);
+            SetWindowLongW(hwnd, GWL_STYLE, new_style);
+
             // Get current extended style
             let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
 
@@ -1421,7 +1427,7 @@ fn init_windows_window(app_handle: &AppHandle) {
                 0,
                 0,
                 0,
-                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
+                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED,
             );
         }
     }
