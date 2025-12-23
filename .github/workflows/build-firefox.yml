@@ -1,4 +1,4 @@
-name: Build Firefox Extension
+name: Build Extension - Firefox
 
 on:
   push:

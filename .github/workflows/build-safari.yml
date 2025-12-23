@@ -1,4 +1,4 @@
-name: Build Safari Extension
+name: Build Extension - Safari
 
 on:
   push:
