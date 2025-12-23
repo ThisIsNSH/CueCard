@@ -17,7 +17,7 @@
         "alwaysOnTop": true,
         "center": true,
         "decorations": false,
-        "focus": false,
+        "focus": true,
         "fullscreen": false,
         "shadow": true,
         "resizable": true,

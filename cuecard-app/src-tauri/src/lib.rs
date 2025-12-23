@@ -1403,8 +1403,7 @@ fn init_windows_window(app_handle: &AppHandle) {
     use windows::Win32::Foundation::HWND;
     use windows::Win32::UI::WindowsAndMessaging::{
         GetWindowLongW, SetWindowLongW, SetWindowPos, GWL_EXSTYLE, GWL_STYLE, HWND_TOPMOST,
-        SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, WS_CAPTION, WS_EX_APPWINDOW,
-        WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
+        SWP_FRAMECHANGED, SWP_NOMOVE, SWP_NOSIZE, WS_CAPTION, WS_EX_APPWINDOW, WS_EX_TOOLWINDOW,
     };
 
     let window = app_handle.get_webview_window("main").unwrap();
@@ -1424,9 +1423,8 @@ fn init_windows_window(app_handle: &AppHandle) {
 
             // Set WS_EX_TOOLWINDOW to hide from taskbar and alt-tab
             // Remove WS_EX_APPWINDOW to ensure it doesn't show in taskbar
-            // Add WS_EX_NOACTIVATE to prevent stealing focus
-            let new_ex_style = (ex_style | WS_EX_TOOLWINDOW.0 as i32 | WS_EX_NOACTIVATE.0 as i32)
-                & !(WS_EX_APPWINDOW.0 as i32);
+            let new_ex_style =
+                (ex_style | WS_EX_TOOLWINDOW.0 as i32) & !(WS_EX_APPWINDOW.0 as i32);
             SetWindowLongW(hwnd, GWL_EXSTYLE, new_ex_style);
 
             // Ensure window stays on top (HWND_TOPMOST)
@@ -1437,7 +1435,7 @@ fn init_windows_window(app_handle: &AppHandle) {
                 0,
                 0,
                 0,
-                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED,
+                SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED,
             );
         }
     }
