@@ -217,6 +217,7 @@ let appStore = null;
 const STORAGE_KEYS = {
   SETTINGS_OPACITY: 'settings_opacity',
   SETTINGS_SHOW_IN_SCREENSHOT: 'settings_show_in_screenshot',
+  SETTINGS_LIGHT_MODE: 'settings_light_mode',
   ADD_NOTES_CONTENT: 'add_notes_content'
 };
 
@@ -303,7 +304,7 @@ async function hasScope(scopeType) {
 // DOM Elements
 let btnClose, btnDownloadUpdates, downloadUpdatesSeparator;
 let authBtn;
-let appContainer, viewInitial, viewAddNotes, viewNotes, viewSettings;
+let appContainer, appHeader, appHeaderTitle, viewInitial, viewAddNotes, viewNotes, viewSettings;
 let linkGoBack, backSeparator;
 let notesInput, notesContent;
 let welcomeHeading, welcomeSubtext;
@@ -313,7 +314,7 @@ let refreshBtn, refreshSeparator;
 let notesInputHighlight;
 let timerSeparator, timerStartSeparator, timerPauseSeparator;
 let btnStart, btnPause, btnReset;
-let opacitySlider, opacityValue, screenCaptureToggle;
+let opacitySlider, opacityValue, screenCaptureToggle, lightModeToggle;
 let editNoteBtn, editNoteSeparator;
 let notesInputWrapper;
 
@@ -326,6 +327,7 @@ let manualNotes = ''; // Notes pasted by the user
 let currentSlideData = null; // Store current slide data
 let currentOpacity = 100; // Store current opacity value (10-100)
 let showInScreenshot = false; // Default: false = hidden from screenshots
+let isLightMode = false; // Default: dark mode
 
 // Timer State
 let timerState = 'stopped'; // 'stopped', 'running', 'paused'
@@ -354,6 +356,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   downloadUpdatesSeparator = document.getElementById("download-updates-separator");
   authBtn = document.getElementById("auth-btn");
   appContainer = document.querySelector(".app-container");
+  appHeader = document.querySelector(".app-header");
+  appHeaderTitle = document.getElementById("app-header-title");
   viewInitial = document.getElementById("view-initial");
   viewAddNotes = document.getElementById("view-add-notes");
   viewNotes = document.getElementById("view-notes");
@@ -383,6 +387,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   opacitySlider = document.getElementById("opacity-slider");
   opacityValue = document.getElementById("opacity-value");
   screenCaptureToggle = document.getElementById("screen-capture-toggle");
+  lightModeToggle = document.getElementById("light-mode-toggle");
   editNoteBtn = document.getElementById("edit-note-btn");
   editNoteSeparator = document.getElementById("edit-note-separator");
   notesInputWrapper = document.querySelector(".notes-input-wrapper");
@@ -1178,6 +1183,12 @@ async function showView(viewName) {
   settingsLink.classList.remove('hidden');
   settingsSeparator.classList.remove('hidden');
 
+  if (btnClose && appHeaderTitle) {
+    const isSettingsView = viewName === 'settings';
+    btnClose.classList.toggle('hidden', isSettingsView);
+    appHeaderTitle.classList.toggle('hidden', !isSettingsView);
+  }
+
   // Show/hide privacy, website, and settings links based on view
   if (viewName === 'initial') {
     // Initial view: show Visit Site, Settings
@@ -1569,6 +1580,11 @@ function setupFooter() {
 // Default settings values
 const DEFAULT_OPACITY = 100;
 const DEFAULT_SHOW_IN_SCREENSHOT = false; // false = hidden from screenshots
+const DEFAULT_LIGHT_MODE = false;
+
+function applyTheme(isLight) {
+  document.documentElement.classList.toggle('theme-light', isLight);
+}
 
 // Load stored settings from persistent storage
 async function loadStoredSettings() {
@@ -1599,41 +1615,63 @@ async function loadStoredSettings() {
       console.error("Error applying screenshot protection:", error);
     }
   }
+
+  // Load stored light mode setting or use default
+  const storedLightMode = await getStoredValue(STORAGE_KEYS.SETTINGS_LIGHT_MODE);
+  if (storedLightMode !== null && storedLightMode !== undefined) {
+    isLightMode = storedLightMode;
+  } else {
+    isLightMode = DEFAULT_LIGHT_MODE;
+    await setStoredValue(STORAGE_KEYS.SETTINGS_LIGHT_MODE, DEFAULT_LIGHT_MODE);
+  }
+  applyTheme(isLightMode);
 }
 
 // Settings Handlers
 function setupSettings() {
-  if (!opacitySlider || !screenCaptureToggle) return;
-
   // Opacity slider handler
-  opacitySlider.addEventListener("input", async (e) => {
-    const value = parseInt(e.target.value);
-    currentOpacity = value;
-    opacityValue.textContent = `${value}%`;
+  if (opacitySlider) {
+    opacitySlider.addEventListener("input", async (e) => {
+      const value = parseInt(e.target.value);
+      currentOpacity = value;
+      opacityValue.textContent = `${value}%`;
 
-    // Update window opacity via CSS variable
-    document.documentElement.style.setProperty('--bg-opacity', value / 100);
+      // Update window opacity via CSS variable
+      document.documentElement.style.setProperty('--bg-opacity', value / 100);
 
-    // Save to persistent storage
-    await setStoredValue(STORAGE_KEYS.SETTINGS_OPACITY, value);
-  });
+      // Save to persistent storage
+      await setStoredValue(STORAGE_KEYS.SETTINGS_OPACITY, value);
+    });
+  }
 
   // Screen capture toggle handler
-  screenCaptureToggle.addEventListener("change", async (e) => {
-    showInScreenshot = e.target.checked;
+  if (screenCaptureToggle) {
+    screenCaptureToggle.addEventListener("change", async (e) => {
+      showInScreenshot = e.target.checked;
 
-    // Update screenshot protection via Tauri (protection = !showInScreenshot)
-    if (invoke) {
-      try {
-        await invoke("set_screenshot_protection", { enabled: !showInScreenshot });
-      } catch (error) {
-        console.error("Error setting screenshot protection:", error);
+      // Update screenshot protection via Tauri (protection = !showInScreenshot)
+      if (invoke) {
+        try {
+          await invoke("set_screenshot_protection", { enabled: !showInScreenshot });
+        } catch (error) {
+          console.error("Error setting screenshot protection:", error);
+        }
       }
-    }
 
-    // Save to persistent storage
-    await setStoredValue(STORAGE_KEYS.SETTINGS_SHOW_IN_SCREENSHOT, showInScreenshot);
-  });
+      // Save to persistent storage
+      await setStoredValue(STORAGE_KEYS.SETTINGS_SHOW_IN_SCREENSHOT, showInScreenshot);
+    });
+  }
+
+  if (lightModeToggle) {
+    lightModeToggle.addEventListener("change", async (e) => {
+      isLightMode = e.target.checked;
+      applyTheme(isLightMode);
+
+      // Save to persistent storage
+      await setStoredValue(STORAGE_KEYS.SETTINGS_LIGHT_MODE, isLightMode);
+    });
+  }
 }
 
 // Load current settings values
@@ -1652,5 +1690,9 @@ async function loadCurrentSettings() {
   // Screen capture toggle: checkbox reflects showInScreenshot directly
   if (screenCaptureToggle) {
     screenCaptureToggle.checked = showInScreenshot;
+  }
+
+  if (lightModeToggle) {
+    lightModeToggle.checked = isLightMode;
   }
 }

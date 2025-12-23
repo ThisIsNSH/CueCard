@@ -2,12 +2,16 @@
   /* Colors from Figma */
   --bg-opacity: 1;
   --color-bg: #000000;
+  --color-bg-rgb: 0, 0, 0;
   --text-primary: #ffffff;
   --text-secondary: #a8a6a6;
   --color-yellow: #febc2e;
   --color-green: #19c332;
   --color-pink: #ff6adf;
   --color-red: #ff605c;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.3);
+  --selection-bg: rgba(254, 188, 46, 0.3);
 
   /* Typography */
   --font-family: -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -19,6 +23,19 @@
   --stroke-main: var(--text-secondary);
   --stroke-add-notes: var(--color-green);
   --stroke-slides: var(--color-yellow);
+}
+
+:root.theme-light {
+  --color-bg: #f7f4ef;
+  --color-bg-rgb: 247, 244, 239;
+  --text-primary: #141312;
+  --text-secondary: #5f5b55;
+  --color-yellow: #b36a00;
+  --color-green: #0c7a29;
+  --color-pink: #b82a82;
+  --color-red: #c23a36;
+  --scrollbar-thumb: rgba(0, 0, 0, 0.2);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.3);
 }
 
 * {
@@ -47,7 +64,7 @@ body {
 /* Main App Container */
 .app-container {
   height: 100%;
-  background: rgba(0, 0, 0, var(--bg-opacity));
+  background: rgba(var(--color-bg-rgb), var(--bg-opacity));
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -63,7 +80,7 @@ body {
   background-color: transparent;
   background-image: none;
   -webkit-border-radius: 0 16px 16px 16px;
-  border-radius: 0 16px 16px 16px;
+  border-radius: 0;
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
   border: 1px solid var(--text-primary);
@@ -448,24 +465,28 @@ body {
 
 /* Scrollbar Styling */
 .content::-webkit-scrollbar,
-.notes-content::-webkit-scrollbar {
+.notes-content::-webkit-scrollbar,
+.settings-content::-webkit-scrollbar {
   width: 6px;
 }
 
 .content::-webkit-scrollbar-track,
-.notes-content::-webkit-scrollbar-track {
+.notes-content::-webkit-scrollbar-track,
+.settings-content::-webkit-scrollbar-track {
   background: transparent;
 }
 
 .content::-webkit-scrollbar-thumb,
-.notes-content::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+.notes-content::-webkit-scrollbar-thumb,
+.settings-content::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 
 .content::-webkit-scrollbar-thumb:hover,
-.notes-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+.notes-content::-webkit-scrollbar-thumb:hover,
+.settings-content::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* Animated Highlights - Curved Brush Stroke Underlines */
@@ -611,7 +632,7 @@ body {
 
 /* Selection Style */
 ::selection {
-  background: rgba(254, 188, 46, 0.3);
+  background: var(--selection-bg);
   color: var(--text-primary);
 }
 
@@ -622,7 +643,7 @@ body {
   justify-content: flex-start;
   gap: 8px;
   padding: 18px 18px 0px 18px;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, var(--bg-opacity)) 0%, transparent 100%);
+  background: linear-gradient(to bottom, rgba(var(--color-bg-rgb), var(--bg-opacity)) 0%, transparent 100%);
   transition: opacity 0.2s ease, transform 0.2s ease;
   pointer-events: none;
   cursor: grab;
@@ -630,10 +651,6 @@ body {
 
 .app-header:active {
   cursor: grabbing;
-}
-
-.app-header:hover {
-  background: linear-gradient(to bottom, rgba(80, 80, 80, var(--bg-opacity)) 0%, transparent 100%);
 }
 
 .app-container:hover .app-header {
@@ -666,7 +683,7 @@ body {
 .btn-close {
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--color-pink);
   background: none;
   border: none;
   cursor: pointer;
@@ -678,6 +695,13 @@ body {
 
 .btn-close:hover {
   color: var(--color-red);
+}
+
+.app-header-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.25px;
 }
 
 .btn-download-updates {
@@ -718,7 +742,7 @@ body {
   justify-content: flex-start;
   gap: 8px;
   padding: 0 18px 18px 18px;
-  background: linear-gradient(to top, rgba(0, 0, 0, var(--bg-opacity)) 0%, transparent 100%);
+  background: linear-gradient(to top, rgba(var(--color-bg-rgb), var(--bg-opacity)) 0%, transparent 100%);
 }
 
 .footer-link {
@@ -819,13 +843,33 @@ body {
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding-top: 24px;
+  position: relative;
+
+  /* Mask for fade in/out */
+  -webkit-mask-image: linear-gradient(to bottom,
+      transparent 0px,
+      var(--color-bg) 24px,
+      var(--color-bg) calc(100% - 24px),
+      transparent 100%);
+
+  mask-image: linear-gradient(to bottom,
+      transparent 0px,
+      var(--color-bg) 24px,
+      var(--color-bg) calc(100% - 24px),
+      transparent 100%);
+
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
 }
 
 .settings-content {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  flex: 1;
+  overflow-y: auto;
+  padding-top: 24px;
+  padding-bottom: 24px;
 }
 
 .settings-heading {

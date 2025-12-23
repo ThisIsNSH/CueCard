@@ -12,6 +12,7 @@
 <body>
   <div class="app-container">
     <header data-tauri-drag-region class="app-header">
+      <span class="app-header-title hidden" id="app-header-title">Settings</span>
       <button class="btn-close" id="btn-close">Close</button>
       <span class="footer-separator hidden" id="download-updates-separator">•</span>
       <button class="btn-download-updates hidden" id="btn-download-updates">Download Updates</button>
@@ -92,6 +93,19 @@
               <div class="setting-control">
                 <label class="toggle-switch">
                   <input type="checkbox" id="screen-capture-toggle">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-label">
+                <span class="setting-title">Light Mode</span>
+                <span class="setting-description">Switch to a light color theme</span>
+              </div>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="light-mode-toggle">
                   <span class="toggle-slider"></span>
                 </label>
               </div>
