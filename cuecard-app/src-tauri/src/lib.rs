@@ -1395,53 +1395,6 @@ fn init_nspanel(app_handle: &AppHandle) {
 }
 
 // =============================================================================
-// WINDOWS WINDOW MANAGEMENT
-// =============================================================================
-
-#[cfg(target_os = "windows")]
-fn init_windows_window(app_handle: &AppHandle) {
-    use windows::Win32::Foundation::HWND;
-    use windows::Win32::UI::WindowsAndMessaging::{
-        GetWindowLongW, SetWindowLongW, SetWindowPos, GWL_EXSTYLE, GWL_STYLE, HWND_TOPMOST,
-        SWP_FRAMECHANGED, SWP_NOMOVE, SWP_NOSIZE, WS_CAPTION, WS_EX_APPWINDOW, WS_EX_TOOLWINDOW,
-    };
-
-    let window = app_handle.get_webview_window("main").unwrap();
-
-    // Get the native window handle
-    if let Ok(hwnd) = window.hwnd() {
-        let hwnd = HWND(hwnd.0 as *mut std::ffi::c_void);
-
-        unsafe {
-            // Strip caption style to avoid the native title bar showing through.
-            let style = GetWindowLongW(hwnd, GWL_STYLE);
-            let new_style = style & !(WS_CAPTION.0 as i32);
-            SetWindowLongW(hwnd, GWL_STYLE, new_style);
-
-            // Get current extended style
-            let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
-
-            // Set WS_EX_TOOLWINDOW to hide from taskbar and alt-tab
-            // Remove WS_EX_APPWINDOW to ensure it doesn't show in taskbar
-            let new_ex_style =
-                (ex_style | WS_EX_TOOLWINDOW.0 as i32) & !(WS_EX_APPWINDOW.0 as i32);
-            SetWindowLongW(hwnd, GWL_EXSTYLE, new_ex_style);
-
-            // Ensure window stays on top (HWND_TOPMOST)
-            let _ = SetWindowPos(
-                hwnd,
-                HWND_TOPMOST,
-                0,
-                0,
-                0,
-                0,
-                SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED,
-            );
-        }
-    }
-}
-
-// =============================================================================
 // APPLICATION ENTRY POINT
 // =============================================================================
 
@@ -1488,9 +1441,6 @@ pub fn run() {
             // Platform-specific window initialization
             #[cfg(target_os = "macos")]
             init_nspanel(app.app_handle());
-
-            #[cfg(target_os = "windows")]
-            init_windows_window(app.app_handle());
 
             // Start the web server in a background thread
             std::thread::spawn(|| {
