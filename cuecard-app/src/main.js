@@ -317,6 +317,7 @@ let btnStart, btnPause, btnReset;
 let opacitySlider, opacityValue, screenCaptureToggle, lightModeToggle;
 let editNoteBtn, editNoteSeparator;
 let notesInputWrapper;
+let ghostModeIndicator;
 
 // State
 let isAuthenticated = false;
@@ -391,6 +392,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   editNoteBtn = document.getElementById("edit-note-btn");
   editNoteSeparator = document.getElementById("edit-note-separator");
   notesInputWrapper = document.querySelector(".notes-input-wrapper");
+  ghostModeIndicator = document.getElementById("ghost-mode-indicator");
 
   // Set up navigation handlers
   setupNavigation();
@@ -1607,6 +1609,7 @@ async function loadStoredSettings() {
     showInScreenshot = DEFAULT_SHOW_IN_SCREENSHOT;
     await setStoredValue(STORAGE_KEYS.SETTINGS_SHOW_IN_SCREENSHOT, DEFAULT_SHOW_IN_SCREENSHOT);
   }
+  updateGhostModeIndicator();
   // Apply screenshot protection via Rust (protection = !showInScreenshot)
   if (invoke) {
     try {
@@ -1648,6 +1651,7 @@ function setupSettings() {
   if (screenCaptureToggle) {
     screenCaptureToggle.addEventListener("change", async (e) => {
       showInScreenshot = e.target.checked;
+      updateGhostModeIndicator();
 
       // Update screenshot protection via Tauri (protection = !showInScreenshot)
       if (invoke) {
@@ -1674,6 +1678,12 @@ function setupSettings() {
   }
 }
 
+function updateGhostModeIndicator() {
+  if (!ghostModeIndicator) return;
+  const ghostModeOn = !showInScreenshot;
+  ghostModeIndicator.textContent = `Ghost Mode: ${ghostModeOn ? 'On' : 'Off'}`;
+}
+
 // Load current settings values
 async function loadCurrentSettings() {
   // Load current opacity from CSS variable
@@ -1691,6 +1701,7 @@ async function loadCurrentSettings() {
   if (screenCaptureToggle) {
     screenCaptureToggle.checked = showInScreenshot;
   }
+  updateGhostModeIndicator();
 
   if (lightModeToggle) {
     lightModeToggle.checked = isLightMode;
