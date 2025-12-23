@@ -33,7 +33,6 @@ async function getCurrentTabInfo() {
     const [tab] = await browserAPI.tabs.query({ active: true, currentWindow: true });
 
     const titleEl = document.getElementById('presentation-title');
-    const slideEl = document.getElementById('current-slide');
 
     if (tab && tab.url && tab.url.includes('docs.google.com/presentation')) {
       // Extract presentation title from tab title
@@ -41,25 +40,8 @@ async function getCurrentTabInfo() {
       title = title.replace(' - Google Slides', '').replace(' - Google Präsentationen', '');
       titleEl.textContent = title;
 
-      // Extract slide info from URL
-      let slideInfo = 'Unknown';
-
-      // Check hash (edit mode)
-      const hashMatch = tab.url.match(/#slide=id\.([a-zA-Z0-9_-]+)/);
-      if (hashMatch) {
-        slideInfo = `Slide ID: ${hashMatch[1]}`;
-      }
-
-      // Check query param (slideshow mode)
-      const queryMatch = tab.url.match(/[?&]slide=id\.([a-zA-Z0-9_-]+)/);
-      if (queryMatch) {
-        slideInfo = `Slide ID: ${queryMatch[1]}`;
-      }
-
-      slideEl.textContent = slideInfo;
     } else {
       titleEl.textContent = 'Not on Google Slides';
-      slideEl.textContent = '-';
     }
   } catch (error) {
     console.error('Error getting tab info:', error);
