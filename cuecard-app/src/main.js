@@ -27,6 +27,26 @@ const { check } = window.__TAURI__?.updater || {};
 const { relaunch } = window.__TAURI__?.process || {};
 
 // =============================================================================
+// PLATFORM-SPECIFIC STYLES
+// =============================================================================
+
+function setPlatformClass() {
+  const root = document.documentElement;
+  const platform = (navigator.userAgentData && navigator.userAgentData.platform)
+    || navigator.platform
+    || navigator.userAgent
+    || '';
+
+  if (/win/i.test(platform)) {
+    root.classList.add('platform-windows');
+  } else if (/mac/i.test(platform)) {
+    root.classList.add('platform-mac');
+  }
+}
+
+setPlatformClass();
+
+// =============================================================================
 // FIRESTORE INTEGRATION
 // =============================================================================
 
