@@ -335,6 +335,12 @@ main {
     display: block;
 }
 
+/* Iframe video specific styling */
+.hero-gif[id="hero-video"] {
+    aspect-ratio: 16 / 9;
+    height: auto;
+}
+
 .hero-gif-loader {
     position: absolute;
     inset: 0;
