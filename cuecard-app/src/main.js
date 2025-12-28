@@ -1068,7 +1068,7 @@ function updateAuthUI(authenticated, name = '') {
     if (buttonIcon) buttonIcon.style.display = 'block';
 
     // Reset welcome heading to default
-    welcomeHeading.innerHTML = 'CueCard\n<span class="version-text">1.1.1</span>';
+    welcomeHeading.innerHTML = 'CueCard\n<span class="version-text">1.1.2</span>';
 
     // Reset subtext
     welcomeSubtext.innerHTML = 'Speaker notes visible only to you during screen sharing — for <span class="highlight-presentations">presentations</span>, <span class="highlight-meetings">meetings</span>, and more...';
@@ -1273,6 +1273,8 @@ async function showView(viewName) {
       }
       // Update edit note button visibility
       updateEditNoteButtonVisibility();
+      // Update timer button visibility after notes are loaded
+      updateTimerButtonVisibility();
       // In add-notes view, timer waits for Start button
       // Don't auto-start
       break;
