@@ -625,8 +625,8 @@ function calculateTotalDownloads() {
     totalDownloads = 0;
     allReleases.forEach(release => {
         release.assets.forEach(asset => {
-            // Exclude *latest.json files from total downloads
-            if (!asset.name.toLowerCase().endsWith('latest.json')) {
+            // Exclude files containing latest.json from total downloads
+            if (!asset.name.toLowerCase().includes('latest.json')) {
                 totalDownloads += asset.download_count;
             }
         });
