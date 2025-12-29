@@ -130,7 +130,7 @@ jobs:
           # Read signature from .sig file
           SIGNATURE=$(cat target/universal-apple-darwin/release/bundle/macos/*.tar.gz.sig)
 
-          # Copy template and generate latest.json
+          # Copy template and generate latest.json for x86_64
           cp latest/darwin-x86_64-latest.example.json latest/darwin-x86_64-latest.json
 
           # Update fields using node
@@ -143,16 +143,20 @@ jobs:
             fs.writeFileSync('latest/darwin-x86_64-latest.json', JSON.stringify(latest, null, 2));
           "
 
+          # Copy the same file for aarch64 (universal binary works for both architectures)
+          cp latest/darwin-x86_64-latest.json latest/darwin-aarch64-latest.json
+
       - name: Prepare artifacts
         run: |
           VERSION=$(node -p "require('./cuecard-app/src-tauri/tauri.conf.json').version")
           mkdir -p artifacts
-          # Use own DMG instead of the one created by Tauri. 
+          # Use own DMG instead of the one created by Tauri.
           # One created by Tauri is notarized but does not contain the correct background image.
           cp "$RUNNER_TEMP/CueCard_${VERSION}_universal.dmg" artifacts/
           cp cuecard-app/src-tauri/target/universal-apple-darwin/release/bundle/macos/*.tar.gz artifacts/
           cp cuecard-app/src-tauri/target/universal-apple-darwin/release/bundle/macos/*.tar.gz.sig artifacts/
           cp cuecard-app/src-tauri/latest/darwin-x86_64-latest.json artifacts/
+          cp cuecard-app/src-tauri/latest/darwin-aarch64-latest.json artifacts/
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
