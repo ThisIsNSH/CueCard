@@ -1,0 +1,11 @@
+# CueCard - Invisible Speaker Notes
+# https://cuecard.dev
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://cuecard.dev/sitemap.xml
+
+# Crawl-delay (optional, for politeness)
+Crawl-delay: 1

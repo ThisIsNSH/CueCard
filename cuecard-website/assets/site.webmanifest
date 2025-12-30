@@ -1,6 +1,7 @@
 {
-  "name": "MyWebSite",
-  "short_name": "MySite",
+  "name": "CueCard - Invisible Speaker Notes",
+  "short_name": "CueCard",
+  "description": "Invisible speaker notes for Zoom, Google Meet, and Microsoft Teams. Sync from Google Slides or paste notes for any meeting.",
   "icons": [
     {
       "src": "/assets/web-app-manifest-192x192.png",
@@ -15,7 +16,9 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
-  "display": "standalone"
+  "theme_color": "#000000",
+  "background_color": "#000000",
+  "display": "standalone",
+  "start_url": "/",
+  "scope": "/"
 }
