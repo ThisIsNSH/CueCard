@@ -53,7 +53,7 @@
     <main class="policy-page">
         <header class="policy-header">
             <h1 class="policy-title">Privacy Policy</h1>
-            <p class="policy-date">Last updated: December 21, 2025</p>
+            <p class="policy-date">Last updated: December 29, 2025</p>
         </header>
 
         <div class="policy-content">
@@ -66,8 +66,16 @@
                 <li><strong>Name and Email Address:</strong> When you sign in with Google, we collect your name and
                     email address to identify you as a user. This helps us understand who uses CueCard and enables us to
                     provide support when needed.</li>
-                <li><strong>Usage Patterns:</strong> We track count of times you pasted notes or synced google slide
-                    notes. This helps us understand why people use CueCard and improve the service.</li>
+                <li><strong>Analytics Data:</strong> We use Firebase Analytics to collect anonymous usage data. This includes:
+                    <ul>
+                        <li>App opens and session duration</li>
+                        <li>Feature usage (e.g., timer, settings changes)</li>
+                        <li>Navigation patterns within the app</li>
+                        <li>Platform information (Windows/macOS)</li>
+                    </ul>
+                    This data helps us understand how CueCard is used and prioritize improvements. Your email is hashed 
+                    before being used as an identifier, ensuring your identity remains protected.
+                </li>
             </ul>
             <p>That's it. We don't collect anything else.</p>
 
@@ -96,10 +104,17 @@
             <p>We will never sell your information to third parties or use it for advertising purposes.</p>
 
             <h2>Third-Party Services</h2>
-            <p>CueCard integrates with Google services for authentication and Google Slides sync. When you use these
-                features, you're also subject to <a href="https://policies.google.com/privacy" target="_blank">Google's
-                    Privacy Policy</a>. We only request the minimum permissions necessary to provide the functionality
-                you need.</p>
+            <p>CueCard integrates with the following third-party services:</p>
+            <ul>
+                <li><strong>Google Authentication & Slides:</strong> We use Google services for authentication and
+                    Google Slides sync. When you use these features, you're also subject to
+                    <a href="https://policies.google.com/privacy" target="_blank">Google's Privacy Policy</a>.
+                    We only request the minimum permissions necessary to provide the functionality you need.</li>
+                <li><strong>Firebase Analytics:</strong> We use Firebase Analytics (a Google service) to collect
+                    anonymous usage statistics. This service helps us understand app usage patterns and improve
+                    CueCard. Firebase Analytics data is processed according to
+                    <a href="https://firebase.google.com/support/privacy" target="_blank">Firebase's Privacy Policy</a>.</li>
+            </ul>
 
             <h2>Google User Data & Slides Access</h2>
             <ul>
@@ -116,8 +131,9 @@
             </ul>
 
             <h2>Data Retention</h2>
-            <p>We retain your basic account information (name and email) for as long as you use CueCard. If you wish to
-                have your information deleted, please contact us at <a
+            <p>We retain your basic account information (name and email) for as long as you use CueCard. Analytics data
+                is retained according to Firebase Analytics' default retention period. If you wish to have
+                your information deleted, please contact us at <a
                     href="mailto:support@cuecard.dev">support@cuecard.dev</a>.</p>
 
             <h2>Your Rights</h2>
