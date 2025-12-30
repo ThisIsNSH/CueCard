@@ -18,15 +18,17 @@ use once_cell::sync::Lazy;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::net::IpAddr::V4;
 use std::sync::Arc;
-use tauri::{AppHandle, Emitter, Manager};
 #[cfg(target_os = "macos")]
 use tauri::WebviewWindow;
+use tauri::{AppHandle, Emitter, Manager};
 #[cfg(target_os = "macos")]
 use tauri_nspanel::{tauri_panel, CollectionBehavior, PanelLevel, StyleMask, WebviewWindowExt};
 use tauri_plugin_opener::OpenerExt;
 use tauri_plugin_store::StoreExt;
 use tower_http::cors::{Any, CorsLayer};
+use uuid::Uuid;
 
 // =============================================================================
 // CONSTANTS
@@ -42,6 +44,11 @@ const FIREBASE_SIGNUP_URL: &str = "https://identitytoolkit.googleapis.com/v1/acc
 const FIREBASE_SIGNIN_IDP_URL: &str =
     "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp";
 const FIREBASE_TOKEN_URL: &str = "https://securetoken.googleapis.com/v1/token";
+
+// Analytics
+const GA_COLLECT_URL: &str = "https://www.google-analytics.com/mp/collect";
+const ANALYTICS_CLIENT_ID_KEY: &str = "analytics_client_id";
+const ANALYTICS_SESSION_COUNT_KEY: &str = "analytics_session_count";
 
 // Scopes
 const SCOPE_PROFILE: &str = "openid profile email";
@@ -65,11 +72,22 @@ pub struct FirebaseConfig {
 /// Analytics configuration (separate Firebase project for security)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalyticsConfig {
-    pub api_key: String,
-    pub auth_domain: String,
-    pub project_id: String,
-    pub app_id: String,
+    pub api_secret: String,
     pub measurement_id: String,
+}
+
+#[derive(Debug, Clone)]
+struct AnalyticsState {
+    measurement_id: String,
+    api_secret: String,
+    client_id: String,
+    session_id: i64,
+    session_count: i64,
+    user_id: Option<String>,
+    platform: Option<String>,
+    operating_system: Option<String>,
+    ip_override: Option<String>,
+    last_event_at_ms: Option<i64>,
 }
 
 /// Wrapper for firebase-config.json structure
@@ -93,11 +111,8 @@ struct FirebaseConfigInner {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct AnalyticsConfigInner {
-    api_key: String,
-    auth_domain: String,
-    project_id: String,
-    app_id: String,
     measurement_id: String,
+    api_secret: String,
 }
 
 /// Firebase authentication tokens
@@ -220,6 +235,8 @@ static FIREBASE_CONFIG: Lazy<Arc<RwLock<Option<FirebaseConfig>>>> =
     Lazy::new(|| Arc::new(RwLock::new(None)));
 static ANALYTICS_CONFIG: Lazy<Arc<RwLock<Option<AnalyticsConfig>>>> =
     Lazy::new(|| Arc::new(RwLock::new(None)));
+static ANALYTICS_STATE: Lazy<Arc<RwLock<Option<AnalyticsState>>>> =
+    Lazy::new(|| Arc::new(RwLock::new(None)));
 static FIREBASE_TOKENS: Lazy<Arc<RwLock<Option<FirebaseTokens>>>> =
     Lazy::new(|| Arc::new(RwLock::new(None)));
 static OAUTH_CREDENTIALS: Lazy<Arc<RwLock<Option<OAuthCredentials>>>> =
@@ -240,7 +257,9 @@ fn load_firebase_config(app: &AppHandle) -> Result<FirebaseConfig, String> {
     let resource_dir = app.path().resource_dir().ok();
 
     let possible_paths = vec![
-        resource_dir.as_ref().map(|p| p.join("firebase-config.json")),
+        resource_dir
+            .as_ref()
+            .map(|p| p.join("firebase-config.json")),
         Some(std::path::PathBuf::from("firebase-config.json")),
         Some(std::path::PathBuf::from("src-tauri/firebase-config.json")),
     ];
@@ -263,13 +282,12 @@ fn load_firebase_config(app: &AppHandle) -> Result<FirebaseConfig, String> {
 
             // Load analytics config (only store if properly configured)
             let analytics = config_file.analytics;
-            if !analytics.measurement_id.starts_with("G-XXXX") {
+            if !analytics.measurement_id.trim().is_empty()
+                && !analytics.measurement_id.starts_with("G-XXXX")
+            {
                 let analytics_config = AnalyticsConfig {
-                    api_key: analytics.api_key,
-                    auth_domain: analytics.auth_domain,
-                    project_id: analytics.project_id,
-                    app_id: analytics.app_id,
                     measurement_id: analytics.measurement_id,
+                    api_secret: analytics.api_secret,
                 };
                 let mut ac = ANALYTICS_CONFIG.write();
                 *ac = Some(analytics_config);
@@ -717,6 +735,95 @@ fn load_tokens_from_store(app: &AppHandle) {
             }
         }
     }
+}
+
+// =============================================================================
+// ANALYTICS
+// =============================================================================
+
+fn get_or_init_analytics_state(app: &AppHandle) -> Option<AnalyticsState> {
+    if ANALYTICS_CONFIG.read().is_none() {
+        return None;
+    }
+
+    let mut analytics_state = ANALYTICS_STATE.write();
+    if let Some(ref state) = *analytics_state {
+        return Some(state.clone());
+    }
+
+    let config = ANALYTICS_CONFIG.read().clone()?;
+    let client_id = load_or_create_client_id(app);
+    let session_count = increment_session_count(app);
+    let session_id = chrono::Utc::now().timestamp();
+
+    let state = AnalyticsState {
+        measurement_id: config.measurement_id,
+        api_secret: config.api_secret,
+        client_id,
+        session_id,
+        session_count,
+        user_id: None,
+        platform: None,
+        operating_system: None,
+        ip_override: None,
+        last_event_at_ms: None,
+    };
+
+    *analytics_state = Some(state.clone());
+    Some(state)
+}
+
+fn load_or_create_client_id(app: &AppHandle) -> String {
+    if let Ok(store) = app.store("cuecard-store.json") {
+        if let Some(value) = store.get(ANALYTICS_CLIENT_ID_KEY) {
+            if let Some(client_id) = value.as_str() {
+                if !client_id.is_empty() {
+                    return client_id.to_string();
+                }
+            }
+        }
+
+        let client_id = generate_client_id();
+        store.set(ANALYTICS_CLIENT_ID_KEY, serde_json::json!(client_id));
+        let _ = store.save();
+        return client_id;
+    }
+
+    generate_client_id()
+}
+
+fn increment_session_count(app: &AppHandle) -> i64 {
+    if let Ok(store) = app.store("cuecard-store.json") {
+        let current = store
+            .get(ANALYTICS_SESSION_COUNT_KEY)
+            .and_then(|value| {
+                value
+                    .as_i64()
+                    .or_else(|| value.as_str().and_then(|text| text.parse::<i64>().ok()))
+            })
+            .unwrap_or(0);
+        let next = current + 1;
+        store.set(ANALYTICS_SESSION_COUNT_KEY, serde_json::json!(next));
+        let _ = store.save();
+        return next;
+    }
+
+    1
+}
+
+fn generate_client_id() -> String {
+    Uuid::new_v4().to_string()
+}
+
+fn hash_string(value: &str) -> String {
+    let mut hash: i32 = 0;
+    for byte in value.bytes() {
+        hash = hash
+            .wrapping_shl(5)
+            .wrapping_sub(hash)
+            .wrapping_add(byte as i32);
+    }
+    format!("user_{:x}", hash.wrapping_abs() as u32)
 }
 
 // =============================================================================
@@ -1259,8 +1366,170 @@ fn get_firestore_project_id() -> String {
 }
 
 #[tauri::command]
-fn get_analytics_config() -> Option<AnalyticsConfig> {
-    ANALYTICS_CONFIG.read().clone()
+async fn init_analytics(
+    app: AppHandle,
+    platform: Option<String>,
+    operating_system: Option<String>,
+) -> Result<(), String> {
+    if get_or_init_analytics_state(&app).is_none() {
+        return Ok(());
+    }
+
+    // Perform IP lookup before acquiring the lock to avoid holding it across await
+    let ip_override = if let Ok(response) = public_ip_address::perform_lookup(None).await {
+        if let V4(ipv4) = response.ip {
+            Some(ipv4.to_string())
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    let mut analytics_state = ANALYTICS_STATE.write();
+    if let Some(ref mut state) = *analytics_state {
+        state.platform = platform;
+        state.operating_system = operating_system;
+        state.ip_override = ip_override;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+async fn send_event(
+    app: AppHandle,
+    event_name: String,
+    params: Option<HashMap<String, serde_json::Value>>,
+) -> Result<(), String> {
+    let state = match get_or_init_analytics_state(&app) {
+        Some(state) => state,
+        None => return Ok(()),
+    };
+
+    let now_ms = chrono::Utc::now().timestamp_millis();
+    let engagement_time_msec = {
+        let mut analytics_state = ANALYTICS_STATE.write();
+        if let Some(ref mut state) = *analytics_state {
+            let last = state.last_event_at_ms.unwrap_or(now_ms);
+            state.last_event_at_ms = Some(now_ms);
+            let delta = now_ms.saturating_sub(last);
+            if delta <= 0 {
+                1
+            } else {
+                delta
+            }
+        } else {
+            1
+        }
+    };
+
+    let AnalyticsState {
+        measurement_id,
+        api_secret,
+        client_id,
+        session_id,
+        session_count,
+        user_id,
+        platform,
+        operating_system,
+        ip_override,
+        last_event_at_ms: _,
+    } = state;
+
+    let mut event_params = params.unwrap_or_default();
+    if (event_name == "app_open" || event_name == "start_session")
+        && !event_params.contains_key("platform")
+    {
+        let platform_value = platform.unwrap_or_else(|| "unknown".to_string());
+        event_params.insert(
+            "platform".to_string(),
+            serde_json::Value::String(platform_value),
+        );
+    }
+    if !event_params.contains_key("engagement_time_msec") {
+        event_params.insert(
+            "engagement_time_msec".to_string(),
+            serde_json::Value::Number(engagement_time_msec.into()),
+        );
+    }
+    if !event_params.contains_key("session_id") {
+        event_params.insert(
+            "session_id".to_string(),
+            serde_json::Value::Number(session_id.into()),
+        );
+    }
+    if !event_params.contains_key("session_number") {
+        event_params.insert(
+            "session_number".to_string(),
+            serde_json::Value::Number(session_count.into()),
+        );
+    }
+
+    let mut payload = serde_json::json!({
+        "client_id": client_id,
+        "events": [{
+            "name": event_name,
+            "params": event_params
+        }],
+        "device": {
+            "category": "desktop",
+            "operating_system": operating_system.unwrap_or_else(|| "unknown".to_string())
+        }
+    });
+
+    if let Some(user_id) = user_id {
+        payload["user_id"] = serde_json::Value::String(user_id);
+    }
+    if let Some(ip_override) = ip_override {
+        payload["ip_override"] = serde_json::Value::String(ip_override.to_string());
+    }
+
+    let url = format!(
+        "{}?measurement_id={}&api_secret={}",
+        GA_COLLECT_URL, measurement_id, api_secret
+    );
+
+    let client = reqwest::Client::new();
+    let response = client.post(&url).json(&payload).send().await;
+
+    println!("Analytics payload: {}", payload);
+    println!("Analytics response: {:?}", response);
+
+    match response {
+        Ok(result) => {
+            if !result.status().is_success() {
+                eprintln!("Analytics send_event failed: {}", result.status());
+            }
+        }
+        Err(error) => {
+            eprintln!("Analytics send_event failed: {}", error);
+        }
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+fn set_analytics_user_id(app: AppHandle, email: String) -> Result<(), String> {
+    if get_or_init_analytics_state(&app).is_none() {
+        return Ok(());
+    }
+
+    let hashed = hash_string(&email);
+    let mut analytics_state = ANALYTICS_STATE.write();
+    if let Some(ref mut state) = *analytics_state {
+        state.user_id = Some(hashed);
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn clear_analytics_user_id() -> Result<(), String> {
+    let mut analytics_state = ANALYTICS_STATE.write();
+    if let Some(ref mut state) = *analytics_state {
+        state.user_id = None;
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -1497,7 +1766,10 @@ pub fn run() {
             get_current_notes,
             get_auth_status,
             get_firestore_project_id,
-            get_analytics_config,
+            init_analytics,
+            send_event,
+            set_analytics_user_id,
+            clear_analytics_user_id,
             get_firebase_id_token,
             has_slides_scope,
             get_user_info,

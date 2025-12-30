@@ -2,7 +2,7 @@
  * CueCard - Main Frontend Application
  *
  * This file contains the main frontend logic for the CueCard application:
- * - Firebase Analytics for usage tracking
+ * - Analytics tracking for usage insights
  * - Firestore integration for user profiles
  * - Persistent storage management
  * - Google OAuth authentication UI
@@ -10,26 +10,6 @@
  * - Timer functionality for presentations
  * - Settings management (opacity, screenshot protection)
  */
-
-// =============================================================================
-// ANALYTICS IMPORTS
-// =============================================================================
-
-import {
-  initAnalytics,
-  setAnalyticsUserId,
-  trackAppOpen,
-  trackSessionStart,
-  trackLogin,
-  trackLogout,
-  trackScreenView,
-  trackNotesPaste,
-  trackSlidesSync,
-  trackTimerAction,
-  trackSettingChange,
-  trackSlideUpdate,
-  trackEditAction
-} from './analytics.js';
 
 // =============================================================================
 // TAURI API INITIALIZATION
@@ -48,19 +28,133 @@ const { check } = window.__TAURI__?.updater || {};
 const { relaunch } = window.__TAURI__?.process || {};
 
 // =============================================================================
+// ANALYTICS (BACKEND)
+// =============================================================================
+
+async function initAnalytics() {
+  if (!invoke) return;
+  try {
+    const { platform, operatingSystem } = getPlatformInfo();
+    await invoke('init_analytics', {
+      platform,
+      operatingSystem,
+    });
+  } catch (error) {
+    console.debug('Analytics init error:', error);
+  }
+}
+
+async function sendAnalyticsEvent(eventName, params) {
+  if (!invoke) return;
+  try {
+    const payload = { eventName };
+    if (params && Object.keys(params).length > 0) {
+      payload.params = params;
+    }
+    await invoke('send_event', payload);
+  } catch (error) {
+    console.debug('Analytics error:', error);
+  }
+}
+
+async function setAnalyticsUserId(email) {
+  if (!invoke || !email) return;
+  try {
+    await invoke('set_analytics_user_id', { email });
+    console.log('Analytics: User ID set');
+  } catch (error) {
+    console.debug('Analytics setUserId error:', error);
+  }
+}
+
+async function clearAnalyticsUserId() {
+  if (!invoke) return;
+  try {
+    await invoke('clear_analytics_user_id');
+  } catch (error) {
+    console.debug('Analytics clearUserId error:', error);
+  }
+}
+
+function trackAppOpen() {
+  void sendAnalyticsEvent('app_open');
+}
+
+function trackSessionStart() {
+  void sendAnalyticsEvent('start_session');
+}
+
+function trackLogin(method = 'google') {
+  void sendAnalyticsEvent('login', { method });
+}
+
+function trackLogout() {
+  void sendAnalyticsEvent('logout');
+  void clearAnalyticsUserId();
+}
+
+function trackScreenView(screenName) {
+  void sendAnalyticsEvent('screen_view', {
+    screen_name: screenName
+  });
+}
+
+function trackNotesPaste() {
+  void sendAnalyticsEvent('notes_paste');
+}
+
+function trackSlidesSync() {
+  void sendAnalyticsEvent('slides_sync');
+}
+
+function trackTimerAction(action) {
+  void sendAnalyticsEvent('timer_action', { action });
+}
+
+function trackSettingChange(setting, value) {
+  void sendAnalyticsEvent('setting_change', {
+    setting_name: setting,
+    setting_value: String(value)
+  });
+}
+
+function trackSlideUpdate() {
+  void sendAnalyticsEvent('slide_update');
+}
+
+function trackEditAction(action) {
+  void sendAnalyticsEvent('edit_action', { action });
+}
+
+// =============================================================================
 // PLATFORM-SPECIFIC STYLES
 // =============================================================================
 
-function setPlatformClass() {
-  const root = document.documentElement;
-  const platform = (navigator.userAgentData && navigator.userAgentData.platform)
+function getPlatformInfo() {
+  const platformSource = (navigator.userAgentData && navigator.userAgentData.platform)
     || navigator.platform
     || navigator.userAgent
     || '';
 
-  if (/win/i.test(platform)) {
+  if (/win/i.test(platformSource)) {
+    return { platform: 'windows', operatingSystem: 'windows' };
+  }
+  if (/mac/i.test(platformSource)) {
+    return { platform: 'macos', operatingSystem: 'mac' };
+  }
+  if (/linux/i.test(platformSource)) {
+    return { platform: 'linux', operatingSystem: 'linux' };
+  }
+  return { platform: 'unknown', operatingSystem: 'unknown' };
+}
+
+function setPlatformClass() {
+  const root = document.documentElement;
+  const { platform } = getPlatformInfo();
+
+  if (platform === 'windows') {
     root.classList.add('platform-windows');
-  } else if (/mac/i.test(platform)) {
+  } else if (platform === 'macos') {
     root.classList.add('platform-mac');
   }
 }
@@ -317,7 +411,7 @@ let sessionTracked = false; // Prevent duplicate session tracking
 window.addEventListener("DOMContentLoaded", async () => {
   console.log("App initializing...");
 
-  // Initialize Firebase Analytics
+  // Initialize analytics
   await initAnalytics();
 
   // Initialize Firestore configuration from environment variables

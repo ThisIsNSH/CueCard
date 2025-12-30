@@ -8,10 +8,7 @@
     "appId": "1:123456789:web:abc123"
   },
   "analytics": {
-    "apiKey": "YOUR_ANALYTICS_API_KEY",
-    "authDomain": "your-analytics-project.firebaseapp.com",
-    "projectId": "your-analytics-project",
-    "appId": "YOUR_ANALYTICS_APP_ID",
+    "apiSecret": "YOUR_ANALYTICS_API_SECRET",
     "measurementId": "G-XXXXXXXXXX"
   }
 }
