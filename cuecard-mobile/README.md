@@ -1,201 +1,145 @@
 # CueCard Mobile
 
-Mobile teleprompter app for iOS and Android with Picture-in-Picture support. Keep your speaker notes visible in a floating window while using other apps.
+Native iOS and Android apps for CueCard - your AI-powered flashcard companion.
 
-### Highlights
+## Features
 
-- **Cross-platform:** iOS and Android support
-- **Picture-in-Picture:** Floating teleprompter visible over any app
-- **Dynamic timing:** Use `[time mm:ss]` tags to control scroll speed
-- **Note markers:** `[note content]` tags highlighted in pink
-- **Google OAuth:** Sync notes from your CueCard account
-- **Offline support:** Local persistence for notes and settings
+- **Google Authentication** via Firebase Auth SDK (native)
+- **Firebase Analytics** for usage tracking
+- **SwiftUI** (iOS) and **Jetpack Compose** (Android) for modern UI
+- **Material 3** design system on Android
 
-### Architecture
+## Bundle IDs
 
-- **Frontend:** vanilla HTML/TypeScript in `src/`
-- **Tauri shell:** `src-tauri/` Rust crate handles auth, storage, and segment parsing
-- **Native plugins:**
-  - iOS: Swift PiP manager using `AVPictureInPictureController`
-  - Android: Kotlin PiP manager using native PiP mode
-- **Local store:** `tauri-plugin-store` caches tokens and preferences
+| Platform | Bundle ID |
+|----------|-----------|
+| iOS | `com.thisisnsh.cuecard.ios` |
+| Android | `com.thisisnsh.cuecard.android` |
 
-### Platform-Specific Features
+## Firebase Setup
 
-| Feature | iOS | Android |
-|---------|-----|---------|
-| **PiP Mode** | `AVPictureInPictureController` + `AVSampleBufferDisplayLayer` | `enterPictureInPictureMode` (API 26+) |
-| **Min Version** | iOS 15.0+ | Android 8.0+ (API 26) |
-| **Play/Pause** | Native PiP controls | Remote actions via broadcast receiver |
-| **Timer Display** | Fixed top-left overlay | Canvas rendering |
+Both apps require Firebase configuration files. Download these from the [Firebase Console](https://console.firebase.google.com):
 
-### Teleprompter Format
+### iOS Setup
 
-```
-Welcome everyone!                  <- No timer, uses default speed
+1. Go to Firebase Console → Project Settings → Your Apps
+2. Add an iOS app with bundle ID: `com.thisisnsh.cuecard.ios`
+3. Download `GoogleService-Info.plist`
+4. Replace `ios/CueCard/CueCard/GoogleService-Info.plist` with the downloaded file
+5. Add URL scheme for Google Sign-In:
+   - Copy `REVERSED_CLIENT_ID` from `GoogleService-Info.plist`
+   - It's already configured in `Info.plist` via `$(REVERSED_CLIENT_ID)`
 
-[time 00:30]                       <- This section scrolls in 30 seconds
-I'm excited to be here today.      <- Section start
-[note smile and pause]             <- Displayed in pink, section end
+### Android Setup
 
-[time 01:00]                       <- This section scrolls in 1 minute
-Now let's talk about our main topic.  <- Section start
+1. Go to Firebase Console → Project Settings → Your Apps
+2. Add an Android app with package name: `com.thisisnsh.cuecard.android`
+3. Download `google-services.json`
+4. Replace `android/app/google-services.json` with the downloaded file
+5. Update Web Client ID in `LoginScreen.kt`:
+   - Find your Web Client ID in Firebase Console → Authentication → Sign-in method → Google
+   - Replace `YOUR_WEB_CLIENT_ID` in the code
 
-Final thoughts.
-Thank you!                         <- Section end (until next [time] or EOF)
-```
+## Prerequisites
 
-Sections are delimited by `[time]` tags. All content between one `[time]` tag and the next belongs to the same section. New lines do not create new sections.
+### iOS Development
+- macOS
+- Xcode 15.0+
+- iOS 17.0+ deployment target
+- Apple Developer account (for device testing)
 
-### Firebase Configuration
+### Android Development
+- Android Studio Hedgehog (2023.1.1) or newer
+- JDK 17
+- Android SDK 34
+- Min SDK: 26 (Android 8.0)
 
-The mobile app requires a `firebase-config.json` file in the `src-tauri/` directory.
+## Building
 
-1. Copy the example file:
-   ```bash
-   cd src-tauri
-   cp firebase-config.example.json firebase-config.json
-   ```
-2. Fill in values from your Firebase project settings.
-
-**Note:** The build will fail if `firebase-config.json` is missing.
-
-### Prerequisites
-
-**For iOS development:**
-- macOS with Xcode 15+
-- Xcode Command Line Tools
-- CocoaPods (optional)
-
-**For Android development:**
-- Android Studio
-- Android SDK (API 26+)
-- Android NDK
-- Java 17+
-
-### Run in Development
-
-#### iOS Simulator
+### iOS
 
 ```bash
-# Run on default iOS simulator
-npm run tauri ios dev
+# Open in Xcode
+open ios/CueCard/CueCard.xcodeproj
 
-# Run on a specific simulator
-npm run tauri ios dev -- --target "iPhone 15 Pro"
-
-# Open in Xcode (for physical device testing)
-npm run tauri ios dev -- --open
+# Or build from command line
+cd ios/CueCard
+xcodebuild -scheme CueCard -destination 'platform=iOS Simulator,name=iPhone 15 Pro'
 ```
 
-**Note:** PiP functionality requires a physical iOS device. The simulator has limited PiP support.
+**First build:** Xcode will automatically fetch Swift Package dependencies (Firebase SDK, GoogleSignIn).
 
-#### Android Emulator
+### Android
 
 ```bash
-# List available Android emulators
-emulator -list-avds
-
-# Start an emulator
-emulator -avd <your_avd_name>
-
-# Run on connected emulator/device
-npm run tauri android dev
-
 # Open in Android Studio
-npm run tauri android dev -- --open
+open -a "Android Studio" android/
+
+# Or build from command line
+cd android
+./gradlew assembleDebug
 ```
 
-**Requirements:**
-- Emulator must be API 26+ (Android 8.0+) for PiP support
-- Enable PiP permission: Settings > Apps > CueCard > Picture-in-picture > Allow
+**First build:** Gradle will automatically download dependencies.
 
-### Build for Production
+## Running
 
-#### iOS
+### iOS Simulator
 
-```bash
-# Build for iOS device (release)
-npm run tauri ios build
+1. Open `ios/CueCard/CueCard.xcodeproj` in Xcode
+2. Select target device (e.g., iPhone 15 Pro)
+3. Press Cmd+R or click Run
 
-# Build for App Store
-npm run tauri ios build -- --export-method app-store-connect
-```
+### Android Emulator
 
-Build artifacts: `src-tauri/gen/apple/build/`
+1. Open `android/` folder in Android Studio
+2. Create/select an AVD (API 26+)
+3. Press Run or Shift+F10
 
-#### Android
+## Architecture
 
-```bash
-# Build APK
-npm run tauri android build
-
-# Build for Play Store (AAB)
-npm run tauri android build -- --aab
-```
-
-Build artifacts: `src-tauri/gen/android/app/build/outputs/`
-
-### Testing Checklist
-
-1. **Basic functionality:**
-   - [ ] App launches successfully
-   - [ ] Can paste notes into the editor
-   - [ ] Settings (font size, scroll speed, opacity) work
-
-2. **Picture-in-Picture:**
-   - [ ] Tap "Start Teleprompter" enters PiP mode
-   - [ ] Text scrolls smoothly in PiP window
-   - [ ] Play/pause controls work
-   - [ ] Close PiP returns to app
-
-3. **Timing features:**
-   - [ ] `[time mm:ss]` tags control scroll speed
-   - [ ] Timer countdown appears in top-left
-   - [ ] `[note content]` appears in pink
-
-4. **Authentication:**
-   - [ ] Google OAuth flow completes
-   - [ ] Notes sync from cloud
-
-### Project Structure
+### iOS (SwiftUI)
 
 ```
-cuecard-mobile/
-├── src/
-│   ├── main.ts                    # Frontend entry point
-│   └── styles.css                 # UI styling
-├── src-tauri/
-│   ├── src/
-│   │   ├── lib.rs                 # Main Rust code
-│   │   ├── teleprompter.rs        # Segment parsing logic
-│   │   ├── ios_pip.rs             # iOS PiP bridge
-│   │   └── android_pip.rs         # Android PiP bridge
-│   ├── gen/
-│   │   ├── apple/
-│   │   │   └── Sources/
-│   │   │       ├── TeleprompterPiPManager.swift
-│   │   │       └── TeleprompterBridge.swift
-│   │   └── android/
-│   │       └── app/src/main/java/.../
-│   │           ├── TeleprompterPiPManager.kt
-│   │           └── TeleprompterBridge.kt
-│   └── tauri.conf.json            # Tauri configuration
-└── package.json
+CueCardApp.swift          # App entry point, Firebase initialization
+├── ContentView.swift     # Root view, auth state routing
+├── Views/
+│   ├── LoginView.swift   # Google Sign-In UI
+│   ├── HomeView.swift    # Main flashcard view
+│   └── ProfileView.swift # User profile sheet
+└── Services/
+    └── AuthenticationService.swift  # Firebase Auth + Google Sign-In
 ```
 
-### Troubleshooting
+### Android (Jetpack Compose)
 
-**iOS: PiP not starting**
-- Ensure audio session is active (required for PiP)
-- Check device is iOS 15.0+
-- PiP must be enabled in device settings
+```
+CueCardApplication.kt     # Application class, Firebase init
+├── MainActivity.kt       # Single activity
+├── ui/
+│   ├── screens/
+│   │   ├── MainScreen.kt     # Navigation host
+│   │   ├── LoginScreen.kt    # Google Sign-In UI
+│   │   ├── HomeScreen.kt     # Main flashcard view
+│   │   └── ProfileSheet.kt   # User profile bottom sheet
+│   └── theme/
+│       └── Theme.kt          # Material 3 theming
+└── services/
+    └── AuthenticationService.kt  # Firebase Auth + Credential Manager
+```
 
-**Android: PiP not working**
-- Verify API level is 26+
-- Check PiP permission in app settings
-- Some OEMs restrict PiP functionality
+## Dependencies
 
-**Build fails with missing firebase-config.json**
-- Copy the example config: `cp src-tauri/firebase-config.example.json src-tauri/firebase-config.json`
-- Fill in your Firebase credentials
+### iOS (Swift Package Manager)
+
+- `firebase-ios-sdk` - Firebase Analytics & Auth
+- `GoogleSignIn-iOS` - Google Sign-In
+
+### Android (Gradle)
+
+- Firebase BOM 32.7.0
+  - `firebase-analytics-ktx`
+  - `firebase-auth-ktx`
+- Jetpack Compose BOM 2023.10.01
+- Google Identity Services (Credential Manager)
+- Coil for image loading

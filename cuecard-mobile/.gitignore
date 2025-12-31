@@ -1,24 +1,53 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# iOS
+ios/**/build/
+ios/**/*.xcworkspace
+ios/**/xcuserdata/
+ios/**/*.xccheckout
+ios/**/*.moved-aside
+ios/**/*.mode1v3
+ios/**/*.mode2v3
+ios/**/*.perspectivev3
+ios/**/Pods/
+ios/**/Podfile.lock
+ios/**/.build/
+ios/**/DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/*.iml
+android/.idea/
+android/captures/
+*.apk
+*.aab
+
+# Firebase config files (contain sensitive keys)
+# Uncomment these if you don't want to track Firebase configs
+ios/**/GoogleService-Info.plist
+android/**/google-services.json
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
 # Logs
-logs
 *.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Misc
+*.tmp
+*.temp
 *.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
