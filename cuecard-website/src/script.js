@@ -818,14 +818,14 @@ function groupAssetsByPlatform(assets) {
             icon: getChromeIcon(),
             assets: [],
             totalSize: 0,
+            storeUrl: 'https://chromewebstore.google.com/detail/mfphcgcbbahhahofibnenonbgjnabamg',
             instructions: [
                 'Download and extract the ZIP file',
                 'Move the extracted folder to Documents',
                 'Open Chrome and go to chrome://extensions',
                 'Enable "Developer mode" in the top right',
                 'Click "Load unpacked" and select the extracted folder',
-            ],
-            badge: 'Coming to Web Store'
+            ]
         },
         firefox: {
             name: 'Firefox Extension',
@@ -954,7 +954,7 @@ function createPlatformCard(platformKey, platform) {
                         <polyline points="15 3 21 3 21 9"/>
                         <line x1="10" y1="14" x2="21" y2="3"/>
                     </svg>
-                    <span class="btn-label">Add to Firefox</span>
+                    <span class="btn-label">Add to ${platformKey === 'chrome' ? 'Chrome' : 'Firefox'}</span>
                 </a>
             </div>
             ${manualInstallHtml}
