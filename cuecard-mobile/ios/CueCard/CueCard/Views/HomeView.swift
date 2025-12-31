@@ -3,53 +3,86 @@ import FirebaseAnalytics
 
 struct HomeView: View {
     @EnvironmentObject var authService: AuthenticationService
-    @State private var showingProfile = false
+    @EnvironmentObject var settingsService: SettingsService
+    @State private var showingSettings = false
+    @State private var showingTeleprompter = false
+    @FocusState private var isTextEditorFocused: Bool
+
+    private var hasNotes: Bool {
+        !settingsService.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                // Welcome message
-                if let user = authService.user {
-                    VStack(spacing: 8) {
-                        Text("Welcome back!")
-                            .font(.title2)
-                            .fontWeight(.semibold)
+            VStack(spacing: 0) {
+                // Notes editor
+                NotesEditorView(
+                    text: $settingsService.notes,
+                    isFocused: $isTextEditorFocused
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                        Text(user.displayName ?? user.email ?? "User")
-                            .font(.headline)
-                            .foregroundStyle(.secondary)
+                // Bottom action bar
+                VStack(spacing: 12) {
+                    Divider()
+
+                    HStack(spacing: 16) {
+                        // Tips button
+                        Button(action: {
+                            insertSampleNotes()
+                        }) {
+                            Label("Example", systemImage: "lightbulb")
+                                .font(.subheadline)
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(.secondary)
+
+                        Spacer()
+
+                        // Start teleprompter button
+                        Button(action: {
+                            isTextEditorFocused = false
+                            showingTeleprompter = true
+                        }) {
+                            Label("Start", systemImage: "play.fill")
+                                .font(.headline)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(!hasNotes)
                     }
-                    .padding(.top, 40)
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
                 }
-
-                Spacer()
-
-                // Placeholder for flashcard content
-                VStack(spacing: 16) {
-                    Image(systemName: "rectangle.stack")
-                        .font(.system(size: 60))
-                        .foregroundStyle(.secondary)
-
-                    Text("Your flashcards will appear here")
-                        .font(.headline)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
+                .background(Color(.systemBackground))
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(.systemGroupedBackground))
             .navigationTitle("CueCard")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: { showingProfile = true }) {
-                        Image(systemName: "person.circle")
-                            .font(.title2)
+                    Button(action: { showingSettings = true }) {
+                        Image(systemName: "gearshape")
+                            .font(.title3)
+                    }
+                }
+
+                ToolbarItem(placement: .keyboard) {
+                    HStack {
+                        Spacer()
+                        Button("Done") {
+                            isTextEditorFocused = false
+                        }
                     }
                 }
             }
-            .sheet(isPresented: $showingProfile) {
-                ProfileView()
+            .sheet(isPresented: $showingSettings) {
+                SettingsView()
+            }
+            .fullScreenCover(isPresented: $showingTeleprompter) {
+                TeleprompterView(
+                    content: TeleprompterParser.parseNotes(settingsService.notes),
+                    settings: settingsService.settings
+                )
             }
         }
         .onAppear {
@@ -58,9 +91,60 @@ struct HomeView: View {
             ])
         }
     }
+
+    private func insertSampleNotes() {
+        settingsService.notes = """
+        Welcome everyone!
+
+        [time 00:30]
+        I'm excited to be here today to talk about our new product launch.
+        [note smile and pause]
+
+        [time 01:00]
+        Let me walk you through the key features that make this release special.
+
+        First, we've completely redesigned the user interface.
+        Second, performance improvements of up to 50%.
+        [note emphasize this point]
+
+        [time 00:45]
+        In conclusion, this is our most ambitious update yet.
+
+        Thank you for your time!
+        [note pause for questions]
+        """
+    }
+}
+
+/// Notes editor with syntax highlighting for [time] and [note] tags
+struct NotesEditorView: View {
+    @Binding var text: String
+    var isFocused: FocusState<Bool>.Binding
+
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            // Placeholder
+            if text.isEmpty {
+                Text("Paste your notes here...\n\nUse [time mm:ss] for timer checkpoints\nUse [note text] for delivery cues")
+                    .foregroundStyle(.tertiary)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 16)
+                    .allowsHitTesting(false)
+            }
+
+            // Text editor
+            TextEditor(text: $text)
+                .focused(isFocused)
+                .scrollContentBackground(.hidden)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .font(.body)
+        }
+    }
 }
 
 #Preview {
     HomeView()
         .environmentObject(AuthenticationService.shared)
+        .environmentObject(SettingsService.shared)
 }

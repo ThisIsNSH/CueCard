@@ -9,15 +9,16 @@ struct LoginView: View {
 
             // Logo and Title
             VStack(spacing: 16) {
-                Image(systemName: "rectangle.stack.fill")
-                    .font(.system(size: 80))
-                    .foregroundStyle(.blue)
+                Image("Icon")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 48)
 
                 Text("CueCard")
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
-                Text("Your AI-powered flashcard companion")
+                Text("Teleprompter for everything")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -41,7 +42,7 @@ struct LoginView: View {
                 }
             }) {
                 HStack(spacing: 12) {
-                    Image("google_logo")
+                    Image("GoogleLogo")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)

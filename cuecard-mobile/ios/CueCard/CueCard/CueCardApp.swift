@@ -6,11 +6,13 @@ import FirebaseAnalytics
 struct CueCardApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject private var authService = AuthenticationService.shared
+    @StateObject private var settingsService = SettingsService.shared
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(authService)
+                .environmentObject(settingsService)
         }
     }
 }
