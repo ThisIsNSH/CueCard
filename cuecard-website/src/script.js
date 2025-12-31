@@ -436,12 +436,21 @@ const GITHUB_REPO = 'thisisnsh/cuecard';
 let allReleases = [];
 let totalDownloads = 0;
 
+// Extension Store Integration
+const CHROME_EXTENSION_ID = 'mfphcgcbbahhahofibnenonbgjnabamg';
+const FIREFOX_ADDON_SLUG = 'cuecard-extension';
+let extensionDownloads = {
+    chrome: 0,
+    firefox: 0
+};
+
 async function initGitHubData() {
     try {
-        // Fetch stars and releases in parallel
+        // Fetch stars, releases, and extension downloads in parallel
         const [starsResult, releasesResult] = await Promise.all([
             fetchGitHubStars(),
-            fetchGitHubReleases()
+            fetchGitHubReleases(),
+            fetchExtensionDownloads()
         ]);
 
         // Update stars count
@@ -621,8 +630,64 @@ function formatNumber(num) {
     return num.toString();
 }
 
+// Fetch Firefox Add-on user count from AMO API
+async function fetchFirefoxDownloads() {
+    try {
+        const response = await fetch(`https://addons.mozilla.org/api/v5/addons/addon/${FIREFOX_ADDON_SLUG}/`);
+        if (!response.ok) {
+            throw new Error('Firefox API request failed');
+        }
+        const data = await response.json();
+        // Use average_daily_users as it represents active installs
+        return data.average_daily_users || 0;
+    } catch (error) {
+        console.log('Could not fetch Firefox extension downloads:', error);
+        return 0;
+    }
+}
+
+// Fetch Chrome Web Store user count via CORS proxy
+async function fetchChromeDownloads() {
+    try {
+        const storeUrl = `https://chromewebstore.google.com/detail/${CHROME_EXTENSION_ID}`;
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(storeUrl)}`;
+
+        const response = await fetch(proxyUrl);
+        if (!response.ok) {
+            throw new Error('Chrome proxy request failed');
+        }
+        const data = await response.json();
+        const html = data.contents;
+
+        // Extract user count from the page HTML (format: "X users" or "X,XXX users")
+        const userMatch = html.match(/>([\d,]+)\s*users?</i);
+        if (userMatch) {
+            return parseInt(userMatch[1].replace(/,/g, ''), 10);
+        }
+        return 0;
+    } catch (error) {
+        console.log('Could not fetch Chrome extension downloads:', error);
+        return 0;
+    }
+}
+
+// Fetch all extension download counts
+async function fetchExtensionDownloads() {
+    const [chromeCount, firefoxCount] = await Promise.all([
+        fetchChromeDownloads(),
+        fetchFirefoxDownloads()
+    ]);
+
+    extensionDownloads.chrome = chromeCount;
+    extensionDownloads.firefox = firefoxCount;
+
+    return extensionDownloads;
+}
+
 function calculateTotalDownloads() {
     totalDownloads = 0;
+
+    // Add GitHub release downloads
     allReleases.forEach(release => {
         release.assets.forEach(asset => {
             // Exclude files containing latest.json from total downloads
@@ -631,6 +696,9 @@ function calculateTotalDownloads() {
             }
         });
     });
+
+    // Add extension store downloads
+    totalDownloads += extensionDownloads.chrome + extensionDownloads.firefox;
 
     const totalElement = document.getElementById('total-downloads');
     if (totalElement && totalDownloads > 0) {
