@@ -1,0 +1,112 @@
+---
+layout: layouts/base.njk
+title: "CueCard - Invisible Speaker Notes for Zoom, Google Meet & Teams"
+description: "Invisible speaker notes for Zoom, Google Meet, and Microsoft Teams. Sync notes from Google Slides and view them discreetly during screen sharing. Undetectable teleprompter for presentations and meetings."
+keywords: "invisible speaker notes, zoom speaker notes, google meet notes, microsoft teams notes, presentation notes, teleprompter, google slides sync, undetectable notes, screen sharing notes, meeting notes app, presenter notes, zoom teleprompter, teams teleprompter, meet teleprompter"
+canonical: "https://cuecard.dev/"
+ogTitle: "CueCard - Invisible Speaker Notes for Zoom, Meet & Teams"
+ogDescription: "Invisible speaker notes for Zoom, Google Meet, and Microsoft Teams. Sync from Google Slides or paste notes for any meeting. Undetectable during screen sharing."
+ogImageWidth: "1280"
+ogImageHeight: "640"
+ogLocale: "en_US"
+---
+{% block jsonld %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "CueCard",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "macOS, Windows",
+    "description": "Invisible speaker notes for Zoom, Google Meet, and Microsoft Teams. Sync notes from Google Slides and view them discreetly during screen sharing.",
+    "url": "https://cuecard.dev",
+    "downloadUrl": "https://github.com/thisisnsh/cuecard/releases",
+    "softwareVersion": "1.2.2",
+    "author": {
+        "@type": "Organization",
+        "name": "CueCard",
+        "url": "https://cuecard.dev"
+    },
+    "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+    },
+    "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "5",
+        "ratingCount": "100"
+    },
+    "featureList": [
+        "Invisible speaker notes during screen sharing",
+        "Sync notes from Google Slides",
+        "Works with Zoom, Google Meet, Microsoft Teams",
+        "Built-in timer and note tags",
+        "Undetectable teleprompter",
+        "Free and open source"
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "Is CueCard invisible on Zoom, Google Meet, and Microsoft Teams?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, CueCard is designed to be undetectable on Zoom, Teams, Google Meet, and similar video conferencing apps. Your speaker notes remain invisible during screen sharing."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Can I sync speaker notes from Google Slides?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, CueCard can sync notes directly from Google Slides using a browser extension available for Safari, Chrome, and Firefox."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Can I use CueCard for any meeting without Google Slides?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes! You can type or paste notes directly into CueCard for any meeting. Google Slides sync is optional - CueCard works as a standalone teleprompter for all your presentations and meetings."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Is CueCard free?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, CueCard is completely free and open source under the MIT License."
+            }
+        }
+    ]
+}
+</script>
+{% endblock %}
+
+{% block body %}
+{% include "partials/nav.njk" %}
+
+<main>
+    {% set heroSubtitle = 'Speaker notes visible only to you during screen sharing — for <span class="highlight highlight-yellow">presentations</span>, <span class="highlight highlight-green">meetings</span>, and more.' %}
+    {% set videoTitle = "CueCard - Invisible Speaker Notes" %}
+    {% set downloadBtnHref = "#download" %}
+    {% set faqLink = "#faq-undetectable" %}
+    {% include "partials/hero.njk" %}
+
+    {% include "partials/features.njk" %}
+
+    {% set downloadTitle = "Ready to present<br class=\"desktop-br\"> like a pro?" %}
+    {% set downloadDesc = "Download CueCard and never fumble through a presentation again." %}
+    {% include "partials/download.njk" %}
+
+    {% include "partials/faq.njk" %}
+</main>
+
+{% include "partials/footer.njk" %}
+{% endblock %}

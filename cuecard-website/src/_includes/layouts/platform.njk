@@ -1,0 +1,62 @@
+{% extends "layouts/base.njk" %}
+
+{% block jsonld %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "{{ jsonLdName }}",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "macOS, Windows",
+    "description": "{{ jsonLdDescription }}",
+    "url": "{{ canonical }}",
+    "downloadUrl": "https://github.com/thisisnsh/cuecard/releases",
+    "softwareVersion": "1.2.2",
+    "author": {
+        "@type": "Organization",
+        "name": "CueCard",
+        "url": "https://cuecard.dev"
+    },
+    "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+    },
+    "featureList": [
+        {% for feature in platform.jsonLdFeatures %}"{{ feature }}"{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {% for faq in platform.faqJsonLd %}
+        {
+            "@type": "Question",
+            "name": "{{ faq.question }}",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "{{ faq.answer }}"
+            }
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ]
+}
+</script>
+{% endblock %}
+
+{% block body %}
+{% include "partials/nav.njk" %}
+
+<main>
+    {% include "partials/hero.njk" %}
+    {% include "partials/features.njk" %}
+    {% include "partials/download.njk" %}
+    {% include "partials/faq.njk" %}
+</main>
+
+{% include "partials/footer.njk" %}
+{% endblock %}

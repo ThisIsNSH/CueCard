@@ -1,0 +1,30 @@
+---
+pagination:
+  data: platforms
+  size: 1
+  alias: platform
+permalink: "{{ platform.slug }}/index.html"
+eleventyComputed:
+  title: "{{ platform.title }}"
+  description: "{{ platform.description }}"
+  keywords: "{{ platform.keywords }}"
+  canonical: "{{ platform.canonical }}"
+  ogTitle: "{{ platform.ogTitle }}"
+  ogDescription: "{{ platform.ogDescription }}"
+  ogUrl: "{{ platform.canonical }}"
+  ogImageWidth: "1280"
+  ogImageHeight: "640"
+  ogLocale: "en_US"
+  heroSubtitle: "{{ platform.heroSubtitle }}"
+  videoTitle: "{{ platform.videoTitle }}"
+  downloadTitle: "{{ platform.downloadTitle }}"
+  downloadDesc: "{{ platform.downloadDesc }}"
+  jsonLdName: "{{ platform.jsonLdName }}"
+  jsonLdDescription: "{{ platform.jsonLdDescription }}"
+  jsonLdFeatures: "{{ platform.jsonLdFeatures }}"
+  faqJsonLd: "{{ platform.faqJsonLd }}"
+  downloadHref: "/#download"
+  downloadBtnHref: "/#download"
+  faqLink: "/#faq-undetectable"
+layout: layouts/platform.njk
+---

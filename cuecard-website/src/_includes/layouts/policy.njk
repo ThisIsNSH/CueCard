@@ -1,0 +1,14 @@
+{% extends "layouts/base.njk" %}
+
+{% block body %}
+<div class="noise-overlay"></div>
+
+{% set showNavLinks = false %}
+{% include "partials/nav.njk" %}
+
+<main class="policy-page">
+    {{ content | safe }}
+</main>
+
+{% include "partials/footer.njk" %}
+{% endblock %}

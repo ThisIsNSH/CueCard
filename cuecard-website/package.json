@@ -1,0 +1,13 @@
+{
+  "name": "cuecard-website",
+  "version": "1.0.0",
+  "description": "CueCard website built with 11ty",
+  "scripts": {
+    "build": "eleventy",
+    "serve": "eleventy --serve",
+    "start": "eleventy --serve"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.0.0"
+  }
+}
