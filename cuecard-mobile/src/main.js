@@ -1,37 +1,28 @@
-import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
-
 // =============================================================================
-// TYPE DEFINITIONS
+// TAURI API INITIALIZATION
 // =============================================================================
 
-interface Settings {
-  fontSize: number;
-  scrollSpeed: number;
-  opacity: number;
+// Check if Tauri is available
+if (!window.__TAURI__) {
+  console.error("Tauri runtime not available! Make sure you're running the app with 'npm run tauri dev' or as a built Tauri app.");
 }
 
-interface UserInfo {
-  name: string;
-  email: string;
-}
-
-type ViewName = "signin" | "notes" | "settings";
-type TimerState = "stopped" | "running" | "paused";
+const { invoke } = window.__TAURI__?.core || {};
+const { listen } = window.__TAURI__?.event || {};
 
 // =============================================================================
 // STATE
 // =============================================================================
 
-let _currentView: ViewName = "signin";
+let _currentView = "signin";
 let isEditMode = true;
-let timerState: TimerState = "stopped";
-let timerIntervals: number[] = [];
+let timerState = "stopped";
+let timerIntervals = [];
 let isAndroid = false;
 let isIOS = false;
 
 // Settings
-let settings: Settings = {
+let settings = {
   fontSize: 16,
   scrollSpeed: 1.0,
   opacity: 100,
@@ -42,36 +33,36 @@ let settings: Settings = {
 // =============================================================================
 
 // Views
-let viewSignin: HTMLElement | null;
-let viewNotes: HTMLElement | null;
-let viewSettings: HTMLElement | null;
+let viewSignin;
+let viewNotes;
+let viewSettings;
 
 // Sign in
-let btnSignin: HTMLButtonElement | null;
+let btnSignin;
 
 // Notes view
-let userGreeting: HTMLElement | null;
-let btnSettings: HTMLButtonElement | null;
-let notesInput: HTMLTextAreaElement | null;
-let notesInputHighlight: HTMLElement | null;
-let notesInputWrapper: HTMLElement | null;
-let btnEdit: HTMLButtonElement | null;
-let btnStartFloating: HTMLButtonElement | null;
-let timerControls: HTMLElement | null;
-let btnTimerStart: HTMLButtonElement | null;
-let btnTimerPause: HTMLButtonElement | null;
-let btnTimerReset: HTMLButtonElement | null;
+let userGreeting;
+let btnSettings;
+let notesInput;
+let notesInputHighlight;
+let notesInputWrapper;
+let btnEdit;
+let btnStartFloating;
+let timerControls;
+let btnTimerStart;
+let btnTimerPause;
+let btnTimerReset;
 
 // Settings view
-let btnBack: HTMLButtonElement | null;
-let btnSignout: HTMLButtonElement | null;
-let fontSizeSlider: HTMLInputElement | null;
-let fontSizeValue: HTMLElement | null;
-let scrollSpeedSlider: HTMLInputElement | null;
-let scrollSpeedValue: HTMLElement | null;
-let scrollSpeedGroup: HTMLElement | null;
-let opacitySlider: HTMLInputElement | null;
-let opacityValue: HTMLElement | null;
+let btnBack;
+let btnSignout;
+let fontSizeSlider;
+let fontSizeValue;
+let scrollSpeedSlider;
+let scrollSpeedValue;
+let scrollSpeedGroup;
+let opacitySlider;
+let opacityValue;
 
 // =============================================================================
 // INITIALIZATION
@@ -95,36 +86,36 @@ function initializeElements() {
   viewSettings = document.getElementById("view-settings");
 
   // Sign in
-  btnSignin = document.getElementById("btn-signin") as HTMLButtonElement;
+  btnSignin = document.getElementById("btn-signin");
 
   // Notes view
   userGreeting = document.getElementById("user-greeting");
-  btnSettings = document.getElementById("btn-settings") as HTMLButtonElement;
-  notesInput = document.getElementById("notes-input") as HTMLTextAreaElement;
+  btnSettings = document.getElementById("btn-settings");
+  notesInput = document.getElementById("notes-input");
   notesInputHighlight = document.getElementById("notes-input-highlight");
   notesInputWrapper = document.getElementById("notes-input-wrapper");
-  btnEdit = document.getElementById("btn-edit") as HTMLButtonElement;
-  btnStartFloating = document.getElementById("btn-start-floating") as HTMLButtonElement;
+  btnEdit = document.getElementById("btn-edit");
+  btnStartFloating = document.getElementById("btn-start-floating");
   timerControls = document.getElementById("timer-controls");
-  btnTimerStart = document.getElementById("btn-timer-start") as HTMLButtonElement;
-  btnTimerPause = document.getElementById("btn-timer-pause") as HTMLButtonElement;
-  btnTimerReset = document.getElementById("btn-timer-reset") as HTMLButtonElement;
+  btnTimerStart = document.getElementById("btn-timer-start");
+  btnTimerPause = document.getElementById("btn-timer-pause");
+  btnTimerReset = document.getElementById("btn-timer-reset");
 
   // Settings view
-  btnBack = document.getElementById("btn-back") as HTMLButtonElement;
-  btnSignout = document.getElementById("btn-signout") as HTMLButtonElement;
-  fontSizeSlider = document.getElementById("font-size-slider") as HTMLInputElement;
+  btnBack = document.getElementById("btn-back");
+  btnSignout = document.getElementById("btn-signout");
+  fontSizeSlider = document.getElementById("font-size-slider");
   fontSizeValue = document.getElementById("font-size-value");
-  scrollSpeedSlider = document.getElementById("scroll-speed-slider") as HTMLInputElement;
+  scrollSpeedSlider = document.getElementById("scroll-speed-slider");
   scrollSpeedValue = document.getElementById("scroll-speed-value");
   scrollSpeedGroup = document.getElementById("scroll-speed-group");
-  opacitySlider = document.getElementById("opacity-slider") as HTMLInputElement;
+  opacitySlider = document.getElementById("opacity-slider");
   opacityValue = document.getElementById("opacity-value");
 }
 
 function detectPlatform() {
   // Detect platform from Tauri
-  const platform = (window as any).__TAURI_INTERNALS__?.metadata?.currentPlatform;
+  const platform = window.__TAURI_INTERNALS__?.metadata?.currentPlatform;
   isAndroid = platform === "android";
   isIOS = platform === "ios";
 
@@ -179,7 +170,7 @@ function setupEventListeners() {
 // VIEW MANAGEMENT
 // =============================================================================
 
-function showView(view: ViewName) {
+function showView(view) {
   _currentView = view;
 
   // Hide all views
@@ -206,10 +197,11 @@ function showView(view: ViewName) {
 // =============================================================================
 
 async function checkAuthStatus() {
+  if (!invoke) return;
   try {
-    const isAuthenticated = await invoke<boolean>("get_auth_status");
+    const isAuthenticated = await invoke("get_auth_status");
     if (isAuthenticated) {
-      const userInfo = await invoke<UserInfo>("get_user_info");
+      const userInfo = await invoke("get_user_info");
       updateGreeting(userInfo?.name || "");
       showView("notes");
     } else {
@@ -222,14 +214,23 @@ async function checkAuthStatus() {
 }
 
 async function handleSignIn() {
+  console.log("handleSignIn called");
+  console.log("invoke available:", !!invoke);
+  if (!invoke) {
+    console.error("invoke is not available!");
+    return;
+  }
   try {
+    console.log("Calling start_login...");
     await invoke("start_login");
+    console.log("start_login completed successfully");
   } catch (error) {
     console.error("Error starting login:", error);
   }
 }
 
 async function handleSignOut() {
+  if (!invoke) return;
   try {
     await invoke("logout");
     showView("signin");
@@ -238,7 +239,7 @@ async function handleSignOut() {
   }
 }
 
-function updateGreeting(name: string) {
+function updateGreeting(name) {
   if (!userGreeting) return;
   const hour = new Date().getHours();
   let greeting = "Good evening";
@@ -250,7 +251,8 @@ function updateGreeting(name: string) {
 }
 
 function setupDeepLinkListener() {
-  listen("auth-status", (event: any) => {
+  if (!listen) return;
+  listen("auth-status", (event) => {
     const { authenticated, user_name } = event.payload;
     if (authenticated) {
       updateGreeting(user_name || "");
@@ -274,7 +276,7 @@ function setupNotesInputHighlighting() {
 
   notesInput.addEventListener("scroll", () => {
     if (notesInputHighlight) {
-      notesInputHighlight.scrollTop = notesInput!.scrollTop;
+      notesInputHighlight.scrollTop = notesInput.scrollTop;
     }
   });
 
@@ -295,7 +297,7 @@ function updateHighlight() {
   notesInputHighlight.innerHTML = highlighted;
 }
 
-function highlightNotes(text: string): string {
+function highlightNotes(text) {
   // Normalize line breaks
   let safe = text
     .replace(/\r\n/g, "\n")
@@ -337,7 +339,7 @@ function highlightNotes(text: string): string {
   return safe;
 }
 
-function escapeHtml(text: string): string {
+function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML;
@@ -503,7 +505,7 @@ function updateTimerButtonVisibility() {
 // =============================================================================
 
 async function startPiPTeleprompter() {
-  if (!notesInput) return;
+  if (!notesInput || !invoke) return;
 
   const content = notesInput.value;
   if (!content.trim()) return;
@@ -517,30 +519,6 @@ async function startPiPTeleprompter() {
     });
   } catch (error) {
     console.error("Error starting PiP teleprompter:", error);
-  }
-}
-
-async function pausePiPTeleprompter() {
-  try {
-    await invoke("pause_pip_teleprompter");
-  } catch (error) {
-    console.error("Error pausing PiP:", error);
-  }
-}
-
-async function resumePiPTeleprompter() {
-  try {
-    await invoke("resume_pip_teleprompter");
-  } catch (error) {
-    console.error("Error resuming PiP:", error);
-  }
-}
-
-async function stopPiPTeleprompter() {
-  try {
-    await invoke("stop_pip_teleprompter");
-  } catch (error) {
-    console.error("Error stopping PiP:", error);
   }
 }
 
@@ -583,8 +561,9 @@ function handleOpacityChange() {
 }
 
 async function loadSettings() {
+  if (!invoke) return;
   try {
-    const savedSettings = await invoke<Settings | null>("get_settings");
+    const savedSettings = await invoke("get_settings");
     if (savedSettings) {
       settings = savedSettings;
 
@@ -606,6 +585,7 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
+  if (!invoke) return;
   try {
     await invoke("save_settings", { settings });
   } catch (error) {
@@ -618,8 +598,9 @@ async function saveSettings() {
 // =============================================================================
 
 async function loadSavedNotes() {
+  if (!invoke) return;
   try {
-    const savedNotes = await invoke<string | null>("get_notes");
+    const savedNotes = await invoke("get_notes");
     if (savedNotes && notesInput) {
       notesInput.value = savedNotes;
       updateHighlight();
@@ -631,7 +612,7 @@ async function loadSavedNotes() {
 }
 
 async function saveNotes() {
-  if (!notesInput) return;
+  if (!notesInput || !invoke) return;
 
   try {
     await invoke("save_notes", { content: notesInput.value });

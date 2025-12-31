@@ -31,14 +31,16 @@ pub struct TeleprompterContent {
 ///
 /// # Example
 /// ```text
-/// Welcome! [time 00:30]
-/// This scrolls in 30 seconds.
+/// Welcome!                <- No timer, uses default speed
 ///
-/// [time 01:00]
-/// This scrolls in 1 minute.
+/// [time 00:30]            <- This section scrolls in 30 seconds
+/// This scrolls in 30 seconds.
 /// [note remember to smile]
 ///
-/// Conclusion.
+/// [time 01:00]            <- This section scrolls in 1 minute
+/// This scrolls in 1 minute.
+///
+/// Conclusion.             <- Still part of 1-minute section
 /// ```
 pub fn parse_notes_to_segments(notes: &str) -> TeleprompterContent {
     let time_pattern = regex::Regex::new(r"\[time\s+(\d{1,2}):(\d{2})\]").unwrap();

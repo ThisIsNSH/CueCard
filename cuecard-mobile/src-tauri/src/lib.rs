@@ -224,8 +224,12 @@ async fn get_user_info(app: AppHandle) -> Result<Option<UserInfo>, String> {
 
 #[tauri::command]
 async fn start_login(app: AppHandle) -> Result<(), String> {
+    log::info!("start_login: Starting login flow");
+
     // Ensure we have OAuth credentials
+    log::info!("start_login: Ensuring OAuth credentials...");
     ensure_oauth_credentials(&app).await?;
+    log::info!("start_login: OAuth credentials ready");
 
     let auth_url = {
         let credentials = OAUTH_CREDENTIALS.read();
@@ -252,9 +256,14 @@ async fn start_login(app: AppHandle) -> Result<(), String> {
     };
 
     // Open in system browser
+    log::info!("start_login: Opening browser with URL: {}", auth_url);
     tauri_plugin_opener::open_url(&auth_url, None::<&str>)
-        .map_err(|e| format!("Failed to open browser: {}", e))?;
+        .map_err(|e| {
+            log::error!("start_login: Failed to open browser: {}", e);
+            format!("Failed to open browser: {}", e)
+        })?;
 
+    log::info!("start_login: Browser opened successfully");
     Ok(())
 }
 
@@ -274,23 +283,33 @@ async fn logout(app: AppHandle) -> Result<(), String> {
 }
 
 async fn ensure_oauth_credentials(app: &AppHandle) -> Result<(), String> {
+    log::info!("ensure_oauth_credentials: Checking credentials...");
+
     // Check if already loaded
     {
         if OAUTH_CREDENTIALS.read().is_some() {
+            log::info!("ensure_oauth_credentials: Already loaded in memory");
             return Ok(());
         }
     }
 
     // Try to load from store
+    log::info!("ensure_oauth_credentials: Trying to load from store...");
     if let Ok(Some(creds)) = load_from_store::<OAuthCredentials>(app, KEY_OAUTH_CREDENTIALS) {
+        log::info!("ensure_oauth_credentials: Loaded from store");
         *OAUTH_CREDENTIALS.write() = Some(creds);
         return Ok(());
     }
 
+    log::info!("ensure_oauth_credentials: Not in store, fetching from Firestore...");
+
     // Need to fetch from Firestore using anonymous auth
     let (api_key, project_id) = {
         let config = FIREBASE_CONFIG.read();
-        let config = config.as_ref().ok_or("Firebase config not loaded")?;
+        let config = config.as_ref().ok_or_else(|| {
+            log::error!("ensure_oauth_credentials: Firebase config not loaded!");
+            "Firebase config not loaded".to_string()
+        })?;
         (
             config.firebase.api_key.clone(),
             config.firebase.project_id.clone(),
@@ -298,15 +317,26 @@ async fn ensure_oauth_credentials(app: &AppHandle) -> Result<(), String> {
     };
 
     // Sign in anonymously
-    let anon_token = sign_in_anonymously(&api_key).await?;
+    log::info!("ensure_oauth_credentials: Signing in anonymously...");
+    let anon_token = sign_in_anonymously(&api_key).await.map_err(|e| {
+        log::error!("ensure_oauth_credentials: Anonymous sign-in failed: {}", e);
+        e
+    })?;
+    log::info!("ensure_oauth_credentials: Anonymous sign-in successful");
 
     // Fetch OAuth credentials from Firestore
-    let creds = fetch_oauth_credentials(&project_id, &anon_token).await?;
+    log::info!("ensure_oauth_credentials: Fetching OAuth creds from Firestore...");
+    let creds = fetch_oauth_credentials(&project_id, &anon_token).await.map_err(|e| {
+        log::error!("ensure_oauth_credentials: Failed to fetch creds: {}", e);
+        e
+    })?;
+    log::info!("ensure_oauth_credentials: Got OAuth credentials");
 
     // Save to store
     save_to_store(app, KEY_OAUTH_CREDENTIALS, &creds)?;
     *OAUTH_CREDENTIALS.write() = Some(creds);
 
+    log::info!("ensure_oauth_credentials: Complete!");
     Ok(())
 }
 
