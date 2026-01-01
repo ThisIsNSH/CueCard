@@ -1713,17 +1713,20 @@ pub fn run() {
                 .with_handler(|app, shortcut, event| {
                     if event.state() == tauri_plugin_global_shortcut::ShortcutState::Pressed {
                         let action = match shortcut.id() {
-                            id if id == Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::KeyC).id() => "toggle-visibility",
-                            id if id == Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::Minus).id() => "opacity-down",
-                            id if id == Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::Equal).id() => "opacity-up",
-                            id if id == Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::ArrowDown).id() => "height-up",
-                            id if id == Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::ArrowUp).id() => "height-down",
-                            id if id == Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::ArrowLeft).id() => "move-left",
-                            id if id == Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::ArrowRight).id() => "move-right",
+                            // General controls: Control+Option (Mac) / Control+Alt (Windows)
+                            id if id == Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::KeyC).id() => "toggle-visibility",
+                            id if id == Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::Minus).id() => "opacity-down",
+                            id if id == Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::Equal).id() => "opacity-up",
+                            id if id == Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::Space).id() => "timer-toggle",
+                            id if id == Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::Digit0).id() => "timer-reset",
+                            // Movement: Control+Option+Arrow (Mac) / Control+Alt+Arrow (Windows)
+                            id if id == Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::ArrowLeft).id() => "move-left",
+                            id if id == Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::ArrowRight).id() => "move-right",
                             id if id == Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::ArrowUp).id() => "move-up",
                             id if id == Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::ArrowDown).id() => "move-down",
-                            id if id == Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::Space).id() => "timer-toggle",
-                            id if id == Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::Digit0).id() => "timer-reset",
+                            // Height: Shift+Control+Option+Arrow (Mac) / Shift+Control+Alt+Arrow (Windows)
+                            id if id == Shortcut::new(Some(Modifiers::SHIFT | Modifiers::ALT | Modifiers::CONTROL), Code::ArrowUp).id() => "height-down",
+                            id if id == Shortcut::new(Some(Modifiers::SHIFT | Modifiers::ALT | Modifiers::CONTROL), Code::ArrowDown).id() => "height-up",
                             _ => return,
                         };
                         let _ = app.emit("shortcut-triggered", action);
@@ -1768,18 +1771,23 @@ pub fn run() {
             init_nspanel(app.app_handle());
 
             // Register global shortcuts
+            // All shortcuts use Control+Option (Mac) / Control+Alt (Windows)
+            // Height adjustments add Shift modifier
             let shortcuts = [
-                Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::KeyC),      // Toggle visibility
-                Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::Minus),     // Opacity down
-                Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::Equal),     // Opacity up
-                Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::ArrowDown), // Height down
-                Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::ArrowUp),   // Height up
-                Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::ArrowLeft), // Move left
-                Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::ArrowRight),// Move right
-                Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::ArrowUp), // Move up
-                Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::ArrowDown),// Move down
-                Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::Space),     // Timer toggle
-                Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::Digit0),    // Timer reset
+                // General controls: Control+Option (Mac) / Control+Alt (Windows)
+                Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::KeyC),       // Toggle visibility
+                Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::Minus),      // Opacity down
+                Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::Equal),      // Opacity up
+                Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::Space),      // Timer toggle
+                Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::Digit0),     // Timer reset
+                // Movement: Control+Option+Arrow (Mac) / Control+Alt+Arrow (Windows)
+                Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::ArrowLeft),  // Move left
+                Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::ArrowRight), // Move right
+                Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::ArrowUp),    // Move up
+                Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::ArrowDown),  // Move down
+                // Height: Shift+Control+Option+Arrow (Mac) / Shift+Control+Alt+Arrow (Windows)
+                Shortcut::new(Some(Modifiers::SHIFT | Modifiers::ALT | Modifiers::CONTROL), Code::ArrowUp),   // Height down
+                Shortcut::new(Some(Modifiers::SHIFT | Modifiers::ALT | Modifiers::CONTROL), Code::ArrowDown), // Height up
             ];
 
             if let Err(e) = app.global_shortcut().register_multiple(shortcuts) {

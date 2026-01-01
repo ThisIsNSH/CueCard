@@ -2389,18 +2389,20 @@ async function loadCurrentSettings() {
 // =============================================================================
 
 // Shortcut definitions with platform-specific display
+// All shortcuts use Control+Option (Mac) / Control+Alt (Windows)
+// Height adjustments add Shift modifier
 const SHORTCUTS = {
-  'toggle-visibility': { mac: ['Option', 'Shift', 'C'], win: ['Alt', 'Shift', 'C'] },
-  'opacity-down': { mac: ['Option', 'Shift', '-'], win: ['Alt', 'Shift', '-'] },
-  'opacity-up': { mac: ['Option', 'Shift', '='], win: ['Alt', 'Shift', '='] },
-  'height-down': { mac: ['Option', 'Shift', '↑'], win: ['Alt', 'Shift', '↑'] },
-  'height-up': { mac: ['Option', 'Shift', '↓'], win: ['Alt', 'Shift', '↓'] },
-  'move-left': { mac: ['Option', 'Shift', '←'], win: ['Alt', 'Shift', '←'] },
-  'move-right': { mac: ['Option', 'Shift', '→'], win: ['Alt', 'Shift', '→'] },
-  'move-up': { mac: ['Option', 'Ctrl', '↑'], win: ['Alt', 'Ctrl', '↑'] },
-  'move-down': { mac: ['Option', 'Ctrl', '↓'], win: ['Alt', 'Ctrl', '↓'] },
-  'timer-toggle': { mac: ['Option', 'Shift', 'Space'], win: ['Alt', 'Shift', 'Space'] },
-  'timer-reset': { mac: ['Option', 'Shift', '0'], win: ['Alt', 'Shift', '0'] },
+  'toggle-visibility': { mac: ['Ctrl', 'Option', 'C'], win: ['Ctrl', 'Alt', 'C'] },
+  'opacity-down': { mac: ['Ctrl', 'Option', '-'], win: ['Ctrl', 'Alt', '-'] },
+  'opacity-up': { mac: ['Ctrl', 'Option', '='], win: ['Ctrl', 'Alt', '='] },
+  'height-down': { mac: ['Shift', 'Ctrl', 'Option', '↑'], win: ['Shift', 'Ctrl', 'Alt', '↑'] },
+  'height-up': { mac: ['Shift', 'Ctrl', 'Option', '↓'], win: ['Shift', 'Ctrl', 'Alt', '↓'] },
+  'move-left': { mac: ['Ctrl', 'Option', '←'], win: ['Ctrl', 'Alt', '←'] },
+  'move-right': { mac: ['Ctrl', 'Option', '→'], win: ['Ctrl', 'Alt', '→'] },
+  'move-up': { mac: ['Ctrl', 'Option', '↑'], win: ['Ctrl', 'Alt', '↑'] },
+  'move-down': { mac: ['Ctrl', 'Option', '↓'], win: ['Ctrl', 'Alt', '↓'] },
+  'timer-toggle': { mac: ['Ctrl', 'Option', 'Space'], win: ['Ctrl', 'Alt', 'Space'] },
+  'timer-reset': { mac: ['Ctrl', 'Option', '0'], win: ['Ctrl', 'Alt', '0'] },
 };
 
 // Check if running on macOS
