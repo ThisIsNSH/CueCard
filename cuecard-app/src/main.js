@@ -295,10 +295,20 @@ let appStore = null;
 // Storage keys
 const STORAGE_KEYS = {
   SETTINGS_OPACITY: 'settings_opacity',
-  SETTINGS_SHOW_IN_SCREENSHOT: 'settings_show_in_screenshot',
-  SETTINGS_LIGHT_MODE: 'settings_light_mode',
+  SETTINGS_GHOST_MODE: 'settings_ghost_mode',
+  SETTINGS_THEME: 'settings_theme',
+  SETTINGS_SCROLL_SPEED: 'settings_scroll_speed',
   ADD_NOTES_CONTENT: 'add_notes_content'
 };
+
+// Scroll speed presets: index -> { label, wpm }
+const SCROLL_SPEED_PRESETS = [
+  { label: 'Off', wpm: 0 },
+  { label: 'Slow', wpm: 100 },
+  { label: 'Medium', wpm: 150 },
+  { label: 'Fast', wpm: 200 },
+  { label: 'Extreme', wpm: 300 }
+];
 
 // Initialize the store
 async function initStore() {
@@ -393,10 +403,13 @@ let refreshBtn, refreshSeparator;
 let notesInputHighlight;
 let timerSeparator, timerStartSeparator, timerPauseSeparator;
 let btnStart, btnPause, btnReset;
-let opacitySlider, opacityValue, screenCaptureToggle, lightModeToggle;
+let opacitySlider, opacityValue, ghostModeToggle;
+let scrollSpeedSlider, scrollSpeedValue;
+let themeSystemBtn, themeLightBtn, themeDarkBtn;
 let editNoteBtn, editNoteSeparator;
 let notesInputWrapper;
 let ghostModeIndicator;
+let headerTimer;
 
 // State
 let isAuthenticated = false;
@@ -406,12 +419,32 @@ let previousView = null; // 'initial', 'add-notes', 'notes', 'settings'
 let manualNotes = ''; // Notes pasted by the user
 let currentSlideData = null; // Store current slide data
 let currentOpacity = 100; // Store current opacity value (10-100)
-let showInScreenshot = false; // Default: false = hidden from screenshots
-let isLightMode = false; // Default: dark mode
+let ghostMode = true; // Default: true = hidden from screenshots (ghost mode ON)
+let currentTheme = 'system'; // 'system', 'light', 'dark'
+let scrollSpeedIndex = 0; // Default: 0 = Off (see SCROLL_SPEED_PRESETS)
 
 // Timer State
 let timerState = 'stopped'; // 'stopped', 'running', 'paused'
 let timerIntervals = []; // Store all timer interval IDs
+let totalTimeSeconds = 0; // Total time from all [time] tags
+let remainingTimeSeconds = 0; // Current remaining time for countdown
+
+// Auto-scroll State
+let autoScrollRafId = null;
+let autoScrollLastTimestamp = null;
+let isSyncingAddNotesScroll = false;
+
+// Hover pause state
+let isHoveringApp = false;
+let autoScrollPausedByHover = false;
+let autoScrollPausedBySettings = false;
+
+// Scroll position tracking for reset on hover leave
+let savedScrollPosition = null;
+let userScrolledDuringHover = false;
+
+// Notes metadata
+let notesHasTimeTags = false;
 
 // Edit Mode State
 let isEditMode = false; // false = done mode (readonly, highlighted), true = edit mode (editable, not highlighted)
@@ -472,12 +505,17 @@ window.addEventListener("DOMContentLoaded", async () => {
   btnReset = document.getElementById("btn-reset");
   opacitySlider = document.getElementById("opacity-slider");
   opacityValue = document.getElementById("opacity-value");
-  screenCaptureToggle = document.getElementById("screen-capture-toggle");
-  lightModeToggle = document.getElementById("light-mode-toggle");
+  ghostModeToggle = document.getElementById("ghost-mode-toggle");
+  scrollSpeedSlider = document.getElementById("scroll-speed-slider");
+  scrollSpeedValue = document.getElementById("scroll-speed-value");
+  themeSystemBtn = document.getElementById("theme-system");
+  themeLightBtn = document.getElementById("theme-light");
+  themeDarkBtn = document.getElementById("theme-dark");
   editNoteBtn = document.getElementById("edit-note-btn");
   editNoteSeparator = document.getElementById("edit-note-separator");
   notesInputWrapper = document.querySelector(".notes-input-wrapper");
   ghostModeIndicator = document.getElementById("ghost-mode-indicator");
+  headerTimer = document.getElementById("header-timer");
 
   // Set up navigation handlers
   setupNavigation();
@@ -500,8 +538,14 @@ window.addEventListener("DOMContentLoaded", async () => {
   // Set up timer control buttons
   setupTimerControls();
 
+  // Set up hover pause functionality
+  setupHoverPause();
+
   // Set up syntax highlighting for notes input
   setupNotesInputHighlighting();
+
+  // Set up notes scroll sync
+  setupNotesScrollSync();
 
   // Set up edit note button
   setupEditNoteButton();
@@ -606,6 +650,8 @@ function resetAllStates() {
 
   // Clear notes content
   notesContent.innerHTML = '';
+  notesHasTimeTags = false;
+  updateHeaderTimerVisibility();
 
   // Clear slide info
   window.title = '';
@@ -617,6 +663,9 @@ function resetAllStates() {
   // Stop and reset all timers
   stopAllTimers();
   timerState = 'stopped';
+
+  // Stop auto-scroll
+  stopAutoScroll();
 
   // Update timer button visibility
   updateTimerButtonVisibility();
@@ -709,51 +758,55 @@ function startTimerCountdown() {
   timerState = 'running';
   updateTimerButtonVisibility();
 
-  // Get timestamps based on current view
-  let timestamps;
-  if (currentView === 'add-notes') {
-    // In add-notes view, get timestamps from the highlight preview
-    timestamps = notesInputHighlight.querySelectorAll('.timestamp[data-time]');
-  } else {
-    // In notes view, get timestamps from the content display
-    timestamps = document.querySelectorAll('.timestamp[data-time]');
-  }
+  // Start auto-scroll
+  autoScrollPausedByHover = false;
+  userScrolledDuringHover = false;
+  savedScrollPosition = null;
+  startAutoScroll();
 
-  timestamps.forEach((timestamp, index) => {
-    // Get current remaining time from data attribute
-    let remainingSeconds = parseInt(timestamp.getAttribute('data-remaining') || timestamp.getAttribute('data-time'));
+  // Track elapsed time for count-up mode (when no [time] tags)
+  let elapsedSeconds = 0;
 
-    // Update the timer every second
-    const interval = setInterval(() => {
-      if (timerState !== 'running') {
-        clearInterval(interval);
-        return;
-      }
+  // Update the single header timer every second
+  const interval = setInterval(() => {
+    if (timerState !== 'running') {
+      clearInterval(interval);
+      return;
+    }
 
-      remainingSeconds--;
-      timestamp.setAttribute('data-remaining', remainingSeconds);
+    if (totalTimeSeconds > 0) {
+      // Count down mode (has [time] tags)
+      remainingTimeSeconds--;
 
-      const minutes = Math.floor(Math.abs(remainingSeconds) / 60);
-      const seconds = Math.abs(remainingSeconds) % 60;
+      const minutes = Math.floor(Math.abs(remainingTimeSeconds) / 60);
+      const seconds = Math.abs(remainingTimeSeconds) % 60;
       const displayTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
-      // Update the display
-      if (remainingSeconds < 0) {
-        timestamp.textContent = `[-${displayTime}]`;
-        timestamp.classList.add('time-overtime');
-        timestamp.classList.remove('time-warning');
-      } else if (remainingSeconds < 10) {
-        timestamp.textContent = `[${displayTime}]`;
-        timestamp.classList.add('time-warning');
-        timestamp.classList.remove('time-overtime');
+      // Update the header timer display
+      if (remainingTimeSeconds < 0) {
+        headerTimer.textContent = `-${displayTime}`;
+        headerTimer.classList.add('time-overtime');
+        headerTimer.classList.remove('time-warning');
+      } else if (remainingTimeSeconds < 10) {
+        headerTimer.textContent = displayTime;
+        headerTimer.classList.add('time-warning');
+        headerTimer.classList.remove('time-overtime');
       } else {
-        timestamp.textContent = `[${displayTime}]`;
-        timestamp.classList.remove('time-warning', 'time-overtime');
+        headerTimer.textContent = displayTime;
+        headerTimer.classList.remove('time-warning', 'time-overtime');
       }
-    }, 1000);
+    } else {
+      // Count up mode (no [time] tags)
+      elapsedSeconds++;
+      const minutes = Math.floor(elapsedSeconds / 60);
+      const seconds = elapsedSeconds % 60;
+      const displayTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      headerTimer.textContent = displayTime;
+      headerTimer.classList.remove('time-warning', 'time-overtime');
+    }
+  }, 1000);
 
-    timerIntervals.push(interval);
-  });
+  timerIntervals.push(interval);
 }
 
 // Pause timer countdown
@@ -764,6 +817,10 @@ function pauseTimerCountdown() {
   timerState = 'paused';
   stopAllTimers();
   updateTimerButtonVisibility();
+
+  // Pause auto-scroll
+  stopAutoScroll();
+  autoScrollPausedByHover = false;
 }
 
 // Reset timer countdown to original values
@@ -772,25 +829,32 @@ function resetTimerCountdown() {
   stopAllTimers();
   timerState = 'stopped';
 
-  // Get timestamps based on current view
-  let timestamps;
-  if (currentView === 'add-notes') {
-    timestamps = notesInputHighlight.querySelectorAll('.timestamp[data-time]');
-  } else {
-    timestamps = document.querySelectorAll('.timestamp[data-time]');
+  // Reset auto-scroll
+  stopAutoScroll();
+  autoScrollPausedByHover = false;
+  userScrolledDuringHover = false;
+  savedScrollPosition = null;
+
+  // Reset scroll position to top
+  const container = getAutoScrollContainer();
+  if (container) {
+    container.scrollTop = 0;
+    if (currentView === 'add-notes') {
+      syncAddNotesScroll(container);
+    }
   }
 
-  timestamps.forEach((timestamp) => {
-    const originalTime = parseInt(timestamp.getAttribute('data-time'));
-    timestamp.setAttribute('data-remaining', originalTime);
+  // Reset remaining time to total time
+  remainingTimeSeconds = totalTimeSeconds;
 
-    const minutes = Math.floor(originalTime / 60);
-    const seconds = originalTime % 60;
+  // Update header timer display
+  if (headerTimer) {
+    const minutes = Math.floor(totalTimeSeconds / 60);
+    const seconds = totalTimeSeconds % 60;
     const displayTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
-    timestamp.textContent = `[${displayTime}]`;
-    timestamp.classList.remove('time-warning', 'time-overtime');
-  });
+    headerTimer.textContent = displayTime;
+    headerTimer.classList.remove('time-warning', 'time-overtime');
+  }
 
   updateTimerButtonVisibility();
 }
@@ -801,10 +865,242 @@ function stopAllTimers() {
   timerIntervals = [];
 }
 
+// =============================================================================
+// AUTO-SCROLL (TELEPROMPTER)
+// =============================================================================
+
+function getAutoScrollContainer() {
+  if (currentView === 'add-notes') {
+    if (isEditMode) {
+      return notesInput;
+    }
+    return notesInputHighlight || notesInput;
+  }
+  if (currentView === 'notes') {
+    return notesContent;
+  }
+  return null;
+}
+
+function syncAddNotesScroll(source) {
+  if (!notesInput || !notesInputHighlight) return;
+  if (isSyncingAddNotesScroll) return;
+  isSyncingAddNotesScroll = true;
+  if (source === notesInput) {
+    notesInputHighlight.scrollTop = notesInput.scrollTop;
+  } else {
+    notesInput.scrollTop = notesInputHighlight.scrollTop;
+  }
+  isSyncingAddNotesScroll = false;
+}
+
+// Get current WPM from scroll speed preset
+function getCurrentWPM() {
+  return SCROLL_SPEED_PRESETS[scrollSpeedIndex]?.wpm || 0;
+}
+
+// Check if auto-scroll is enabled (not "Off")
+function isAutoScrollEnabled() {
+  return scrollSpeedIndex > 0;
+}
+
+// Start auto-scroll for the current view
+function startAutoScroll() {
+  stopAutoScroll();
+
+  if (!isAutoScrollEnabled()) return;
+
+  const wordsPerMinute = getCurrentWPM();
+  if (wordsPerMinute === 0) return;
+
+  // Get the scrollable container for the current view
+  const container = getAutoScrollContainer();
+  if (!container) return;
+
+  // Wait for next frame to ensure layout is ready
+  requestAnimationFrame(() => {
+    // Check if container is scrollable
+    if (container.scrollHeight <= container.clientHeight) {
+      return;
+    }
+
+    autoScrollLastTimestamp = null;
+
+    // Simple smooth scroll speed based on reading speed (WPM)
+    const wordsPerLine = 8;
+    const computedStyles = getComputedStyle(container);
+    const fontSize = parseFloat(computedStyles.fontSize) || 20;
+    const lineHeightValue = computedStyles.lineHeight;
+    let lineHeight = parseFloat(lineHeightValue);
+    if (!lineHeightValue || lineHeightValue === 'normal') {
+      lineHeight = fontSize * 1.2;
+    } else if (!lineHeightValue.endsWith('px')) {
+      lineHeight = lineHeight * fontSize;
+    }
+    const pixelsPerWord = lineHeight / wordsPerLine;
+    const pixelsPerSecond = (wordsPerMinute / 60) * pixelsPerWord;
+
+    const step = (timestamp) => {
+      if (!autoScrollRafId) return;
+
+      // Re-check container in case view changed
+      const currentContainer = getAutoScrollContainer();
+      if (!currentContainer || currentContainer !== container) {
+        stopAutoScroll();
+        return;
+      }
+
+      if (!autoScrollLastTimestamp) {
+        autoScrollLastTimestamp = timestamp;
+        autoScrollRafId = requestAnimationFrame(step);
+        return;
+      }
+
+      const deltaMs = timestamp - autoScrollLastTimestamp;
+      autoScrollLastTimestamp = timestamp;
+      const scrollDelta = (pixelsPerSecond * deltaMs) / 1000;
+      const nextScrollTop = container.scrollTop + scrollDelta;
+
+      if (nextScrollTop + container.clientHeight >= container.scrollHeight) {
+        container.scrollTop = container.scrollHeight - container.clientHeight;
+        stopAutoScroll();
+        return;
+      }
+
+      container.scrollTop = nextScrollTop;
+      if (currentView === 'add-notes') {
+        syncAddNotesScroll(container);
+      }
+      autoScrollRafId = requestAnimationFrame(step);
+    };
+
+    autoScrollRafId = requestAnimationFrame(step);
+  });
+}
+
+// Stop auto-scroll
+function stopAutoScroll() {
+  if (autoScrollRafId) {
+    cancelAnimationFrame(autoScrollRafId);
+    autoScrollRafId = null;
+  }
+  autoScrollLastTimestamp = null;
+}
+
+// Restart auto-scroll with current settings
+function restartAutoScroll() {
+  stopAutoScroll();
+  if (isAutoScrollEnabled() && timerState === 'running' && !isHoveringApp) {
+    startAutoScroll();
+  }
+}
+
+// =============================================================================
+// HOVER PAUSE FUNCTIONALITY
+// =============================================================================
+
+// Pause auto-scroll on hover (but not timers)
+function pauseOnHover() {
+  isHoveringApp = true;
+
+  // Pause auto-scroll if running and save position
+  if (autoScrollRafId) {
+    autoScrollPausedByHover = true;
+    const container = getAutoScrollContainer();
+    if (container) {
+      savedScrollPosition = container.scrollTop;
+    }
+    stopAutoScroll();
+    userScrolledDuringHover = false;
+  }
+}
+
+// Resume auto-scroll on mouse leave
+function resumeOnLeave() {
+  isHoveringApp = false;
+
+  // Resume auto-scroll if it was paused by hover and timer is still running
+  if (autoScrollPausedByHover && timerState === 'running' && isAutoScrollEnabled()) {
+    autoScrollPausedByHover = false;
+
+    // If user scrolled manually during hover, reset to saved position
+    if (userScrolledDuringHover && savedScrollPosition !== null) {
+      const container = getAutoScrollContainer();
+      if (container) {
+        container.scrollTop = savedScrollPosition;
+        if (currentView === 'add-notes') {
+          syncAddNotesScroll(container);
+        }
+      }
+    }
+
+    userScrolledDuringHover = false;
+    savedScrollPosition = null;
+    startAutoScroll();
+  }
+}
+
+// Pause auto-scroll when opening settings
+function pauseAnimationsForSettings() {
+  if (autoScrollRafId) {
+    stopAutoScroll();
+    autoScrollPausedBySettings = true;
+  }
+}
+
+// Resume auto-scroll when closing settings
+function resumeAnimationsAfterSettings() {
+  if (timerState !== 'running') {
+    autoScrollPausedBySettings = false;
+    return;
+  }
+
+  if (autoScrollPausedBySettings) {
+    if (isAutoScrollEnabled()) {
+      startAutoScroll();
+    }
+    autoScrollPausedBySettings = false;
+  }
+}
+
+// Track manual scroll during hover
+function handleManualScroll() {
+  if (isHoveringApp && autoScrollPausedByHover) {
+    userScrolledDuringHover = true;
+  }
+}
+
+// Setup hover listeners on the app container
+function setupHoverPause() {
+  if (appContainer) {
+    appContainer.addEventListener('mouseenter', pauseOnHover);
+    appContainer.addEventListener('mouseleave', resumeOnLeave);
+  }
+
+  // Add scroll listeners to track manual scrolling during hover
+  if (notesContent) {
+    notesContent.addEventListener('scroll', handleManualScroll);
+  }
+  if (notesInput) {
+    notesInput.addEventListener('scroll', handleManualScroll);
+  }
+  if (notesInputHighlight) {
+    notesInputHighlight.addEventListener('scroll', handleManualScroll);
+  }
+}
+
 // Check if text contains [time mm:ss] pattern
 function hasTimePattern(text) {
   const timePattern = /\[time\s+(\d{1,2}):(\d{2})\]/i;
   return timePattern.test(text);
+}
+
+// Update header timer visibility based on time tags and view
+function updateHeaderTimerVisibility() {
+  if (!headerTimer) return;
+  const isNotesView = currentView === 'add-notes' || currentView === 'notes';
+  const shouldShowHeaderTimer = isNotesView && notesHasTimeTags;
+  headerTimer.classList.toggle('hidden', !shouldShowHeaderTimer);
 }
 
 // Update timer button visibility based on state
@@ -812,15 +1108,15 @@ function updateTimerButtonVisibility() {
   if (!btnStart || !btnPause || !btnReset) return;
 
   // Determine if we should show timer controls
-  // Show only if text contains [time mm:ss] pattern
+  // Show when there's content (for auto-scroll), even without [time] tags
   let shouldShowTimers = false;
 
   if (currentView === 'add-notes') {
-    // Check if input text has time pattern AND we're not in edit mode
-    shouldShowTimers = notesInput.value.trim() && hasTimePattern(notesInput.value) && !isEditMode;
+    // Check if input text has content AND we're not in edit mode
+    shouldShowTimers = notesInput.value.trim() && !isEditMode;
   } else if (currentView === 'notes') {
-    // Check if notes content has time pattern
-    shouldShowTimers = currentSlideData && notesContent.querySelector('.timestamp[data-time]') !== null;
+    // Check if notes content exists
+    shouldShowTimers = currentSlideData && notesContent && notesContent.textContent.trim();
   }
 
   // Show timer controls only when there's content with time pattern
@@ -879,6 +1175,8 @@ function setupNotesInputHighlighting() {
     const text = notesInput.value;
     if (!text) {
       notesInputHighlight.innerHTML = '';
+      notesHasTimeTags = false;
+      updateHeaderTimerVisibility();
       // Update timer button visibility when content changes
       updateTimerButtonVisibility();
       // Update edit note button visibility when content changes
@@ -890,9 +1188,6 @@ function setupNotesInputHighlighting() {
     const highlighted = highlightNotesForInput(text);
     notesInputHighlight.innerHTML = highlighted;
 
-    // Initialize timer data attributes for the preview
-    initializeTimerDataAttributesForInput();
-
     // Update timer button visibility when content changes
     updateTimerButtonVisibility();
     // Update edit note button visibility when content changes
@@ -902,12 +1197,22 @@ function setupNotesInputHighlighting() {
   // Listen for input changes
   notesInput.addEventListener('input', updateHighlight);
   notesInput.addEventListener('scroll', () => {
-    // Sync scroll position
-    notesInputHighlight.scrollTop = notesInput.scrollTop;
+    if (currentView !== 'add-notes') return;
+    syncAddNotesScroll(notesInput);
   });
+  if (notesInputHighlight) {
+    notesInputHighlight.addEventListener('scroll', () => {
+      if (currentView !== 'add-notes' || isEditMode) return;
+      syncAddNotesScroll(notesInputHighlight);
+    });
+  }
 
   // Initial update if there's already content
   updateHighlight();
+}
+
+function setupNotesScrollSync() {
+  if (!notesContent) return;
 }
 
 // =============================================================================
@@ -941,7 +1246,7 @@ function toggleEditMode() {
     editNoteBtn.textContent = 'Edit Note';
   }
 
-  // Reset timer when toggling edit/done
+  // Reset timer and auto-scroll when toggling edit/done
   resetTimerCountdown();
 }
 
@@ -981,10 +1286,22 @@ function updateEditNoteButtonVisibility() {
   }
 }
 
-// Highlight notes for input preview (without timers)
+function trimSpacesPreserveNewlines(text) {
+  return text.replace(/^[ \t]+|[ \t]+$/g, '');
+}
+
+function stripSingleLeadingNewline(text) {
+  return text.replace(/^[ \t]*\n/, '');
+}
+
+// Highlight notes for input preview, wrapping content in sections
 function highlightNotesForInput(text) {
+  notesHasTimeTags = hasTimePattern(text);
+  updateHeaderTimerVisibility();
+
   // Normalize all line break types to \n first
   let safe = text
+    .replace(/\\n/g, '\n')
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
     .replace(/\u2028/g, '\n')
@@ -994,35 +1311,72 @@ function highlightNotesForInput(text) {
   // Escape HTML
   safe = escapeHtml(safe);
 
-  let cumulativeTime = 0; // Track cumulative time in seconds
-
   // Pattern for [time mm:ss] syntax
   const timePattern = /\[time\s+(\d{1,2}):(\d{2})\]/gi;
 
   // Pattern for [note ...] syntax
   const notePattern = /\[note\s+([^\]]+)\]/gi;
 
-  // Replace [time mm:ss]
-  safe = safe.replace(timePattern, (match, minutes, seconds) => {
-    const timeInSeconds = parseInt(minutes) * 60 + parseInt(seconds);
+  // Split by time markers to create sections
+  const parts = safe.split(timePattern);
+
+  let result = '';
+  let cumulativeTime = 0;
+  let sectionIndex = 0;
+
+  // First part (before any [time]) is the first section (no timer)
+  if (parts.length > 0) {
+    let sectionContent = trimSpacesPreserveNewlines(parts[0]);
+    sectionContent = sectionContent.replace(notePattern, (match, note) => {
+      return `<span class="action-tag">[${note}]</span>`;
+    });
+    // Convert newlines to <br>
+    sectionContent = sectionContent.replace(/\n/g, '<br>');
+
+    if (sectionContent.replace(/<br>/g, '').trim()) {
+      result += `<div class="notes-section" data-section="${sectionIndex}">${sectionContent}</div>`;
+      sectionIndex++;
+    }
+  }
+
+  // Process remaining parts (minutes, seconds, content triplets)
+  for (let i = 1; i < parts.length; i += 3) {
+    const minutes = parseInt(parts[i]);
+    const seconds = parseInt(parts[i + 1]);
+    const content = parts[i + 2] || '';
+
+    const timeInSeconds = minutes * 60 + seconds;
     cumulativeTime += timeInSeconds;
 
-    const displayMinutes = Math.floor(cumulativeTime / 60);
-    const displaySeconds = cumulativeTime % 60;
-    const displayTime = `${String(displayMinutes).padStart(2, '0')}:${String(displaySeconds).padStart(2, '0')}`;
+    let sectionContent = trimSpacesPreserveNewlines(content);
+    sectionContent = stripSingleLeadingNewline(sectionContent);
+    sectionContent = sectionContent.replace(notePattern, (match, note) => {
+      return `<span class="action-tag">[${note}]</span>`;
+    });
+    // Convert newlines to <br>
+    sectionContent = sectionContent.replace(/\n/g, '<br>');
 
-    return `<span class="timestamp" data-time="${cumulativeTime}">[${displayTime}]</span>`;
-  });
+    // Don't show [time] tags in the view - just add the content
+    if (sectionContent.replace(/<br>/g, '').trim()) {
+      result += `<div class="notes-section" data-section="${sectionIndex}">${sectionContent}</div>`;
+      sectionIndex++;
+    }
+  }
 
-  // Replace [note ...]
-  safe = safe.replace(notePattern, (match, note) => {
-    return `<span class="action-tag">[${note}]</span>`;
-  });
+  // Update the global total time and remaining time
+  totalTimeSeconds = cumulativeTime;
+  remainingTimeSeconds = cumulativeTime;
 
-  // Convert line breaks
-  safe = safe.replace(/\n/g, '<br>');
+  // Update header timer display
+  if (headerTimer) {
+    const minutes = Math.floor(cumulativeTime / 60);
+    const seconds = cumulativeTime % 60;
+    const displayTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    headerTimer.textContent = displayTime;
+    headerTimer.classList.remove('time-warning', 'time-overtime');
+  }
 
-  return safe;
+  return result;
 }
 
 // Check authentication status
@@ -1308,10 +1662,15 @@ async function showView(viewName) {
   settingsLink.classList.remove('hidden');
   settingsSeparator.classList.remove('hidden');
 
-  if (btnClose && appHeaderTitle) {
+  if (btnClose && appHeaderTitle && headerTimer) {
     const isSettingsView = viewName === 'settings';
-    btnClose.classList.toggle('hidden', isSettingsView);
+    const isNotesView = viewName === 'add-notes' || viewName === 'notes';
+
+    // Hide close button for settings and notes views, show only for initial view
+    btnClose.classList.toggle('hidden', isSettingsView || isNotesView);
     appHeaderTitle.classList.toggle('hidden', !isSettingsView);
+
+    updateHeaderTimerVisibility();
   }
 
   // Show/hide privacy, website, and settings links based on view
@@ -1355,6 +1714,15 @@ async function showView(viewName) {
   // Update edit note button visibility
   updateEditNoteButtonVisibility();
 
+  if (viewName === 'settings' && (previousView === 'add-notes' || previousView === 'notes')) {
+    pauseAnimationsForSettings();
+  }
+
+  // Stop auto-scroll when leaving a view
+  if (previousView === 'add-notes' || previousView === 'notes') {
+    stopAutoScroll();
+  }
+
   // Show the requested view
   switch (viewName) {
     case 'initial':
@@ -1378,22 +1746,35 @@ async function showView(viewName) {
       updateEditNoteButtonVisibility();
       // Update timer button visibility after notes are loaded
       updateTimerButtonVisibility();
-      // In add-notes view, timer waits for Start button
-      // Don't auto-start
+      // Don't auto-start auto-scroll - wait for Start button
       break;
     case 'notes':
       viewNotes.classList.remove('hidden');
       // In notes view, timer starts automatically if slide is present
       // But don't auto-start if we're coming back from settings (preserve timer state)
-      if (timerState === 'stopped' && currentSlideData && previousView !== 'settings') {
+      const hasNotesContent = notesContent && notesContent.textContent.trim();
+      if (!hasNotesContent) {
+        notesHasTimeTags = false;
+        updateHeaderTimerVisibility();
+        stopAllTimers();
+        timerState = 'stopped';
+        stopAutoScroll();
+        updateTimerButtonVisibility();
+      }
+      if (timerState === 'stopped' && currentSlideData && hasNotesContent && previousView !== 'settings') {
         startTimerCountdown();
       }
+      // Don't auto-start auto-scroll - wait for Start button
       break;
     case 'settings':
       viewSettings.classList.remove('hidden');
       // Load current settings when showing settings view
       loadCurrentSettings();
       break;
+  }
+
+  if (previousView === 'settings' && (viewName === 'add-notes' || viewName === 'notes')) {
+    resumeAnimationsAfterSettings();
   }
 }
 
@@ -1432,21 +1813,20 @@ function displayNotes(text, slideData = null) {
     refreshSeparator.classList.add('hidden');
   }
 
-  // Initialize timer data attributes but don't start
-  // Timer start is controlled by buttons or view logic
-  initializeTimerDataAttributes();
-
   // Update timer button visibility
   updateTimerButtonVisibility();
 }
 
-// Highlight timestamps and action tags in notes
+// Highlight timestamps and action tags in notes, wrapping content in sections
 function highlightNotes(text) {
+  notesHasTimeTags = hasTimePattern(text);
+  updateHeaderTimerVisibility();
 
   // Normalize all line break types to \n first
-  // Handles: \r\n (Windows), \r (old Mac), \n (Unix), 
+  // Handles: \r\n (Windows), \r (old Mac), \n (Unix),
   // \u2028 (Line Separator), \u2029 (Paragraph Separator), \v (Vertical Tab)
   let safe = text
+    .replace(/\\n/g, '\n')
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
     .replace(/\u2028/g, '\n')
@@ -1456,80 +1836,93 @@ function highlightNotes(text) {
   // Escape HTML
   safe = escapeHtml(safe);
 
-  let cumulativeTime = 0; // Track cumulative time in seconds
-
-  // Pattern for [time mm:ss] syntax - marks the START of the next block
+  // Pattern for [time mm:ss] syntax
   const timePattern = /\[time\s+(\d{1,2}):(\d{2})\]/gi;
 
   // Pattern for [note ...] syntax - matches anything between [note and ]
   const notePattern = /\[note\s+([^\]]+)\]/gi;
 
-  // Pattern for "Google Slides" - replace with link
-  const slidesPattern = /Google Slides/gi;
-
   // Pattern for "CueCard Extension" - replace with link
   const cuecardPattern = /CueCard Extension/gi;
 
-  // Replace [time mm:ss] - add line break BEFORE it, time starts a new line
-  safe = safe.replace(timePattern, (match, minutes, seconds) => {
-    const timeInSeconds = parseInt(minutes) * 60 + parseInt(seconds);
+  // Split by time markers to create sections
+  const parts = safe.split(timePattern);
+
+  let result = '';
+  let cumulativeTime = 0;
+  let sectionIndex = 0;
+
+  // First part (before any [time]) is the first section (no timer)
+  if (parts.length > 0) {
+    let sectionContent = trimSpacesPreserveNewlines(parts[0]);
+    // Apply note pattern and CueCard Extension link
+    sectionContent = sectionContent.replace(notePattern, (match, note) => {
+      return `<span class="action-tag">[${note}]</span>`;
+    });
+    sectionContent = sectionContent.replace(cuecardPattern, (match) => {
+      return `<a href="https://cuecard.dev/#download" class="slides-link" target="_blank" rel="noopener noreferrer">${match}</a>`;
+    });
+    // Convert newlines to <br>
+    sectionContent = sectionContent.replace(/\n/g, '<br>');
+
+    if (sectionContent.replace(/<br>/g, '').trim()) {
+      result += `<div class="notes-section" data-section="${sectionIndex}">${sectionContent}</div>`;
+      sectionIndex++;
+    }
+  }
+
+  // Process remaining parts (minutes, seconds, content triplets)
+  for (let i = 1; i < parts.length; i += 3) {
+    const minutes = parseInt(parts[i]);
+    const seconds = parseInt(parts[i + 1]);
+    const content = parts[i + 2] || '';
+
+    const timeInSeconds = minutes * 60 + seconds;
     cumulativeTime += timeInSeconds;
 
-    const displayMinutes = Math.floor(cumulativeTime / 60);
-    const displaySeconds = cumulativeTime % 60;
-    const displayTime = `${String(displayMinutes).padStart(2, '0')}:${String(displaySeconds).padStart(2, '0')}`;
+    let sectionContent = trimSpacesPreserveNewlines(content);
+    sectionContent = stripSingleLeadingNewline(sectionContent);
+    // Apply note pattern and CueCard Extension link
+    sectionContent = sectionContent.replace(notePattern, (match, note) => {
+      return `<span class="action-tag">[${note}]</span>`;
+    });
+    sectionContent = sectionContent.replace(cuecardPattern, (match) => {
+      return `<a href="https://cuecard.dev/#download" class="slides-link" target="_blank" rel="noopener noreferrer">${match}</a>`;
+    });
+    // Convert newlines to <br>
+    sectionContent = sectionContent.replace(/\n/g, '<br>');
 
-    return `<span class="timestamp" data-time="${cumulativeTime}">[${displayTime}]</span>`;
-  });
+    // Don't show [time] tags in the view - just add the content
+    if (sectionContent.replace(/<br>/g, '').trim()) {
+      result += `<div class="notes-section" data-section="${sectionIndex}">${sectionContent}</div>`;
+      sectionIndex++;
+    }
+  }
 
-  // Replace [note ...] with [...] inline (pink)
-  safe = safe.replace(notePattern, (match, note) => {
-    return `<span class="action-tag">[${note}]</span>`;
-  });
+  // Update the global total time and remaining time
+  totalTimeSeconds = cumulativeTime;
+  remainingTimeSeconds = cumulativeTime;
 
-  // Replace "Google Slides" with link
-  // safe = safe.replace(slidesPattern, (match) => {
-  //   return `<a href="https://slides.google.com" class="slides-link" id="slides-link" target="_blank" rel="noopener noreferrer">${match}</a>`;
-  // });
+  // Update header timer display
+  if (headerTimer) {
+    const minutes = Math.floor(cumulativeTime / 60);
+    const seconds = cumulativeTime % 60;
+    const displayTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    headerTimer.textContent = displayTime;
+    headerTimer.classList.remove('time-warning', 'time-overtime');
+  }
 
-  // Replace "CueCard Extension" with link
-  safe = safe.replace(cuecardPattern, (match) => {
-    return `<a href="https://cuecard.dev/#download" class="slides-link" id="slides-link" target="_blank" rel="noopener noreferrer">${match}</a>`;
-  });
-
-  // Convert line breaks
-  safe = safe.replace(/\n/g, '<br>');
-
-  return safe;
+  return result;
 }
 
-// Initialize timer data attributes for timestamps (without starting countdown)
-function initializeTimerDataAttributes() {
-  const timestamps = document.querySelectorAll('.timestamp[data-time]');
-
-  timestamps.forEach(timestamp => {
-    const totalSeconds = parseInt(timestamp.getAttribute('data-time'));
-    // Set initial remaining time equal to total time
-    timestamp.setAttribute('data-remaining', totalSeconds);
-  });
-}
-
-// Initialize timer data attributes for timestamps in input preview
-function initializeTimerDataAttributesForInput() {
-  const timestamps = notesInputHighlight.querySelectorAll('.timestamp[data-time]');
-
-  timestamps.forEach(timestamp => {
-    const totalSeconds = parseInt(timestamp.getAttribute('data-time'));
-    // Set initial remaining time equal to total time
-    timestamp.setAttribute('data-remaining', totalSeconds);
-  });
-}
-
-// Escape HTML to prevent XSS
+// Escape HTML to prevent XSS (preserves newlines)
 function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 // =============================================================================
@@ -1715,11 +2108,28 @@ function setupFooter() {
 
 // Default settings values
 const DEFAULT_OPACITY = 100;
-const DEFAULT_SHOW_IN_SCREENSHOT = false; // false = hidden from screenshots
-const DEFAULT_LIGHT_MODE = false;
+const DEFAULT_GHOST_MODE = true; // true = ghost mode ON = hidden from screenshots
+const DEFAULT_SCROLL_SPEED = 0; // 0 = Off (see SCROLL_SPEED_PRESETS)
 
-function applyTheme(isLight) {
+// Apply theme based on preference ('system', 'light', 'dark')
+function applyTheme(theme) {
+  let isLight = false;
+  if (theme === 'light') {
+    isLight = true;
+  } else if (theme === 'dark') {
+    isLight = false;
+  } else {
+    // System preference
+    isLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+  }
   document.documentElement.classList.toggle('theme-light', isLight);
+}
+
+// Update theme button states
+function updateThemeButtons(theme) {
+  if (themeSystemBtn) themeSystemBtn.classList.toggle('active', theme === 'system');
+  if (themeLightBtn) themeLightBtn.classList.toggle('active', theme === 'light');
+  if (themeDarkBtn) themeDarkBtn.classList.toggle('active', theme === 'dark');
 }
 
 // Load stored settings from persistent storage
@@ -1735,33 +2145,42 @@ async function loadStoredSettings() {
   // Apply opacity via CSS variable
   document.documentElement.style.setProperty('--bg-opacity', currentOpacity / 100);
 
-  // Load stored show in screenshot setting or use default
-  const storedShowInScreenshot = await getStoredValue(STORAGE_KEYS.SETTINGS_SHOW_IN_SCREENSHOT);
-  if (storedShowInScreenshot !== null && storedShowInScreenshot !== undefined) {
-    showInScreenshot = storedShowInScreenshot;
+  // Load stored ghost mode setting or use default
+  const storedGhostMode = await getStoredValue(STORAGE_KEYS.SETTINGS_GHOST_MODE);
+  if (storedGhostMode !== null && storedGhostMode !== undefined) {
+    ghostMode = storedGhostMode;
   } else {
-    showInScreenshot = DEFAULT_SHOW_IN_SCREENSHOT;
-    await setStoredValue(STORAGE_KEYS.SETTINGS_SHOW_IN_SCREENSHOT, DEFAULT_SHOW_IN_SCREENSHOT);
+    ghostMode = DEFAULT_GHOST_MODE;
+    await setStoredValue(STORAGE_KEYS.SETTINGS_GHOST_MODE, DEFAULT_GHOST_MODE);
   }
   updateGhostModeIndicator();
-  // Apply screenshot protection via Rust (protection = !showInScreenshot)
+  // Apply screenshot protection via Rust (protection = ghostMode)
   if (invoke) {
     try {
-      await invoke("set_screenshot_protection", { enabled: !showInScreenshot });
+      await invoke("set_screenshot_protection", { enabled: ghostMode });
     } catch (error) {
       console.error("Error applying screenshot protection:", error);
     }
   }
 
-  // Load stored light mode setting or use default
-  const storedLightMode = await getStoredValue(STORAGE_KEYS.SETTINGS_LIGHT_MODE);
-  if (storedLightMode !== null && storedLightMode !== undefined) {
-    isLightMode = storedLightMode;
+  // Load stored theme setting or use default (system)
+  const storedTheme = await getStoredValue(STORAGE_KEYS.SETTINGS_THEME);
+  if (storedTheme !== null && storedTheme !== undefined) {
+    currentTheme = storedTheme;
   } else {
-    isLightMode = DEFAULT_LIGHT_MODE;
-    await setStoredValue(STORAGE_KEYS.SETTINGS_LIGHT_MODE, DEFAULT_LIGHT_MODE);
+    currentTheme = 'system';
+    await setStoredValue(STORAGE_KEYS.SETTINGS_THEME, 'system');
   }
-  applyTheme(isLightMode);
+  applyTheme(currentTheme);
+
+  // Load stored scroll speed setting or use default
+  const storedScrollSpeed = await getStoredValue(STORAGE_KEYS.SETTINGS_SCROLL_SPEED);
+  if (storedScrollSpeed !== null && storedScrollSpeed !== undefined) {
+    scrollSpeedIndex = storedScrollSpeed;
+  } else {
+    scrollSpeedIndex = DEFAULT_SCROLL_SPEED;
+    await setStoredValue(STORAGE_KEYS.SETTINGS_SCROLL_SPEED, DEFAULT_SCROLL_SPEED);
+  }
 }
 
 // Settings Handlers
@@ -1788,47 +2207,81 @@ function setupSettings() {
     });
   }
 
-  // Screen capture toggle handler
-  if (screenCaptureToggle) {
-    screenCaptureToggle.addEventListener("change", async (e) => {
-      showInScreenshot = e.target.checked;
+  // Ghost mode toggle handler
+  if (ghostModeToggle) {
+    ghostModeToggle.addEventListener("change", async (e) => {
+      ghostMode = e.target.checked;
       updateGhostModeIndicator();
 
       // Track setting change
-      trackSettingChange('ghost_mode', !showInScreenshot);
+      trackSettingChange('ghost_mode', ghostMode);
 
-      // Update screenshot protection via Tauri (protection = !showInScreenshot)
+      // Update screenshot protection via Tauri (protection = ghostMode)
       if (invoke) {
         try {
-          await invoke("set_screenshot_protection", { enabled: !showInScreenshot });
+          await invoke("set_screenshot_protection", { enabled: ghostMode });
         } catch (error) {
           console.error("Error setting screenshot protection:", error);
         }
       }
 
       // Save to persistent storage
-      await setStoredValue(STORAGE_KEYS.SETTINGS_SHOW_IN_SCREENSHOT, showInScreenshot);
+      await setStoredValue(STORAGE_KEYS.SETTINGS_GHOST_MODE, ghostMode);
     });
   }
 
-  if (lightModeToggle) {
-    lightModeToggle.addEventListener("change", async (e) => {
-      isLightMode = e.target.checked;
-      applyTheme(isLightMode);
+  // Theme button handlers
+  const themeButtons = [themeSystemBtn, themeLightBtn, themeDarkBtn];
+  themeButtons.forEach(btn => {
+    if (btn) {
+      btn.addEventListener("click", async (e) => {
+        const theme = btn.dataset.theme;
+        currentTheme = theme;
+        applyTheme(theme);
+        updateThemeButtons(theme);
 
-      // Track setting change
-      trackSettingChange('light_mode', isLightMode);
+        // Track setting change
+        trackSettingChange('theme', theme);
+
+        // Save to persistent storage
+        await setStoredValue(STORAGE_KEYS.SETTINGS_THEME, theme);
+      });
+    }
+  });
+
+  // Scroll speed slider handler (combined toggle + speed)
+  let scrollSpeedTrackingTimeout = null;
+  if (scrollSpeedSlider) {
+    scrollSpeedSlider.addEventListener("input", async (e) => {
+      const value = parseInt(e.target.value);
+      scrollSpeedIndex = value;
+      const preset = SCROLL_SPEED_PRESETS[value];
+      scrollSpeedValue.textContent = preset.label;
 
       // Save to persistent storage
-      await setStoredValue(STORAGE_KEYS.SETTINGS_LIGHT_MODE, isLightMode);
+      await setStoredValue(STORAGE_KEYS.SETTINGS_SCROLL_SPEED, value);
+
+      // Start, restart, or stop auto-scroll based on new speed
+      if (currentView === 'add-notes' || currentView === 'notes') {
+        if (isAutoScrollEnabled() && timerState === 'running') {
+          restartAutoScroll();
+        } else {
+          stopAutoScroll();
+        }
+      }
+
+      // Debounce analytics tracking
+      clearTimeout(scrollSpeedTrackingTimeout);
+      scrollSpeedTrackingTimeout = setTimeout(() => {
+        trackSettingChange('scroll_speed', preset.label);
+      }, 500);
     });
   }
 }
 
 function updateGhostModeIndicator() {
   if (!ghostModeIndicator) return;
-  const ghostModeOn = !showInScreenshot;
-  ghostModeIndicator.textContent = `Ghost Mode: ${ghostModeOn ? 'On' : 'Off'}`;
+  ghostModeIndicator.textContent = `Ghost Mode: ${ghostMode ? 'On' : 'Off'}`;
 }
 
 // Load current settings values
@@ -1844,13 +2297,21 @@ async function loadCurrentSettings() {
     opacityValue.textContent = `${opacityPercent}%`;
   }
 
-  // Screen capture toggle: checkbox reflects showInScreenshot directly
-  if (screenCaptureToggle) {
-    screenCaptureToggle.checked = showInScreenshot;
+  // Ghost mode toggle: checkbox reflects ghostMode directly
+  if (ghostModeToggle) {
+    ghostModeToggle.checked = ghostMode;
   }
   updateGhostModeIndicator();
 
-  if (lightModeToggle) {
-    lightModeToggle.checked = isLightMode;
+  // Update theme buttons
+  updateThemeButtons(currentTheme);
+
+  // Scroll speed slider
+  if (scrollSpeedSlider) {
+    scrollSpeedSlider.value = scrollSpeedIndex;
+  }
+  if (scrollSpeedValue) {
+    const preset = SCROLL_SPEED_PRESETS[scrollSpeedIndex];
+    scrollSpeedValue.textContent = preset.label;
   }
 }

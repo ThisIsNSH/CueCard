@@ -14,6 +14,7 @@
     <header data-tauri-drag-region class="app-header">
       <span class="app-header-title hidden" id="app-header-title">Settings</span>
       <button class="btn-close" id="btn-close">Close</button>
+      <span class="header-timer hidden" id="header-timer">00:00</span>
       <span class="footer-separator hidden" id="download-updates-separator">•</span>
       <button class="btn-download-updates hidden" id="btn-download-updates">Download Updates</button>
       <div class="ghost-mode-indicator" id="ghost-mode-indicator">Ghost Mode: On</div>
@@ -77,6 +78,19 @@
           <div class="settings-group">
             <div class="setting-item">
               <div class="setting-label">
+                <span class="setting-title">Ghost Mode</span>
+                <span class="setting-description">Hide app from screenshots and recordings</span>
+              </div>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="ghost-mode-toggle">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-label">
                 <span class="setting-title">Window Opacity</span>
                 <span class="setting-description">Adjust window opacity to see content behind</span>
               </div>
@@ -88,27 +102,24 @@
 
             <div class="setting-item">
               <div class="setting-label">
-                <span class="setting-title">Show in Screenshot</span>
-                <span class="setting-description">Allow app to appear in screenshots and recordings</span>
+                <span class="setting-title">Auto-Scroll</span>
+                <span class="setting-description">Teleprompter scroll speed</span>
               </div>
               <div class="setting-control">
-                <label class="toggle-switch">
-                  <input type="checkbox" id="screen-capture-toggle">
-                  <span class="toggle-slider"></span>
-                </label>
+                <input type="range" id="scroll-speed-slider" class="opacity-slider" min="0" max="4" value="0" step="1">
+                <span class="opacity-value" id="scroll-speed-value">Off</span>
               </div>
             </div>
 
             <div class="setting-item">
               <div class="setting-label">
-                <span class="setting-title">Light Mode</span>
-                <span class="setting-description">Switch to a light color theme</span>
+                <span class="setting-title">Appearance</span>
+                <span class="setting-description">Choose your preferred theme</span>
               </div>
-              <div class="setting-control">
-                <label class="toggle-switch">
-                  <input type="checkbox" id="light-mode-toggle">
-                  <span class="toggle-slider"></span>
-                </label>
+              <div class="setting-control theme-buttons">
+                <button class="theme-btn" id="theme-system" data-theme="system">System</button>
+                <button class="theme-btn" id="theme-light" data-theme="light">Light</button>
+                <button class="theme-btn" id="theme-dark" data-theme="dark">Dark</button>
               </div>
             </div>
           </div>

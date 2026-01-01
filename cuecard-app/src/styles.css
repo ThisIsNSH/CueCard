@@ -9,6 +9,7 @@
   --color-green: #19c332;
   --color-pink: #ff6adf;
   --color-red: #ff605c;
+  --shimmer-start: rgba(255, 255, 255, 0.85);
   --scrollbar-thumb: rgba(255, 255, 255, 0.2);
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.3);
   --selection-bg: rgba(254, 188, 46, 0.3);
@@ -38,6 +39,7 @@
   --color-green: #0c7a29;
   --color-pink: #b82a82;
   --color-red: #c23a36;
+  --shimmer-start: rgba(20, 19, 18, 0.85);
   --scrollbar-thumb: rgba(0, 0, 0, 0.2);
   --scrollbar-thumb-hover: rgba(0, 0, 0, 0.3);
 }
@@ -187,7 +189,7 @@ body {
 /* Main Content Area */
 .content {
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden;
   padding: 0 18px 0 18px;
 }
 
@@ -286,12 +288,15 @@ body {
   color: var(--text-secondary);
   line-height: 1.2;
   padding-top: 24px;
-  padding-bottom: 24px;
+  padding-bottom: calc(100vh - 100px);
   white-space: pre-wrap;
   word-wrap: break-word;
   overflow-y: auto;
   pointer-events: none;
   z-index: 0;
+  -webkit-overflow-scrolling: touch;
+  will-change: scroll-position;
+  contain: content;
 }
 
 .notes-input {
@@ -307,9 +312,10 @@ body {
   caret-color: var(--text-secondary);
   line-height: 1.2;
   padding-top: 24px;
-  padding-bottom: 24px;
+  padding-bottom: calc(100vh - 100px);
   position: relative;
   z-index: 1;
+  -webkit-overflow-scrolling: touch;
 }
 
 .notes-input::placeholder {
@@ -370,6 +376,7 @@ body {
   font-weight: 600;
   font-stretch: expanded;
   color: var(--color-pink);
+  opacity: 1;
 }
 
 /* Gradient overlays for notes input */
@@ -409,9 +416,12 @@ body {
   white-space: pre-wrap;
   word-wrap: break-word;
   padding-top: 24px;
-  padding-bottom: 24px;
+  padding-bottom: calc(100vh - 100px);
   flex: 1;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  will-change: scroll-position;
+  contain: content;
 }
 
 /* Gradient overlays for notes display */
@@ -435,6 +445,25 @@ body {
   mask-repeat: no-repeat;
 }
 
+/* Notes Section Structure */
+.notes-section {
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+/* Sticky timer - sticks at top of each section */
+.notes-section .section-timer {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-bg);
+  display: block;
+  /* Extend background upward to cover the 24px padding gap */
+  padding-top: 24px;
+  margin-top: -24px;
+}
+
 /* Syntax Highlighting for Notes */
 .notes-content .timestamp {
   display: block;
@@ -444,13 +473,11 @@ body {
   color: var(--color-green);
   line-height: 1;
   transition: color 0.3s ease;
-  margin-bottom: -20px;
 }
 
 /* Warning state: when time < 00:10 */
 .notes-content .timestamp.time-warning {
   color: var(--color-yellow);
-  /* Yellow */
 }
 
 /* Overtime state: when time < 00:00 (counting up) */
@@ -463,31 +490,57 @@ body {
   font-weight: 600;
   font-stretch: expanded;
   color: var(--color-pink);
+  opacity: 1;
+}
+
+/* Notes Input Highlight Section Structure */
+.notes-input-highlight .notes-section {
+  position: relative;
+}
+
+.notes-input-highlight .section-timer {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-bg);
+  display: block;
+  /* Extend background upward to cover the 24px padding gap */
+  padding-top: 24px;
+  margin-top: -24px;
 }
 
 
-/* Scrollbar Styling */
-.content::-webkit-scrollbar,
+
+/* Scrollbar Styling - Hidden for notes views */
 .notes-content::-webkit-scrollbar,
+.notes-input::-webkit-scrollbar,
+.notes-input-highlight::-webkit-scrollbar {
+  display: none;
+}
+
+.notes-content,
+.notes-input,
+.notes-input-highlight {
+  scrollbar-width: none;
+}
+
+.content::-webkit-scrollbar,
 .settings-content::-webkit-scrollbar {
   width: 6px;
 }
 
 .content::-webkit-scrollbar-track,
-.notes-content::-webkit-scrollbar-track,
 .settings-content::-webkit-scrollbar-track {
   background: transparent;
 }
 
 .content::-webkit-scrollbar-thumb,
-.notes-content::-webkit-scrollbar-thumb,
 .settings-content::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 
 .content::-webkit-scrollbar-thumb:hover,
-.notes-content::-webkit-scrollbar-thumb:hover,
 .settings-content::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
 }
@@ -717,6 +770,23 @@ weight and line-height across buttons/links/separators
   color: var(--color-red);
 }
 
+.header-timer {
+  font-size: 12px;
+  font-weight: 600;
+  font-stretch: expanded;
+  color: var(--color-green);
+  letter-spacing: 0.25px;
+  transition: color 0.3s ease;
+}
+
+.header-timer.time-warning {
+  color: var(--color-yellow);
+}
+
+.header-timer.time-overtime {
+  color: var(--color-red);
+}
+
 .app-header-title {
   font-size: 12px;
   font-weight: 600;
@@ -760,7 +830,7 @@ weight and line-height across buttons/links/separators
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.3px;
-  color: var(--text-primary);
+  color: var(--text-secondary);
   pointer-events: none;
   user-select: none;
 }
@@ -900,6 +970,11 @@ weight and line-height across buttons/links/separators
   overflow-y: auto;
   padding-top: 24px;
   padding-bottom: 24px;
+  scrollbar-width: none;
+}
+
+.settings-content::-webkit-scrollbar {
+  display: none;
 }
 
 .settings-heading {
@@ -917,14 +992,17 @@ weight and line-height across buttons/links/separators
 
 .setting-item {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .setting-label {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1;
+  min-width: 0;
 }
 
 .setting-title {
@@ -943,7 +1021,10 @@ weight and line-height across buttons/links/separators
 .setting-control {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 12px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 /* Opacity Slider */
@@ -992,7 +1073,8 @@ weight and line-height across buttons/links/separators
   font-size: 14px;
   font-weight: 500;
   color: var(--text-secondary);
-  min-width: 45px;
+  min-width: 70px;
+  text-align: right;
 }
 
 /* Toggle Switch */
@@ -1041,4 +1123,35 @@ weight and line-height across buttons/links/separators
 
 .toggle-switch input:checked+.toggle-slider:before {
   transform: translateX(20px);
+}
+
+/* Theme Buttons */
+.theme-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.theme-btn {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--text-secondary);
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  opacity: 0.6;
+}
+
+.theme-btn:hover {
+  opacity: 1;
+}
+
+.theme-btn.active {
+  color: var(--text-primary);
+  border-color: var(--color-green);
+  background: rgba(25, 195, 50, 0.1);
+  opacity: 1;
 }
