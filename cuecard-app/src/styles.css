@@ -249,7 +249,7 @@ body {
 .welcome-hero {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -294,6 +294,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  margin-top: 8px;
 }
 
 .welcome-action {
@@ -337,7 +338,7 @@ body {
 }
 
 .action-desc {
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
   line-height: 1.35;
