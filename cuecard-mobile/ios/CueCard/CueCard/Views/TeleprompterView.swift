@@ -120,13 +120,16 @@ struct TeleprompterView: View {
                                         .glassedEffect(in: Circle())
                                 }
 
-                                // Close button
-                                Button(action: { stopAndDismiss() }) {
-                                    Image(systemName: "xmark")
-                                        .font(.system(size: 20, weight: .semibold))
-                                        .foregroundStyle(AppColors.textPrimary(for: colorScheme))
-                                        .frame(width: 52, height: 52)
-                                        .glassedEffect(in: Circle())
+                                // PiP toggle button
+                                if pipManager.isPiPPossible {
+                                    Button(action: { togglePiP() }) {
+                                        Image(systemName: pipManager.isPiPActive ? "pip.exit" : "pip.enter")
+                                            .font(.system(size: 20, weight: .semibold))
+                                            .foregroundStyle(AppColors.textPrimary(for: colorScheme))
+                                            .frame(width: 52, height: 52)
+                                            .glassedEffect(in: Circle())
+                                    }
+                                    .accessibilityLabel(pipManager.isPiPActive ? "Close Overlay" : "Start Overlay")
                                 }
 
                                 // Play/Pause button
@@ -189,21 +192,10 @@ struct TeleprompterView: View {
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 16) {
-                        if pipManager.isPiPPossible {
-                            Button(action: { startPiP() }) {
-                                Image(systemName: "pip.enter")
-                                    .font(.system(size: 16))
-                                    .foregroundStyle(AppColors.textPrimary(for: colorScheme))
-                            }
-                            .accessibilityLabel("Start Overlay")
-                        }
-
-                        Button(action: { showingSettings = true }) {
-                            Image(systemName: "gearshape")
-                                .font(.system(size: 16))
-                                .foregroundStyle(AppColors.textPrimary(for: colorScheme))
-                        }
+                    Button(action: { showingSettings = true }) {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 16))
+                            .foregroundStyle(AppColors.textPrimary(for: colorScheme))
                     }
                 }
             }
@@ -279,6 +271,15 @@ struct TeleprompterView: View {
         )
         pipManager.startPiP()
         Analytics.logEvent("teleprompter_pip_started", parameters: nil)
+    }
+
+    private func togglePiP() {
+        if pipManager.isPiPActive {
+            pipManager.stopPiP()
+            Analytics.logEvent("teleprompter_pip_stopped", parameters: nil)
+        } else {
+            startPiP()
+        }
     }
 
     // MARK: - Controls
