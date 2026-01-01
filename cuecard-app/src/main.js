@@ -297,19 +297,9 @@ const STORAGE_KEYS = {
   SETTINGS_OPACITY: 'settings_opacity',
   SETTINGS_GHOST_MODE: 'settings_ghost_mode',
   SETTINGS_THEME: 'settings_theme',
-  SETTINGS_SCROLL_SPEED: 'settings_scroll_speed',
   SETTINGS_SHORTCUTS_ENABLED: 'settings_shortcuts_enabled',
   ADD_NOTES_CONTENT: 'add_notes_content'
 };
-
-// Scroll speed presets: index -> { label, wpm }
-const SCROLL_SPEED_PRESETS = [
-  { label: 'Off', wpm: 0 },
-  { label: 'Slow', wpm: 100 },
-  { label: 'Medium', wpm: 150 },
-  { label: 'Fast', wpm: 200 },
-  { label: 'Extreme', wpm: 300 }
-];
 
 // Initialize the store
 async function initStore() {
@@ -405,7 +395,6 @@ let refreshBtn;
 let notesInputHighlight;
 let btnStart, btnPause, btnReset;
 let opacitySlider, opacityValue, ghostModeToggle, shortcutsToggle;
-let scrollSpeedSlider, scrollSpeedValue;
 let themeSystemBtn, themeLightBtn, themeDarkBtn;
 let editNoteBtn;
 let notesInputWrapper;
@@ -422,7 +411,6 @@ let currentSlideData = null; // Store current slide data
 let currentOpacity = 100; // Store current opacity value (10-100)
 let ghostMode = true; // Default: true = hidden from screenshots (ghost mode ON)
 let currentTheme = 'system'; // 'system', 'light', 'dark'
-let scrollSpeedIndex = 0; // Default: 0 = Off (see SCROLL_SPEED_PRESETS)
 let shortcutsEnabled = true; // Default: true = global shortcuts are enabled
 
 // Timer State
@@ -430,20 +418,6 @@ let timerState = 'stopped'; // 'stopped', 'running', 'paused'
 let timerIntervals = []; // Store all timer interval IDs
 let totalTimeSeconds = 0; // Total time from all [time] tags
 let remainingTimeSeconds = 0; // Current remaining time for countdown
-
-// Auto-scroll State
-let autoScrollRafId = null;
-let autoScrollLastTimestamp = null;
-let isSyncingAddNotesScroll = false;
-
-// Hover pause state
-let isHoveringApp = false;
-let autoScrollPausedByHover = false;
-let autoScrollPausedBySettings = false;
-
-// Scroll position tracking for reset on hover leave
-let savedScrollPosition = null;
-let userScrolledDuringHover = false;
 
 // Notes metadata
 let notesHasTimeTags = false;
@@ -503,8 +477,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   opacityValue = document.getElementById("opacity-value");
   ghostModeToggle = document.getElementById("ghost-mode-toggle");
   shortcutsToggle = document.getElementById("shortcuts-toggle");
-  scrollSpeedSlider = document.getElementById("scroll-speed-slider");
-  scrollSpeedValue = document.getElementById("scroll-speed-value");
   themeSystemBtn = document.getElementById("theme-system");
   themeLightBtn = document.getElementById("theme-light");
   themeDarkBtn = document.getElementById("theme-dark");
@@ -534,14 +506,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   // Set up timer control buttons
   setupTimerControls();
 
-  // Set up hover pause functionality
-  setupHoverPause();
-
   // Set up syntax highlighting for notes input
   setupNotesInputHighlighting();
-
-  // Set up notes scroll sync
-  setupNotesScrollSync();
 
   // Set up edit note button
   setupEditNoteButton();
@@ -663,9 +629,6 @@ function resetAllStates() {
   stopAllTimers();
   timerState = 'stopped';
 
-  // Stop auto-scroll
-  stopAutoScroll();
-
   // Update timer button visibility
   updateTimerButtonVisibility();
 }
@@ -758,13 +721,6 @@ function startTimerCountdown() {
   timerState = 'running';
   updateTimerButtonVisibility();
 
-  // Start auto-scroll
-  console.log('[Timer] Starting auto-scroll...');
-  autoScrollPausedByHover = false;
-  userScrolledDuringHover = false;
-  savedScrollPosition = null;
-  startAutoScroll();
-
   // Track elapsed time for count-up mode (when no [time] tags)
   let elapsedSeconds = 0;
 
@@ -784,6 +740,7 @@ function startTimerCountdown() {
       const displayTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
       // Update the header timer display
+      headerTimer.classList.remove('time-countup');
       if (remainingTimeSeconds < 0) {
         headerTimer.textContent = `-${displayTime}`;
         headerTimer.classList.add('time-overtime');
@@ -797,13 +754,14 @@ function startTimerCountdown() {
         headerTimer.classList.remove('time-warning', 'time-overtime');
       }
     } else {
-      // Count up mode (no [time] tags)
+      // Count up mode (no [time] tags) - white color
       elapsedSeconds++;
       const minutes = Math.floor(elapsedSeconds / 60);
       const seconds = elapsedSeconds % 60;
       const displayTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
       headerTimer.textContent = displayTime;
       headerTimer.classList.remove('time-warning', 'time-overtime');
+      headerTimer.classList.add('time-countup');
     }
   }, 1000);
 
@@ -818,10 +776,6 @@ function pauseTimerCountdown() {
   timerState = 'paused';
   stopAllTimers();
   updateTimerButtonVisibility();
-
-  // Pause auto-scroll
-  stopAutoScroll();
-  autoScrollPausedByHover = false;
 }
 
 // Reset timer countdown to original values
@@ -830,19 +784,10 @@ function resetTimerCountdown() {
   stopAllTimers();
   timerState = 'stopped';
 
-  // Reset auto-scroll
-  stopAutoScroll();
-  autoScrollPausedByHover = false;
-  userScrolledDuringHover = false;
-  savedScrollPosition = null;
-
   // Reset scroll position to top
-  const container = getAutoScrollContainer();
+  const container = getScrollContainer();
   if (container) {
     container.scrollTop = 0;
-    if (currentView === 'add-notes') {
-      syncAddNotesScroll(container);
-    }
   }
 
   // Reset remaining time to total time
@@ -855,6 +800,8 @@ function resetTimerCountdown() {
     const displayTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     headerTimer.textContent = displayTime;
     headerTimer.classList.remove('time-warning', 'time-overtime');
+    // Use count-up styling (white) when no [time] tags
+    headerTimer.classList.toggle('time-countup', totalTimeSeconds === 0);
   }
 
   updateTimerButtonVisibility();
@@ -867,10 +814,10 @@ function stopAllTimers() {
 }
 
 // =============================================================================
-// AUTO-SCROLL (TELEPROMPTER)
+// SCROLL HELPERS
 // =============================================================================
 
-function getAutoScrollContainer() {
+function getScrollContainer() {
   if (currentView === 'add-notes') {
     if (isEditMode) {
       return notesInput;
@@ -883,249 +830,6 @@ function getAutoScrollContainer() {
   return null;
 }
 
-function syncAddNotesScroll(source) {
-  if (!notesInput || !notesInputHighlight) return;
-  if (isSyncingAddNotesScroll) return;
-  isSyncingAddNotesScroll = true;
-  if (source === notesInput) {
-    notesInputHighlight.scrollTop = notesInput.scrollTop;
-  } else {
-    notesInput.scrollTop = notesInputHighlight.scrollTop;
-  }
-  isSyncingAddNotesScroll = false;
-}
-
-// Get current WPM from scroll speed preset
-function getCurrentWPM() {
-  return SCROLL_SPEED_PRESETS[scrollSpeedIndex]?.wpm || 0;
-}
-
-// Check if auto-scroll is enabled (not "Off")
-function isAutoScrollEnabled() {
-  return scrollSpeedIndex > 0;
-}
-
-// Start auto-scroll for the current view
-function startAutoScroll() {
-  stopAutoScroll();
-
-  console.log('[AutoScroll] startAutoScroll called');
-  console.log('[AutoScroll] isAutoScrollEnabled:', isAutoScrollEnabled(), 'scrollSpeedIndex:', scrollSpeedIndex);
-
-  if (!isAutoScrollEnabled()) {
-    console.log('[AutoScroll] RETURN: auto-scroll not enabled');
-    return;
-  }
-
-  const wordsPerMinute = getCurrentWPM();
-  console.log('[AutoScroll] WPM:', wordsPerMinute);
-  if (wordsPerMinute === 0) {
-    console.log('[AutoScroll] RETURN: WPM is 0');
-    return;
-  }
-
-  // Get the scrollable container for the current view
-  const container = getAutoScrollContainer();
-  console.log('[AutoScroll] container:', container, 'currentView:', currentView, 'isEditMode:', isEditMode);
-  if (!container) {
-    console.log('[AutoScroll] RETURN: no container');
-    return;
-  }
-
-  // Wait for next frame to ensure layout is ready
-  requestAnimationFrame(() => {
-    console.log('[AutoScroll] RAF - scrollHeight:', container.scrollHeight, 'clientHeight:', container.clientHeight);
-    // Check if container is scrollable
-    if (container.scrollHeight <= container.clientHeight) {
-      console.log('[AutoScroll] RETURN: container not scrollable');
-      return;
-    }
-
-    console.log('[AutoScroll] Starting animation loop');
-    autoScrollLastTimestamp = null;
-
-    // Simple smooth scroll speed based on reading speed (WPM)
-    const wordsPerLine = 8;
-    const computedStyles = getComputedStyle(container);
-    const fontSize = parseFloat(computedStyles.fontSize) || 20;
-    const lineHeightValue = computedStyles.lineHeight;
-    let lineHeight = parseFloat(lineHeightValue);
-    if (!lineHeightValue || lineHeightValue === 'normal') {
-      lineHeight = fontSize * 1.2;
-    } else if (!lineHeightValue.endsWith('px')) {
-      lineHeight = lineHeight * fontSize;
-    }
-    const pixelsPerWord = lineHeight / wordsPerLine;
-    const pixelsPerSecond = (wordsPerMinute / 60) * pixelsPerWord;
-
-    const step = (timestamp) => {
-      if (!autoScrollRafId) return;
-
-      // Re-check container in case view changed
-      const currentContainer = getAutoScrollContainer();
-      if (!currentContainer || currentContainer !== container) {
-        stopAutoScroll();
-        return;
-      }
-
-      if (!autoScrollLastTimestamp) {
-        autoScrollLastTimestamp = timestamp;
-        autoScrollRafId = requestAnimationFrame(step);
-        return;
-      }
-
-      const deltaMs = timestamp - autoScrollLastTimestamp;
-      autoScrollLastTimestamp = timestamp;
-      const scrollDelta = (pixelsPerSecond * deltaMs) / 1000;
-      const nextScrollTop = container.scrollTop + scrollDelta;
-
-      if (nextScrollTop + container.clientHeight >= container.scrollHeight) {
-        container.scrollTop = container.scrollHeight - container.clientHeight;
-        stopAutoScroll();
-        return;
-      }
-
-      container.scrollTop = nextScrollTop;
-      if (currentView === 'add-notes') {
-        syncAddNotesScroll(container);
-      }
-      autoScrollRafId = requestAnimationFrame(step);
-    };
-
-    autoScrollRafId = requestAnimationFrame(step);
-  });
-}
-
-// Stop auto-scroll
-function stopAutoScroll() {
-  if (autoScrollRafId) {
-    cancelAnimationFrame(autoScrollRafId);
-    autoScrollRafId = null;
-  }
-  autoScrollLastTimestamp = null;
-}
-
-// Restart auto-scroll with current settings
-function restartAutoScroll() {
-  stopAutoScroll();
-  if (isAutoScrollEnabled() && timerState === 'running' && !isHoveringApp) {
-    startAutoScroll();
-  }
-}
-
-// =============================================================================
-// HOVER PAUSE FUNCTIONALITY
-// =============================================================================
-
-// Pause auto-scroll on hover (but not timers)
-function pauseOnHover() {
-  isHoveringApp = true;
-
-  // Pause auto-scroll if running and save position
-  if (autoScrollRafId) {
-    autoScrollPausedByHover = true;
-    const container = getAutoScrollContainer();
-    if (container) {
-      savedScrollPosition = container.scrollTop;
-    }
-    stopAutoScroll();
-    userScrolledDuringHover = false;
-  }
-}
-
-// Resume auto-scroll on mouse leave
-function resumeOnLeave() {
-  isHoveringApp = false;
-
-  // Resume auto-scroll if it was paused by hover and timer is still running
-  if (autoScrollPausedByHover && timerState === 'running' && isAutoScrollEnabled()) {
-    autoScrollPausedByHover = false;
-
-    // If user scrolled manually during hover, reset to saved position
-    if (userScrolledDuringHover && savedScrollPosition !== null) {
-      const container = getAutoScrollContainer();
-      if (container) {
-        container.scrollTop = savedScrollPosition;
-        if (currentView === 'add-notes') {
-          syncAddNotesScroll(container);
-        }
-      }
-    }
-
-    userScrolledDuringHover = false;
-    savedScrollPosition = null;
-    startAutoScroll();
-  }
-}
-
-// Pause auto-scroll when opening settings
-function pauseAnimationsForSettings() {
-  console.log('[Settings] pauseAnimationsForSettings called, timerState:', timerState, 'isAutoScrollEnabled:', isAutoScrollEnabled());
-  // Mark that settings was opened while auto-scroll should be running
-  // Check if auto-scroll SHOULD be running, not just if it IS running
-  // (it might be paused by hover)
-  if (timerState === 'running' && isAutoScrollEnabled()) {
-    autoScrollPausedBySettings = true;
-    console.log('[Settings] autoScrollPausedBySettings set to true');
-  }
-  // Always stop auto-scroll when entering settings (safe to call even if not running)
-  stopAutoScroll();
-}
-
-// Resume auto-scroll when closing settings
-function resumeAnimationsAfterSettings() {
-  console.log('[Settings] resumeAnimationsAfterSettings called, timerState:', timerState, 'isAutoScrollEnabled:', isAutoScrollEnabled());
-  autoScrollPausedBySettings = false;
-
-  // Don't resume if timer is not running
-  if (timerState !== 'running') {
-    console.log('[Settings] RETURN: timer not running');
-    return;
-  }
-
-  // Don't resume if auto-scroll is disabled (Off)
-  if (!isAutoScrollEnabled()) {
-    console.log('[Settings] RETURN: auto-scroll not enabled');
-    return;
-  }
-
-  // Reset hover state - user needs to move mouse out and back in to re-enable hover pause
-  // This prevents the hover state from blocking auto-scroll when returning from settings
-  console.log('[Settings] Resetting hover state and starting auto-scroll');
-  isHoveringApp = false;
-  autoScrollPausedByHover = false;
-  userScrolledDuringHover = false;
-  savedScrollPosition = null;
-
-  // Start auto-scroll
-  startAutoScroll();
-}
-
-// Track manual scroll during hover
-function handleManualScroll() {
-  if (isHoveringApp && autoScrollPausedByHover) {
-    userScrolledDuringHover = true;
-  }
-}
-
-// Setup hover listeners on the app container
-function setupHoverPause() {
-  if (appContainer) {
-    appContainer.addEventListener('mouseenter', pauseOnHover);
-    appContainer.addEventListener('mouseleave', resumeOnLeave);
-  }
-
-  // Add scroll listeners to track manual scrolling during hover
-  if (notesContent) {
-    notesContent.addEventListener('scroll', handleManualScroll);
-  }
-  if (notesInput) {
-    notesInput.addEventListener('scroll', handleManualScroll);
-  }
-  if (notesInputHighlight) {
-    notesInputHighlight.addEventListener('scroll', handleManualScroll);
-  }
-}
 
 // Check if text contains [time mm:ss] pattern
 function hasTimePattern(text) {
@@ -1133,12 +837,11 @@ function hasTimePattern(text) {
   return timePattern.test(text);
 }
 
-// Update header timer visibility based on time tags and view
+// Update header timer visibility based on view (shown in notes views for both countdown and count-up)
 function updateHeaderTimerVisibility() {
   if (!headerTimer) return;
   const isNotesView = currentView === 'add-notes' || currentView === 'notes';
-  const shouldShowHeaderTimer = isNotesView && notesHasTimeTags;
-  headerTimer.classList.toggle('hidden', !shouldShowHeaderTimer);
+  headerTimer.classList.toggle('hidden', !isNotesView);
 }
 
 // Update footer separators - add .has-separator class to visible items that follow other visible items
@@ -1170,7 +873,7 @@ function updateTimerButtonVisibility() {
   if (!btnStart || !btnPause || !btnReset) return;
 
   // Determine if we should show timer controls
-  // Show when there's content (for auto-scroll), even without [time] tags
+  // Show when there's content, even without [time] tags
   let shouldShowTimers = false;
 
   if (currentView === 'add-notes') {
@@ -1248,23 +951,9 @@ function setupNotesInputHighlighting() {
 
   // Listen for input changes
   notesInput.addEventListener('input', updateHighlight);
-  notesInput.addEventListener('scroll', () => {
-    if (currentView !== 'add-notes') return;
-    syncAddNotesScroll(notesInput);
-  });
-  if (notesInputHighlight) {
-    notesInputHighlight.addEventListener('scroll', () => {
-      if (currentView !== 'add-notes' || isEditMode) return;
-      syncAddNotesScroll(notesInputHighlight);
-    });
-  }
 
   // Initial update if there's already content
   updateHighlight();
-}
-
-function setupNotesScrollSync() {
-  if (!notesContent) return;
 }
 
 // =============================================================================
@@ -1298,7 +987,7 @@ function toggleEditMode() {
     editNoteBtn.textContent = 'Edit Note';
   }
 
-  // Reset timer and auto-scroll when toggling edit/done
+  // Reset timer when toggling edit/done
   resetTimerCountdown();
 }
 
@@ -1426,6 +1115,8 @@ function highlightNotesForInput(text) {
     const displayTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     headerTimer.textContent = displayTime;
     headerTimer.classList.remove('time-warning', 'time-overtime');
+    // Use count-up styling (white) when no [time] tags
+    headerTimer.classList.toggle('time-countup', cumulativeTime === 0);
   }
 
   return result;
@@ -1772,15 +1463,6 @@ async function showView(viewName) {
   // Update edit note button visibility
   updateEditNoteButtonVisibility();
 
-  if (viewName === 'settings' && (previousView === 'add-notes' || previousView === 'notes')) {
-    pauseAnimationsForSettings();
-  }
-
-  // Stop auto-scroll when leaving a view
-  if (previousView === 'add-notes' || previousView === 'notes') {
-    stopAutoScroll();
-  }
-
   // Show the requested view
   switch (viewName) {
     case 'initial':
@@ -1804,7 +1486,6 @@ async function showView(viewName) {
       updateEditNoteButtonVisibility();
       // Update timer button visibility after notes are loaded
       updateTimerButtonVisibility();
-      // Don't auto-start auto-scroll - wait for Start button
       break;
     case 'notes':
       viewNotes.classList.remove('hidden');
@@ -1816,13 +1497,11 @@ async function showView(viewName) {
         updateHeaderTimerVisibility();
         stopAllTimers();
         timerState = 'stopped';
-        stopAutoScroll();
         updateTimerButtonVisibility();
       }
       if (timerState === 'stopped' && currentSlideData && hasNotesContent && previousView !== 'settings') {
         startTimerCountdown();
       }
-      // Don't auto-start auto-scroll - wait for Start button
       break;
     case 'settings':
       viewSettings.classList.remove('hidden');
@@ -1834,10 +1513,6 @@ async function showView(viewName) {
       // Populate shortcut key displays
       populateShortcutKeys();
       break;
-  }
-
-  if (previousView === 'settings' && (viewName === 'add-notes' || viewName === 'notes')) {
-    resumeAnimationsAfterSettings();
   }
 
   updateFooterSeparators();
@@ -1973,6 +1648,8 @@ function highlightNotes(text) {
     const displayTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     headerTimer.textContent = displayTime;
     headerTimer.classList.remove('time-warning', 'time-overtime');
+    // Use count-up styling (white) when no [time] tags
+    headerTimer.classList.toggle('time-countup', cumulativeTime === 0);
   }
 
   return result;
@@ -2180,7 +1857,6 @@ function setupFooter() {
 // Default settings values
 const DEFAULT_OPACITY = 100;
 const DEFAULT_GHOST_MODE = true; // true = ghost mode ON = hidden from screenshots
-const DEFAULT_SCROLL_SPEED = 0; // 0 = Off (see SCROLL_SPEED_PRESETS)
 const DEFAULT_SHORTCUTS_ENABLED = true; // true = global shortcuts are enabled
 
 // Apply theme based on preference ('system', 'light', 'dark')
@@ -2244,15 +1920,6 @@ async function loadStoredSettings() {
     await setStoredValue(STORAGE_KEYS.SETTINGS_THEME, 'system');
   }
   applyTheme(currentTheme);
-
-  // Load stored scroll speed setting or use default
-  const storedScrollSpeed = await getStoredValue(STORAGE_KEYS.SETTINGS_SCROLL_SPEED);
-  if (storedScrollSpeed !== null && storedScrollSpeed !== undefined) {
-    scrollSpeedIndex = storedScrollSpeed;
-  } else {
-    scrollSpeedIndex = DEFAULT_SCROLL_SPEED;
-    await setStoredValue(STORAGE_KEYS.SETTINGS_SCROLL_SPEED, DEFAULT_SCROLL_SPEED);
-  }
 
   // Load stored shortcuts enabled setting or use default
   const storedShortcutsEnabled = await getStoredValue(STORAGE_KEYS.SETTINGS_SHORTCUTS_ENABLED);
@@ -2339,35 +2006,6 @@ function setupSettings() {
     }
   });
 
-  // Scroll speed slider handler (combined toggle + speed)
-  let scrollSpeedTrackingTimeout = null;
-  if (scrollSpeedSlider) {
-    scrollSpeedSlider.addEventListener("input", async (e) => {
-      const value = parseInt(e.target.value);
-      scrollSpeedIndex = value;
-      const preset = SCROLL_SPEED_PRESETS[value];
-      scrollSpeedValue.textContent = preset.label;
-
-      // Save to persistent storage
-      await setStoredValue(STORAGE_KEYS.SETTINGS_SCROLL_SPEED, value);
-
-      // Start, restart, or stop auto-scroll based on new speed
-      if (currentView === 'add-notes' || currentView === 'notes') {
-        if (isAutoScrollEnabled() && timerState === 'running') {
-          restartAutoScroll();
-        } else {
-          stopAutoScroll();
-        }
-      }
-
-      // Debounce analytics tracking
-      clearTimeout(scrollSpeedTrackingTimeout);
-      scrollSpeedTrackingTimeout = setTimeout(() => {
-        trackSettingChange('scroll_speed', preset.label);
-      }, 500);
-    });
-  }
-
   // Shortcuts toggle handler
   if (shortcutsToggle) {
     shortcutsToggle.addEventListener("change", async (e) => {
@@ -2429,15 +2067,6 @@ async function loadCurrentSettings() {
 
   // Update theme buttons
   updateThemeButtons(currentTheme);
-
-  // Scroll speed slider
-  if (scrollSpeedSlider) {
-    scrollSpeedSlider.value = scrollSpeedIndex;
-  }
-  if (scrollSpeedValue) {
-    const preset = SCROLL_SPEED_PRESETS[scrollSpeedIndex];
-    scrollSpeedValue.textContent = preset.label;
-  }
 
   // Shortcuts toggle
   if (shortcutsToggle) {

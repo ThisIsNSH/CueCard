@@ -9,7 +9,6 @@
   --color-green: #19c332;
   --color-pink: #ff6adf;
   --color-red: #ff605c;
-  --shimmer-start: rgba(255, 255, 255, 0.85);
   --scrollbar-thumb: rgba(255, 255, 255, 0.2);
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.3);
   --selection-bg: rgba(254, 188, 46, 0.3);
@@ -39,7 +38,6 @@
   --color-green: #0c7a29;
   --color-pink: #b82a82;
   --color-red: #c23a36;
-  --shimmer-start: rgba(20, 19, 18, 0.85);
   --scrollbar-thumb: rgba(0, 0, 0, 0.2);
   --scrollbar-thumb-hover: rgba(0, 0, 0, 0.3);
 }
@@ -452,18 +450,6 @@ body {
   padding: 0;
 }
 
-/* Sticky timer - sticks at top of each section */
-.notes-section .section-timer {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: var(--color-bg);
-  display: block;
-  /* Extend background upward to cover the 24px padding gap */
-  padding-top: 24px;
-  margin-top: -24px;
-}
-
 /* Syntax Highlighting for Notes */
 .notes-content .timestamp {
   display: block;
@@ -492,24 +478,6 @@ body {
   color: var(--color-pink);
   opacity: 1;
 }
-
-/* Notes Input Highlight Section Structure */
-.notes-input-highlight .notes-section {
-  position: relative;
-}
-
-.notes-input-highlight .section-timer {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: var(--color-bg);
-  display: block;
-  /* Extend background upward to cover the 24px padding gap */
-  padding-top: 24px;
-  margin-top: -24px;
-}
-
-
 
 /* Scrollbar Styling - Hidden for notes views */
 .notes-content::-webkit-scrollbar,
@@ -777,6 +745,10 @@ weight and line-height across buttons/links/separators
   color: var(--color-green);
   letter-spacing: 0.25px;
   transition: color 0.3s ease;
+}
+
+.header-timer.time-countup {
+  color: var(--text-secondary);
 }
 
 .header-timer.time-warning {
