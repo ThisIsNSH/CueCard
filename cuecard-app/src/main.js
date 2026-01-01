@@ -383,12 +383,12 @@ async function hasScope(scopeType) {
 // =============================================================================
 
 // DOM Elements
-let btnClose, btnDownloadUpdates, downloadUpdatesSeparator;
+let btnClose, btnDownloadUpdates, downloadUpdatesSeparator, btnSignOut;
 let authBtn;
 let appContainer, appHeader, appHeaderTitle, viewInitial, viewAddNotes, viewNotes, viewSettings, viewShortcuts;
 let linkGoBack;
 let notesInput, notesContent;
-let welcomeHeading, welcomeSubtext;
+let welcomeHeading, welcomeSubtext, welcomeActions;
 let bugLink, websiteLink, supportLink;
 let settingsLink;
 let shortcutsLink;
@@ -455,6 +455,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   btnClose = document.getElementById("btn-close");
   btnDownloadUpdates = document.getElementById("btn-download-updates");
   downloadUpdatesSeparator = document.getElementById("download-updates-separator");
+  btnSignOut = document.getElementById("btn-signout");
   authBtn = document.getElementById("auth-btn");
   appContainer = document.querySelector(".app-container");
   appHeader = document.querySelector(".app-header");
@@ -469,6 +470,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   notesContent = document.getElementById("notes-content");
   welcomeHeading = document.getElementById("welcome-heading");
   welcomeSubtext = document.getElementById("welcome-subtext");
+  welcomeActions = document.getElementById("welcome-actions");
   bugLink = document.getElementById("bug-link");
   websiteLink = document.getElementById("website-link");
   supportLink = document.getElementById("support-link");
@@ -498,6 +500,9 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   // Set up auth handlers
   setupAuth();
+
+  // Set up welcome action handlers
+  setupWelcomeActions();
 
   // Set up header handlers
   setupHeader();
@@ -659,6 +664,57 @@ function setupAuth() {
       await handleLogin();
     }
   });
+
+  if (btnSignOut) {
+    btnSignOut.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!isAuthenticated) return;
+      trackLogout();
+      await handleLogout();
+    });
+  }
+}
+
+// Welcome Actions (Paste Notes / Slides)
+function setupWelcomeActions() {
+  const pasteNotesLink = document.getElementById('paste-notes-link');
+  if (pasteNotesLink) {
+    pasteNotesLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      trackNotesPaste();
+      showView('add-notes');
+      notesInput.focus();
+    });
+  }
+
+  const slidesLink = document.getElementById('slides-link');
+  if (slidesLink) {
+    slidesLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      trackSlidesSync();
+
+      // Check if we have slides scope
+      const hasSlidesScope = await hasScope('slides');
+      if (!hasSlidesScope) {
+        // Request slides scope
+        console.log("Slides scope not granted, requesting...");
+        await handleLogin('slides');
+        return;
+      }
+
+      // Show notes view with slide data or default message
+      if (currentSlideData) {
+        showView('notes');
+      } else {
+        displayNotes('Open a Google Slides presentation to see notes here.\n[note Install CueCard Extension to sync notes]');
+        window.title = 'No Slide Open';
+        showView('notes');
+      }
+    });
+  }
 }
 
 // Refresh Button Handler
@@ -1289,6 +1345,12 @@ function updateAuthUI(authenticated, name = '') {
     // Update button to show "Sign out"
     if (buttonText) buttonText.textContent = 'Sign out';
     if (buttonIcon) buttonIcon.style.display = 'none';
+    authBtn.classList.add('is-authenticated');
+    authBtn.classList.add('hidden');
+    if (btnSignOut) {
+      const shouldShowSignOut = currentView !== 'notes' && currentView !== 'add-notes';
+      btnSignOut.classList.toggle('hidden', !shouldShowSignOut);
+    }
 
     // Update welcome heading with greeting and first name
     const firstName = getFirstName(name);
@@ -1297,59 +1359,29 @@ function updateAuthUI(authenticated, name = '') {
     const versionHTML = versionSpan ? versionSpan.outerHTML : '';
     welcomeHeading.innerHTML = `${greeting}, ${firstName}!${versionHTML ? '\n' + versionHTML : ''}`;
 
-    // Update subtext to show paste notes link
-    welcomeSubtext.innerHTML = 'Speak using <a href="#" class="paste-notes-link" id="paste-notes-link">Your Notes</a>, or sync them from <a href="#" class="slides-link" id="slides-link">Google Slides</a> seamlessly — visible only to you.';
-
-    // Add click handler for Paste your notes link
-    const pasteNotesLink = document.getElementById('paste-notes-link');
-    if (pasteNotesLink) {
-      pasteNotesLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        trackNotesPaste();
-        showView('add-notes');
-        notesInput.focus();
-      });
-    }
-
-    // Add click handler for Google Slides link
-    const slidesLink = document.getElementById('slides-link');
-    if (slidesLink) {
-      slidesLink.addEventListener('click', async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        trackSlidesSync();
-
-        // Check if we have slides scope
-        const hasSlidesScope = await hasScope('slides');
-        if (!hasSlidesScope) {
-          // Request slides scope
-          console.log("Slides scope not granted, requesting...");
-          await handleLogin('slides');
-          return;
-        }
-
-        // Show notes view with slide data or default message
-        if (currentSlideData) {
-          showView('notes');
-        } else {
-          // Show notes view with default message when no slide is open
-          displayNotes('Open a Google Slides presentation to see notes here.\n[note Install CueCard Extension to sync notes]');
-          window.title = 'No Slide Open';
-          showView('notes');
-        }
-      });
+    // Update subtext and show quick actions
+    welcomeSubtext.innerHTML = 'Load your notes and start speaking confidently.';
+    if (welcomeActions) {
+      welcomeActions.classList.remove('hidden');
     }
   } else {
     // Update button to show "Sign in"
     if (buttonText) buttonText.textContent = 'Sign in with Google';
     if (buttonIcon) buttonIcon.style.display = 'block';
+    authBtn.classList.remove('is-authenticated');
+    authBtn.classList.remove('hidden');
+    if (btnSignOut) {
+      btnSignOut.classList.add('hidden');
+    }
 
     // Reset welcome heading to default
     welcomeHeading.innerHTML = 'CueCard\n<span class="version-text">1.3.1</span>';
 
     // Reset subtext
-    welcomeSubtext.innerHTML = 'Speaker notes visible only to you during screen sharing — for <span class="highlight-presentations">presentations</span>, <span class="highlight-meetings">meetings</span>, and more...';
+    welcomeSubtext.innerHTML = 'Speaker notes visible only to you during screen sharing — for <span class="highlight-presentations">presentations</span>, <span class="highlight-meetings">meetings</span>, or <span class="highlight-demos">live demos</span>.';
+    if (welcomeActions) {
+      welcomeActions.classList.add('hidden');
+    }
   }
 }
 
@@ -1514,6 +1546,15 @@ async function showView(viewName) {
     }
 
     updateHeaderTimerVisibility();
+  }
+
+  if (ghostModeIndicator) {
+    const shouldShowGhost = viewName === 'notes' || viewName === 'add-notes';
+    ghostModeIndicator.classList.toggle('hidden', !shouldShowGhost);
+  }
+  if (btnSignOut) {
+    const shouldShowSignOut = isAuthenticated && viewName !== 'notes' && viewName !== 'add-notes';
+    btnSignOut.classList.toggle('hidden', !shouldShowSignOut);
   }
 
   // Show/hide privacy, website, and settings links based on view
