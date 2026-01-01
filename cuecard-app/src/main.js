@@ -298,6 +298,7 @@ const STORAGE_KEYS = {
   SETTINGS_GHOST_MODE: 'settings_ghost_mode',
   SETTINGS_THEME: 'settings_theme',
   SETTINGS_SHORTCUTS_ENABLED: 'settings_shortcuts_enabled',
+  SETTINGS_AUTO_SCROLL_SPEED: 'settings_auto_scroll_speed',
   ADD_NOTES_CONTENT: 'add_notes_content'
 };
 
@@ -396,6 +397,7 @@ let notesInputHighlight;
 let btnStart, btnPause, btnReset;
 let opacitySlider, opacityValue, ghostModeToggle, shortcutsToggle;
 let themeSystemBtn, themeLightBtn, themeDarkBtn;
+let speedOffBtn, speedLowBtn, speedMediumBtn, speedHighBtn;
 let editNoteBtn;
 let notesInputWrapper;
 let ghostModeIndicator;
@@ -412,10 +414,20 @@ let currentOpacity = 100; // Store current opacity value (10-100)
 let ghostMode = true; // Default: true = hidden from screenshots (ghost mode ON)
 let currentTheme = 'system'; // 'system', 'light', 'dark'
 let shortcutsEnabled = true; // Default: true = global shortcuts are enabled
+let autoScrollSpeed = 'off'; // 'off', 'low', 'medium', 'high'
+
+// Auto-scroll speed values (pixels per frame at 60fps)
+const AUTO_SCROLL_SPEEDS = {
+  off: 0,
+  low: 0.5,
+  medium: 1,
+  high: 2
+};
 
 // Timer State
 let timerState = 'stopped'; // 'stopped', 'running', 'paused'
 let timerIntervals = []; // Store all timer interval IDs
+let autoScrollAnimationId = null; // Store auto-scroll animation frame ID
 let totalTimeSeconds = 0; // Total time from all [time] tags
 let remainingTimeSeconds = 0; // Current remaining time for countdown
 
@@ -480,6 +492,10 @@ window.addEventListener("DOMContentLoaded", async () => {
   themeSystemBtn = document.getElementById("theme-system");
   themeLightBtn = document.getElementById("theme-light");
   themeDarkBtn = document.getElementById("theme-dark");
+  speedOffBtn = document.getElementById("speed-off");
+  speedLowBtn = document.getElementById("speed-low");
+  speedMediumBtn = document.getElementById("speed-medium");
+  speedHighBtn = document.getElementById("speed-high");
   editNoteBtn = document.getElementById("edit-note-btn");
   notesInputWrapper = document.querySelector(".notes-input-wrapper");
   ghostModeIndicator = document.getElementById("ghost-mode-indicator");
@@ -721,6 +737,9 @@ function startTimerCountdown() {
   timerState = 'running';
   updateTimerButtonVisibility();
 
+  // Start auto-scroll if enabled
+  startAutoScroll();
+
   // Track elapsed time for count-up mode (when no [time] tags)
   let elapsedSeconds = 0;
 
@@ -775,6 +794,7 @@ function pauseTimerCountdown() {
   trackTimerAction('pause');
   timerState = 'paused';
   stopAllTimers();
+  stopAutoScroll();
   updateTimerButtonVisibility();
 }
 
@@ -782,6 +802,7 @@ function pauseTimerCountdown() {
 function resetTimerCountdown() {
   trackTimerAction('reset');
   stopAllTimers();
+  stopAutoScroll();
   timerState = 'stopped';
 
   // Reset scroll position to top
@@ -830,6 +851,40 @@ function getScrollContainer() {
   return null;
 }
 
+// Start auto-scroll animation
+function startAutoScroll() {
+  if (autoScrollSpeed === 'off' || autoScrollAnimationId !== null) return;
+
+  const speed = AUTO_SCROLL_SPEEDS[autoScrollSpeed];
+  if (speed <= 0) return;
+
+  function scrollStep() {
+    if (timerState !== 'running' || autoScrollSpeed === 'off') {
+      stopAutoScroll();
+      return;
+    }
+
+    const container = getScrollContainer();
+    if (container) {
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      if (container.scrollTop < maxScroll) {
+        container.scrollTop += speed;
+      }
+    }
+
+    autoScrollAnimationId = requestAnimationFrame(scrollStep);
+  }
+
+  autoScrollAnimationId = requestAnimationFrame(scrollStep);
+}
+
+// Stop auto-scroll animation
+function stopAutoScroll() {
+  if (autoScrollAnimationId !== null) {
+    cancelAnimationFrame(autoScrollAnimationId);
+    autoScrollAnimationId = null;
+  }
+}
 
 // Check if text contains [time mm:ss] pattern
 function hasTimePattern(text) {
@@ -1938,6 +1993,15 @@ async function loadStoredSettings() {
       console.error("Error setting shortcuts enabled:", error);
     }
   }
+
+  // Load stored auto-scroll speed setting or use default (off)
+  const storedAutoScrollSpeed = await getStoredValue(STORAGE_KEYS.SETTINGS_AUTO_SCROLL_SPEED);
+  if (storedAutoScrollSpeed !== null && storedAutoScrollSpeed !== undefined) {
+    autoScrollSpeed = storedAutoScrollSpeed;
+  } else {
+    autoScrollSpeed = 'off';
+    await setStoredValue(STORAGE_KEYS.SETTINGS_AUTO_SCROLL_SPEED, 'off');
+  }
 }
 
 // Settings Handlers
@@ -2028,6 +2092,40 @@ function setupSettings() {
       await setStoredValue(STORAGE_KEYS.SETTINGS_SHORTCUTS_ENABLED, shortcutsEnabled);
     });
   }
+
+  // Auto-scroll speed button handlers
+  const speedButtons = [speedOffBtn, speedLowBtn, speedMediumBtn, speedHighBtn];
+  speedButtons.forEach(btn => {
+    if (btn) {
+      btn.addEventListener("click", async (e) => {
+        const speed = btn.dataset.speed;
+        autoScrollSpeed = speed;
+        updateSpeedButtons(speed);
+
+        // Track setting change
+        trackSettingChange('auto_scroll_speed', speed);
+
+        // Save to persistent storage
+        await setStoredValue(STORAGE_KEYS.SETTINGS_AUTO_SCROLL_SPEED, speed);
+
+        // If timer is running and speed changed, restart or stop auto-scroll
+        if (timerState === 'running') {
+          stopAutoScroll();
+          if (speed !== 'off') {
+            startAutoScroll();
+          }
+        }
+      });
+    }
+  });
+}
+
+// Update speed buttons active state
+function updateSpeedButtons(speed) {
+  if (speedOffBtn) speedOffBtn.classList.toggle('active', speed === 'off');
+  if (speedLowBtn) speedLowBtn.classList.toggle('active', speed === 'low');
+  if (speedMediumBtn) speedMediumBtn.classList.toggle('active', speed === 'medium');
+  if (speedHighBtn) speedHighBtn.classList.toggle('active', speed === 'high');
 }
 
 function updateGhostModeIndicator() {
@@ -2072,6 +2170,9 @@ async function loadCurrentSettings() {
   if (shortcutsToggle) {
     shortcutsToggle.checked = shortcutsEnabled;
   }
+
+  // Update speed buttons
+  updateSpeedButtons(autoScrollSpeed);
 }
 
 // =============================================================================
