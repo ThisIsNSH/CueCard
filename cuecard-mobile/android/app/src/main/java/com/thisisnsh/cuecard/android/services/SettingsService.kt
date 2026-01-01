@@ -1,0 +1,181 @@
+package com.thisisnsh.cuecard.android.services
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.doublePreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import com.thisisnsh.cuecard.android.models.FontSizePreset
+import com.thisisnsh.cuecard.android.models.OverlayAspectRatio
+import com.thisisnsh.cuecard.android.models.TeleprompterSettings
+import com.thisisnsh.cuecard.android.models.ThemePreference
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "cuecard_settings")
+
+/**
+ * Service for persisting user settings using DataStore
+ */
+class SettingsService(private val context: Context) {
+
+    companion object {
+        // Preference keys
+        private val FONT_SIZE_PRESET = stringPreferencesKey("font_size_preset")
+        private val PIP_FONT_SIZE_PRESET = stringPreferencesKey("pip_font_size_preset")
+        private val OVERLAY_ASPECT_RATIO = stringPreferencesKey("overlay_aspect_ratio")
+        private val SCROLL_SPEED = doublePreferencesKey("scroll_speed")
+        private val WORDS_PER_MINUTE = intPreferencesKey("words_per_minute")
+        private val LINES_PER_MINUTE = intPreferencesKey("lines_per_minute")
+        private val TIMER_MINUTES = intPreferencesKey("timer_minutes")
+        private val TIMER_SECONDS = intPreferencesKey("timer_seconds")
+        private val AUTO_SCROLL = booleanPreferencesKey("auto_scroll")
+        private val THEME_PREFERENCE = stringPreferencesKey("theme_preference")
+        private val COUNTDOWN_SECONDS = intPreferencesKey("countdown_seconds")
+        private val NOTES = stringPreferencesKey("notes")
+
+        @Volatile
+        private var instance: SettingsService? = null
+
+        fun getInstance(context: Context): SettingsService {
+            return instance ?: synchronized(this) {
+                instance ?: SettingsService(context.applicationContext).also { instance = it }
+            }
+        }
+    }
+
+    private val _settings = MutableStateFlow(TeleprompterSettings.DEFAULT)
+    val settings: StateFlow<TeleprompterSettings> = _settings.asStateFlow()
+
+    private val _notes = MutableStateFlow("")
+    val notes: StateFlow<String> = _notes.asStateFlow()
+
+    /**
+     * Flow of settings from DataStore
+     */
+    val settingsFlow: Flow<TeleprompterSettings> = context.dataStore.data.map { prefs ->
+        TeleprompterSettings(
+            fontSizePreset = FontSizePreset.fromString(prefs[FONT_SIZE_PRESET] ?: FontSizePreset.MEDIUM.displayName),
+            pipFontSizePreset = FontSizePreset.fromString(prefs[PIP_FONT_SIZE_PRESET] ?: FontSizePreset.MEDIUM.displayName),
+            overlayAspectRatio = OverlayAspectRatio.fromString(prefs[OVERLAY_ASPECT_RATIO] ?: OverlayAspectRatio.RATIO_16X9.displayName),
+            scrollSpeed = prefs[SCROLL_SPEED] ?: 1.0,
+            wordsPerMinute = prefs[WORDS_PER_MINUTE] ?: 150,
+            linesPerMinute = prefs[LINES_PER_MINUTE] ?: 10,
+            timerMinutes = prefs[TIMER_MINUTES] ?: 1,
+            timerSeconds = prefs[TIMER_SECONDS] ?: 0,
+            autoScroll = prefs[AUTO_SCROLL] ?: true,
+            themePreference = ThemePreference.fromString(prefs[THEME_PREFERENCE] ?: ThemePreference.SYSTEM.displayName),
+            countdownSeconds = prefs[COUNTDOWN_SECONDS] ?: 5
+        )
+    }
+
+    /**
+     * Flow of notes from DataStore
+     */
+    val notesFlow: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[NOTES] ?: ""
+    }
+
+    /**
+     * Load settings from DataStore
+     */
+    suspend fun loadSettings() {
+        _settings.value = settingsFlow.first()
+        _notes.value = notesFlow.first()
+    }
+
+    /**
+     * Save settings to DataStore
+     */
+    suspend fun saveSettings(newSettings: TeleprompterSettings) {
+        _settings.value = newSettings
+        context.dataStore.edit { prefs ->
+            prefs[FONT_SIZE_PRESET] = newSettings.fontSizePreset.displayName
+            prefs[PIP_FONT_SIZE_PRESET] = newSettings.pipFontSizePreset.displayName
+            prefs[OVERLAY_ASPECT_RATIO] = newSettings.overlayAspectRatio.displayName
+            prefs[SCROLL_SPEED] = newSettings.scrollSpeed
+            prefs[WORDS_PER_MINUTE] = newSettings.wordsPerMinute
+            prefs[LINES_PER_MINUTE] = newSettings.linesPerMinute
+            prefs[TIMER_MINUTES] = newSettings.timerMinutes
+            prefs[TIMER_SECONDS] = newSettings.timerSeconds
+            prefs[AUTO_SCROLL] = newSettings.autoScroll
+            prefs[THEME_PREFERENCE] = newSettings.themePreference.displayName
+            prefs[COUNTDOWN_SECONDS] = newSettings.countdownSeconds
+        }
+    }
+
+    /**
+     * Save notes to DataStore
+     */
+    suspend fun saveNotes(newNotes: String) {
+        _notes.value = newNotes
+        context.dataStore.edit { prefs ->
+            prefs[NOTES] = newNotes
+        }
+    }
+
+    /**
+     * Reset settings to defaults
+     */
+    suspend fun resetSettings() {
+        saveSettings(TeleprompterSettings.DEFAULT)
+    }
+
+    /**
+     * Clear all stored data
+     */
+    suspend fun clearAllData() {
+        _settings.value = TeleprompterSettings.DEFAULT
+        _notes.value = ""
+        context.dataStore.edit { prefs ->
+            prefs.clear()
+        }
+    }
+
+    /**
+     * Update individual setting properties
+     */
+    suspend fun updateFontSizePreset(preset: FontSizePreset) {
+        saveSettings(_settings.value.copy(fontSizePreset = preset))
+    }
+
+    suspend fun updatePipFontSizePreset(preset: FontSizePreset) {
+        saveSettings(_settings.value.copy(pipFontSizePreset = preset))
+    }
+
+    suspend fun updateOverlayAspectRatio(ratio: OverlayAspectRatio) {
+        saveSettings(_settings.value.copy(overlayAspectRatio = ratio))
+    }
+
+    suspend fun updateWordsPerMinute(wpm: Int) {
+        saveSettings(_settings.value.copy(wordsPerMinute = wpm))
+    }
+
+    suspend fun updateTimerMinutes(minutes: Int) {
+        saveSettings(_settings.value.copy(timerMinutes = minutes))
+    }
+
+    suspend fun updateTimerSeconds(seconds: Int) {
+        saveSettings(_settings.value.copy(timerSeconds = seconds))
+    }
+
+    suspend fun updateAutoScroll(enabled: Boolean) {
+        saveSettings(_settings.value.copy(autoScroll = enabled))
+    }
+
+    suspend fun updateThemePreference(theme: ThemePreference) {
+        saveSettings(_settings.value.copy(themePreference = theme))
+    }
+
+    suspend fun updateCountdownSeconds(seconds: Int) {
+        saveSettings(_settings.value.copy(countdownSeconds = seconds))
+    }
+}

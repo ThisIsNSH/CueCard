@@ -15,6 +15,9 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
+            android:supportsPictureInPicture="true"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.CueCard">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
