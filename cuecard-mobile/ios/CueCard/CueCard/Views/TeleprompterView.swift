@@ -24,6 +24,7 @@ struct TeleprompterView: View {
     @State private var countdownValue: Int = 0
     @State private var isCountingDown = false
     @State private var countdownTimer: Timer?
+    @Environment(\.scenePhase) private var scenePhase
 
     // Timer properties
     private var timerDuration: Int { settings.timerDurationSeconds }
@@ -230,6 +231,20 @@ struct TeleprompterView: View {
             stopControlsTimer()
             stopCountdownTimer()
         }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            if newPhase == .background && !pipManager.isPiPActive && pipManager.isPiPPossible {
+                // Auto-start PiP when app goes to background (like YouTube)
+                startPiP(minimizeApp: false)
+            } else if newPhase == .active && pipManager.isPiPActive {
+                // Sync state when coming back to foreground
+                elapsedTime = pipManager.elapsedTime
+                isPlaying = pipManager.isPlaying
+                updateCurrentWord()
+                if isPlaying && timer == nil {
+                    startTimer()
+                }
+            }
+        }
     }
 
     // MARK: - PiP Setup
@@ -259,9 +274,41 @@ struct TeleprompterView: View {
                 startTimer()
             }
         }
+
+        // Handle play/pause from PiP controls
+        pipManager.onPlayPauseFromPiP = { playing in
+            if playing {
+                isPlaying = true
+                startTimer()
+            } else {
+                isPlaying = false
+                stopTimer()
+            }
+        }
+
+        // Handle restart from PiP controls
+        pipManager.onRestartFromPiP = {
+            stopTimer()
+            stopCountdownTimer()
+            isCountingDown = false
+            elapsedTime = 0
+            currentWordIndex = 0
+            scrollOffset = 0
+            isPlaying = false
+        }
+
+        // Handle expand from PiP - app will come to foreground automatically
+        pipManager.onExpandFromPiP = {
+            elapsedTime = pipManager.elapsedTime
+            isPlaying = pipManager.isPlaying
+            updateCurrentWord()
+            if isPlaying {
+                startTimer()
+            }
+        }
     }
 
-    private func startPiP() {
+    private func startPiP(minimizeApp: Bool = false) {
         pipManager.updateState(
             elapsedTime: elapsedTime,
             isPlaying: isPlaying,
@@ -269,7 +316,7 @@ struct TeleprompterView: View {
             countdownValue: countdownValue,
             isCountingDown: isCountingDown
         )
-        pipManager.startPiP()
+        pipManager.startPiP(minimizeApp: minimizeApp)
         Analytics.logEvent("teleprompter_pip_started", parameters: nil)
     }
 
@@ -278,7 +325,8 @@ struct TeleprompterView: View {
             pipManager.stopPiP()
             Analytics.logEvent("teleprompter_pip_stopped", parameters: nil)
         } else {
-            startPiP()
+            // Start PiP and minimize the app
+            startPiP(minimizeApp: true)
         }
     }
 
