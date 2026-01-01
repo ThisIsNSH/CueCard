@@ -298,6 +298,7 @@ const STORAGE_KEYS = {
   SETTINGS_GHOST_MODE: 'settings_ghost_mode',
   SETTINGS_THEME: 'settings_theme',
   SETTINGS_SCROLL_SPEED: 'settings_scroll_speed',
+  SETTINGS_SHORTCUTS_ENABLED: 'settings_shortcuts_enabled',
   ADD_NOTES_CONTENT: 'add_notes_content'
 };
 
@@ -403,7 +404,7 @@ let shortcutsLink;
 let refreshBtn;
 let notesInputHighlight;
 let btnStart, btnPause, btnReset;
-let opacitySlider, opacityValue, ghostModeToggle;
+let opacitySlider, opacityValue, ghostModeToggle, shortcutsToggle;
 let scrollSpeedSlider, scrollSpeedValue;
 let themeSystemBtn, themeLightBtn, themeDarkBtn;
 let editNoteBtn;
@@ -422,6 +423,7 @@ let currentOpacity = 100; // Store current opacity value (10-100)
 let ghostMode = true; // Default: true = hidden from screenshots (ghost mode ON)
 let currentTheme = 'system'; // 'system', 'light', 'dark'
 let scrollSpeedIndex = 0; // Default: 0 = Off (see SCROLL_SPEED_PRESETS)
+let shortcutsEnabled = true; // Default: true = global shortcuts are enabled
 
 // Timer State
 let timerState = 'stopped'; // 'stopped', 'running', 'paused'
@@ -500,6 +502,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   opacitySlider = document.getElementById("opacity-slider");
   opacityValue = document.getElementById("opacity-value");
   ghostModeToggle = document.getElementById("ghost-mode-toggle");
+  shortcutsToggle = document.getElementById("shortcuts-toggle");
   scrollSpeedSlider = document.getElementById("scroll-speed-slider");
   scrollSpeedValue = document.getElementById("scroll-speed-value");
   themeSystemBtn = document.getElementById("theme-system");
@@ -1706,9 +1709,8 @@ async function showView(viewName) {
     linkGoBack.classList.add('hidden');
   }
 
-  // Show settings and shortcuts links
+  // Show settings link (shortcuts visibility handled by updateShortcutsVisibility)
   settingsLink.classList.remove('hidden');
-  shortcutsLink.classList.remove('hidden');
 
   if (btnClose && appHeaderTitle && headerTimer) {
     const isSettingsView = viewName === 'settings';
@@ -1741,20 +1743,21 @@ async function showView(viewName) {
     supportLink.classList.remove('hidden');
     bugLink.classList.remove('hidden');
     settingsLink.classList.add('hidden');
-    shortcutsLink.classList.add('hidden');
   } else if (viewName === 'shortcuts') {
     // Shortcuts view: hide all footer links except go back
     websiteLink.classList.add('hidden');
     supportLink.classList.add('hidden');
     bugLink.classList.add('hidden');
     settingsLink.classList.add('hidden');
-    shortcutsLink.classList.add('hidden');
   } else {
     // Notes and Add-Notes views: hide all footer links except go back
     websiteLink.classList.add('hidden');
     supportLink.classList.add('hidden');
     bugLink.classList.add('hidden');
   }
+
+  // Update shortcuts button visibility (respects both setting and current view)
+  updateShortcutsVisibility();
 
   // Show/hide slide info and refresh button based on view and slide data
   if (viewName === 'notes' && currentSlideData) {
@@ -2178,6 +2181,7 @@ function setupFooter() {
 const DEFAULT_OPACITY = 100;
 const DEFAULT_GHOST_MODE = true; // true = ghost mode ON = hidden from screenshots
 const DEFAULT_SCROLL_SPEED = 0; // 0 = Off (see SCROLL_SPEED_PRESETS)
+const DEFAULT_SHORTCUTS_ENABLED = true; // true = global shortcuts are enabled
 
 // Apply theme based on preference ('system', 'light', 'dark')
 function applyTheme(theme) {
@@ -2248,6 +2252,24 @@ async function loadStoredSettings() {
   } else {
     scrollSpeedIndex = DEFAULT_SCROLL_SPEED;
     await setStoredValue(STORAGE_KEYS.SETTINGS_SCROLL_SPEED, DEFAULT_SCROLL_SPEED);
+  }
+
+  // Load stored shortcuts enabled setting or use default
+  const storedShortcutsEnabled = await getStoredValue(STORAGE_KEYS.SETTINGS_SHORTCUTS_ENABLED);
+  if (storedShortcutsEnabled !== null && storedShortcutsEnabled !== undefined) {
+    shortcutsEnabled = storedShortcutsEnabled;
+  } else {
+    shortcutsEnabled = DEFAULT_SHORTCUTS_ENABLED;
+    await setStoredValue(STORAGE_KEYS.SETTINGS_SHORTCUTS_ENABLED, DEFAULT_SHORTCUTS_ENABLED);
+  }
+  // Update shortcuts button visibility and register/unregister shortcuts
+  updateShortcutsVisibility();
+  if (invoke) {
+    try {
+      await invoke("set_shortcuts_enabled", { enabled: shortcutsEnabled });
+    } catch (error) {
+      console.error("Error setting shortcuts enabled:", error);
+    }
   }
 }
 
@@ -2345,11 +2367,45 @@ function setupSettings() {
       }, 500);
     });
   }
+
+  // Shortcuts toggle handler
+  if (shortcutsToggle) {
+    shortcutsToggle.addEventListener("change", async (e) => {
+      shortcutsEnabled = e.target.checked;
+      updateShortcutsVisibility();
+
+      // Track setting change
+      trackSettingChange('shortcuts_enabled', shortcutsEnabled);
+
+      // Enable/disable shortcuts via Tauri
+      if (invoke) {
+        try {
+          await invoke("set_shortcuts_enabled", { enabled: shortcutsEnabled });
+        } catch (error) {
+          console.error("Error setting shortcuts enabled:", error);
+        }
+      }
+
+      // Save to persistent storage
+      await setStoredValue(STORAGE_KEYS.SETTINGS_SHORTCUTS_ENABLED, shortcutsEnabled);
+    });
+  }
 }
 
 function updateGhostModeIndicator() {
   if (!ghostModeIndicator) return;
   ghostModeIndicator.textContent = `Ghost Mode ${ghostMode ? 'Enabled' : 'Disabled'}`;
+}
+
+// Update shortcuts button visibility based on shortcutsEnabled setting and current view
+function updateShortcutsVisibility() {
+  if (shortcutsLink) {
+    // Hide shortcuts button if:
+    // 1. Shortcuts are disabled, OR
+    // 2. Current view is settings or shortcuts
+    const shouldHide = !shortcutsEnabled || currentView === 'settings' || currentView === 'shortcuts';
+    shortcutsLink.classList.toggle('hidden', shouldHide);
+  }
 }
 
 // Load current settings values
@@ -2381,6 +2437,11 @@ async function loadCurrentSettings() {
   if (scrollSpeedValue) {
     const preset = SCROLL_SPEED_PRESETS[scrollSpeedIndex];
     scrollSpeedValue.textContent = preset.label;
+  }
+
+  // Shortcuts toggle
+  if (shortcutsToggle) {
+    shortcutsToggle.checked = shortcutsEnabled;
   }
 }
 

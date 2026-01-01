@@ -1658,6 +1658,37 @@ fn set_screenshot_protection(app: AppHandle, enabled: bool) -> Result<(), String
     Ok(())
 }
 
+#[tauri::command]
+fn set_shortcuts_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let shortcuts = [
+        // General controls: Control+Option (Mac) / Control+Alt (Windows)
+        Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::KeyC),
+        Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::Minus),
+        Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::Equal),
+        Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::Space),
+        Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::Digit0),
+        // Movement: Control+Option+Arrow (Mac) / Control+Alt+Arrow (Windows)
+        Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::ArrowLeft),
+        Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::ArrowRight),
+        Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::ArrowUp),
+        Shortcut::new(Some(Modifiers::ALT | Modifiers::CONTROL), Code::ArrowDown),
+        // Height: Shift+Control+Option+Arrow (Mac) / Shift+Control+Alt+Arrow (Windows)
+        Shortcut::new(Some(Modifiers::SHIFT | Modifiers::ALT | Modifiers::CONTROL), Code::ArrowUp),
+        Shortcut::new(Some(Modifiers::SHIFT | Modifiers::ALT | Modifiers::CONTROL), Code::ArrowDown),
+    ];
+
+    if enabled {
+        app.global_shortcut()
+            .register_multiple(shortcuts)
+            .map_err(|e| format!("Failed to register shortcuts: {}", e))?;
+    } else {
+        for shortcut in shortcuts {
+            let _ = app.global_shortcut().unregister(shortcut);
+        }
+    }
+    Ok(())
+}
+
 // =============================================================================
 // MACOS SCREENSHOT PROTECTION
 // =============================================================================
@@ -1818,7 +1849,8 @@ pub fn run() {
             start_login,
             logout,
             refresh_notes,
-            set_screenshot_protection
+            set_screenshot_protection,
+            set_shortcuts_enabled
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
