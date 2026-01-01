@@ -23,7 +23,9 @@
 		014 /* TeleprompterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110 /* TeleprompterView.swift */; };
 		015 /* TeleprompterParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111 /* TeleprompterParser.swift */; };
 		016 /* TeleprompterPiPManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112 /* TeleprompterPiPManager.swift */; };
+		017 /* AppColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 113 /* AppColors.swift */; };
 		AA7130F62F04E5BC00F5C366 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AA7130F52F04E5BC00F5C366 /* GoogleService-Info.plist */; };
+		AA856D562F060DFC00B0CBC6 /* GlassEffect.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA856D542F060DFC00B0CBC6 /* GlassEffect.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,9 +41,11 @@
 		110 /* TeleprompterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeleprompterView.swift; sourceTree = "<group>"; };
 		111 /* TeleprompterParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeleprompterParser.swift; sourceTree = "<group>"; };
 		112 /* TeleprompterPiPManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeleprompterPiPManager.swift; sourceTree = "<group>"; };
+		113 /* AppColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppColors.swift; sourceTree = "<group>"; };
 		201 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		501 /* CueCard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CueCard.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA7130F52F04E5BC00F5C366 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		AA856D542F060DFC00B0CBC6 /* GlassEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassEffect.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -71,6 +75,7 @@
 			isa = PBXGroup;
 			children = (
 				101 /* CueCardApp.swift */,
+				AA856D552F060DFC00B0CBC6 /* Modifiers */,
 				711 /* Views */,
 				712 /* Services */,
 				713 /* Models */,
@@ -108,6 +113,7 @@
 			isa = PBXGroup;
 			children = (
 				111 /* TeleprompterParser.swift */,
+				113 /* AppColors.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -118,6 +124,14 @@
 				501 /* CueCard.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		AA856D552F060DFC00B0CBC6 /* Modifiers */ = {
+			isa = PBXGroup;
+			children = (
+				AA856D542F060DFC00B0CBC6 /* GlassEffect.swift */,
+			);
+			path = Modifiers;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -201,6 +215,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				001 /* CueCardApp.swift in Sources */,
+				017 /* AppColors.swift in Sources */,
 				002 /* ContentView.swift in Sources */,
 				003 /* LoginView.swift in Sources */,
 				004 /* HomeView.swift in Sources */,
@@ -208,6 +223,7 @@
 				006 /* AuthenticationService.swift in Sources */,
 				008 /* SettingsService.swift in Sources */,
 				013 /* SettingsView.swift in Sources */,
+				AA856D562F060DFC00B0CBC6 /* GlassEffect.swift in Sources */,
 				014 /* TeleprompterView.swift in Sources */,
 				015 /* TeleprompterParser.swift in Sources */,
 				016 /* TeleprompterPiPManager.swift in Sources */,
@@ -350,6 +366,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = CueCard;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -357,6 +374,10 @@
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.thisisnsh.cuecard.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -377,6 +398,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = CueCard;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -384,6 +406,10 @@
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.thisisnsh.cuecard.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

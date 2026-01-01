@@ -3,6 +3,7 @@ import SwiftUI
 struct ProfileView: View {
     @EnvironmentObject var authService: AuthenticationService
     @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         NavigationStack {
@@ -47,6 +48,7 @@ struct ProfileView: View {
                             Text("Sign Out")
                         }
                     }
+                    .foregroundStyle(AppColors.red(for: colorScheme))
                 }
             }
             .navigationTitle("Profile")

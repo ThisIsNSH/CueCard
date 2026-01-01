@@ -1,220 +1,268 @@
 import SwiftUI
+import UIKit
 import FirebaseAnalytics
-import Combine
 
 struct TeleprompterView: View {
     let content: TeleprompterContent
     let settings: TeleprompterSettings
 
     @Environment(\.dismiss) var dismiss
-    @Environment(\.scenePhase) var scenePhase
+    @Environment(\.colorScheme) var colorScheme
     @StateObject private var pipManager = TeleprompterPiPManager.shared
 
     @State private var isPlaying = false
     @State private var scrollOffset: CGFloat = 0
-    @State private var elapsedTime: Int = 0
-    @State private var currentSegmentIndex: Int = 0
+    @State private var elapsedTime: Double = 0
     @State private var timer: Timer?
     @State private var contentHeight: CGFloat = 0
     @State private var viewHeight: CGFloat = 0
     @State private var showControls = true
     @State private var controlsTimer: Timer?
+    @State private var currentWordIndex: Int = 0
+    @State private var dragOffset: CGFloat = 0
+    @State private var showingSettings = false
+    @State private var countdownValue: Int = 0
+    @State private var isCountingDown = false
+    @State private var countdownTimer: Timer?
 
-    private var currentSegment: TeleprompterSegment? {
-        guard currentSegmentIndex < content.segments.count else { return nil }
-        return content.segments[currentSegmentIndex]
+    // Timer properties
+    private var timerDuration: Int { settings.timerDurationSeconds }
+    private var remainingTime: Int {
+        max(timerDuration - Int(elapsedTime), timerDuration > 0 ? Int(elapsedTime) - timerDuration : 0)
+    }
+    private var isOvertime: Bool {
+        timerDuration > 0 && Int(elapsedTime) > timerDuration
+    }
+
+    private var timerColor: Color {
+        // Show neutral color during countdown
+        if isCountingDown {
+            return AppColors.textPrimary(for: colorScheme)
+        }
+        guard timerDuration > 0 else {
+            return AppColors.textPrimary(for: colorScheme)
+        }
+        return AppColors.timerColor(
+            remainingSeconds: timerDuration - Int(elapsedTime),
+            totalSeconds: timerDuration,
+            colorScheme: colorScheme
+        )
     }
 
     private var timeDisplay: String {
-        if let segment = currentSegment, let duration = segment.durationSeconds {
-            let remaining = max(0, duration - (elapsedTime - segment.startTimeSeconds))
+        // Show countdown if counting down
+        if isCountingDown {
+            return "\(countdownValue)"
+        }
+        if timerDuration > 0 {
+            let remaining = timerDuration - Int(elapsedTime)
             return TeleprompterParser.formatTime(remaining)
         }
-        return TeleprompterParser.formatTime(elapsedTime)
+        return TeleprompterParser.formatTime(Int(elapsedTime))
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                // Background
-                Color.black
-                    .ignoresSafeArea()
+        NavigationStack {
+            GeometryReader { geometry in
+                ZStack {
+                    // Background - matches device theme
+                    AppColors.background(for: colorScheme)
+                        .ignoresSafeArea()
 
-                // Teleprompter content
-                ScrollViewReader { scrollProxy in
-                    ScrollView(.vertical, showsIndicators: false) {
-                        VStack(alignment: .leading, spacing: 24) {
-                            // Top padding for starting position
-                            Color.clear
-                                .frame(height: geometry.size.height * 0.4)
-                                .id("top")
+                    // Teleprompter content with attributed text
+                    let wordsPerSecond = Double(settings.wordsPerMinute) / 60.0
+                    let highlightProgress = settings.autoScroll
+                        ? ((elapsedTime == 0 && !isPlaying) ? -Double.greatestFiniteMagnitude : (elapsedTime * wordsPerSecond))
+                        : Double.greatestFiniteMagnitude
 
-                            // Content segments
-                            ForEach(Array(content.segments.enumerated()), id: \.element.id) { index, segment in
-                                SegmentView(
-                                    segment: segment,
-                                    fontSize: CGFloat(settings.fontSize),
-                                    isCurrentSegment: index == currentSegmentIndex
-                                )
-                                .id(segment.id)
+                    AttributedTextView(
+                        content: content,
+                        fontSize: CGFloat(settings.fontSize),
+                        currentWordIndex: currentWordIndex,
+                        highlightProgress: highlightProgress,
+                        colorScheme: colorScheme,
+                        autoScroll: settings.autoScroll,
+                        topPadding: geometry.size.height * 0.4,
+                        bottomPadding: geometry.size.height * 0.6,
+                        onTap: {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                showControls.toggle()
                             }
-
-                            // Bottom padding
-                            Color.clear
-                                .frame(height: geometry.size.height * 0.6)
+                            resetControlsTimer()
                         }
-                        .padding(.horizontal, 24)
-                        .background(
-                            GeometryReader { contentGeometry in
-                                Color.clear.onAppear {
-                                    contentHeight = contentGeometry.size.height
+                    )
+
+                    // Timer overlay (center top below nav bar)
+                    VStack {
+                        Text(timeDisplay)
+                            .font(.system(size: 20, weight: .bold, design: .monospaced))
+                            .foregroundStyle(timerColor)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .glassedEffect(in: Capsule())
+                            .padding(.top, 8)
+
+                        Spacer()
+                    }
+
+                    // Controls overlay
+                    if showControls {
+                        VStack {
+                            Spacer()
+
+                            HStack(spacing: 24) {
+                                // Backward 10 seconds
+                                Button(action: { seekBackward() }) {
+                                    Image(systemName: "gobackward.10")
+                                        .font(.system(size: 24))
+                                        .foregroundStyle(AppColors.textPrimary(for: colorScheme))
+                                        .frame(width: 48, height: 48)
+                                        .glassedEffect(in: Circle())
+                                }
+
+                                // Close button
+                                Button(action: { stopAndDismiss() }) {
+                                    Image(systemName: "xmark")
+                                        .font(.system(size: 20, weight: .semibold))
+                                        .foregroundStyle(AppColors.textPrimary(for: colorScheme))
+                                        .frame(width: 52, height: 52)
+                                        .glassedEffect(in: Circle())
+                                }
+
+                                // Play/Pause button
+                                Button(action: { togglePlayPause() }) {
+                                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                                        .font(.system(size: 28, weight: .semibold))
+                                        .foregroundStyle(colorScheme == .dark ? .black : .white)
+                                        .frame(width: 72, height: 72)
+                                        .background(
+                                            Circle()
+                                                .fill(AppColors.green(for: colorScheme))
+                                        )
+                                        .glassedEffect(in: Circle())
+                                }
+
+                                // Restart button
+                                Button(action: { restart() }) {
+                                    Image(systemName: "arrow.counterclockwise")
+                                        .font(.system(size: 20, weight: .semibold))
+                                        .foregroundStyle(AppColors.textPrimary(for: colorScheme))
+                                        .frame(width: 52, height: 52)
+                                        .glassedEffect(in: Circle())
+                                }
+
+                                // Forward 10 seconds
+                                Button(action: { seekForward() }) {
+                                    Image(systemName: "goforward.10")
+                                        .font(.system(size: 24))
+                                        .foregroundStyle(AppColors.textPrimary(for: colorScheme))
+                                        .frame(width: 48, height: 48)
+                                        .glassedEffect(in: Circle())
                                 }
                             }
-                        )
-                    }
-                    .onChange(of: currentSegmentIndex) { _, newIndex in
-                        if newIndex < content.segments.count {
-                            withAnimation(.easeInOut(duration: 0.5)) {
-                                scrollProxy.scrollTo(content.segments[newIndex].id, anchor: .center)
-                            }
+                            .padding(.bottom, 48)
                         }
+                        .transition(.opacity)
+                    }
+
+                }
+                .onAppear {
+                    viewHeight = geometry.size.height
+                    setupPiP()
+                    Analytics.logEvent("teleprompter_started", parameters: [
+                        "word_count": content.words.count,
+                        "timer_duration": timerDuration
+                    ])
+                }
+            }
+            .navigationTitle("Teleprompter")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(AppColors.background(for: colorScheme), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(action: { stopAndDismiss() }) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(AppColors.textPrimary(for: colorScheme))
                     }
                 }
-                .opacity(Double(settings.opacity) / 100.0)
 
-                // Tap to show/hide controls
-                Color.clear
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            showControls.toggle()
-                        }
-                        resetControlsTimer()
-                    }
-
-                // Timer overlay (top left) - always visible
-                VStack {
-                    HStack {
-                        if content.hasTiming {
-                            Text(timeDisplay)
-                                .font(.system(size: 20, weight: .bold, design: .monospaced))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(.black.opacity(0.6))
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                        }
-                        Spacer()
-
-                        // PiP indicator
+                ToolbarItem(placement: .topBarTrailing) {
+                    HStack(spacing: 16) {
                         if pipManager.isPiPPossible {
                             Button(action: { startPiP() }) {
                                 Image(systemName: "pip.enter")
-                                    .font(.system(size: 20))
-                                    .foregroundStyle(.white)
-                                    .padding(8)
-                                    .background(.black.opacity(0.6))
-                                    .clipShape(Circle())
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(AppColors.textPrimary(for: colorScheme))
                             }
+                            .accessibilityLabel("Start Overlay")
                         }
-                    }
-                    .padding()
-                    Spacer()
-                }
 
-                // Controls overlay
-                if showControls {
-                    VStack {
-                        Spacer()
-
-                        HStack(spacing: 32) {
-                            // Close button
-                            Button(action: { stopAndDismiss() }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 44))
-                                    .foregroundStyle(.white.opacity(0.8))
-                            }
-
-                            // Play/Pause button
-                            Button(action: { togglePlayPause() }) {
-                                Image(systemName: isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                                    .font(.system(size: 64))
-                                    .foregroundStyle(.white)
-                            }
-
-                            // Restart button
-                            Button(action: { restart() }) {
-                                Image(systemName: "arrow.counterclockwise.circle.fill")
-                                    .font(.system(size: 44))
-                                    .foregroundStyle(.white.opacity(0.8))
-                            }
+                        Button(action: { showingSettings = true }) {
+                            Image(systemName: "gearshape")
+                                .font(.system(size: 16))
+                                .foregroundStyle(AppColors.textPrimary(for: colorScheme))
                         }
-                        .padding(.bottom, 48)
-                    }
-                    .transition(.opacity)
-                }
-
-                // Swipe up hint
-                if !isPlaying && showControls {
-                    VStack {
-                        Spacer()
-                        Text("Swipe up for Picture-in-Picture")
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.5))
-                            .padding(.bottom, 120)
                     }
                 }
             }
-            .onAppear {
-                viewHeight = geometry.size.height
-                setupPiP()
-                Analytics.logEvent("teleprompter_started", parameters: [
-                    "segment_count": content.segments.count,
-                    "has_timing": content.hasTiming
-                ])
+            .sheet(isPresented: $showingSettings) {
+                SettingsView()
             }
         }
-        .ignoresSafeArea()
-        .statusBarHidden()
         .persistentSystemOverlays(.hidden)
-        .onChange(of: scenePhase) { oldPhase, newPhase in
-            handleScenePhaseChange(from: oldPhase, to: newPhase)
-        }
-        .onChange(of: pipManager.isPiPActive) { _, isPiPActive in
-            if isPiPActive {
-                // PiP started, pause our timer (PiP manager handles its own)
-                stopTimer()
-            }
-        }
+        .offset(x: dragOffset)
+        .gesture(
+            DragGesture()
+                .onChanged { value in
+                    // Only respond to swipes starting from left edge (first 40 points)
+                    if value.startLocation.x < 40 && value.translation.width > 0 {
+                        dragOffset = value.translation.width
+                    }
+                }
+                .onEnded { value in
+                    if value.startLocation.x < 40 && value.translation.width > 100 {
+                        // Swipe was far enough, dismiss
+                        stopAndDismiss()
+                    } else {
+                        // Reset position
+                        withAnimation(.spring(response: 0.3)) {
+                            dragOffset = 0
+                        }
+                    }
+                }
+        )
         .onDisappear {
             stopTimer()
             stopControlsTimer()
+            stopCountdownTimer()
         }
     }
 
     // MARK: - PiP Setup
 
     private func setupPiP() {
-        // Configure PiP manager
-        pipManager.configure(segments: content.segments, settings: settings)
+        pipManager.configure(
+            text: content.fullText,
+            settings: settings,
+            timerDuration: timerDuration,
+            colorScheme: colorScheme
+        )
 
-        // Handle PiP closed
         pipManager.onPiPClosed = {
-            // PiP was closed, resume our state from PiP manager
-            currentSegmentIndex = pipManager.currentSegmentIndex
             elapsedTime = pipManager.elapsedTime
             isPlaying = pipManager.isPlaying
+            updateCurrentWord()
             if isPlaying {
                 startTimer()
             }
         }
 
-        // Handle restore UI (user tapped to return to app)
         pipManager.onPiPRestoreUI = {
-            // Sync state from PiP
-            currentSegmentIndex = pipManager.currentSegmentIndex
             elapsedTime = pipManager.elapsedTime
             isPlaying = pipManager.isPlaying
+            updateCurrentWord()
             if isPlaying {
                 startTimer()
             }
@@ -222,88 +270,127 @@ struct TeleprompterView: View {
     }
 
     private func startPiP() {
-        // Sync current state to PiP manager
         pipManager.updateState(
-            segmentIndex: currentSegmentIndex,
-            scrollOffset: scrollOffset,
             elapsedTime: elapsedTime,
-            isPlaying: isPlaying
+            isPlaying: isPlaying,
+            currentWordIndex: currentWordIndex,
+            countdownValue: countdownValue,
+            isCountingDown: isCountingDown
         )
-
-        // Start PiP
         pipManager.startPiP()
-
         Analytics.logEvent("teleprompter_pip_started", parameters: nil)
-    }
-
-    private func handleScenePhaseChange(from oldPhase: ScenePhase, to newPhase: ScenePhase) {
-        if oldPhase == .active && newPhase == .inactive {
-            // App is going to background - start PiP if playing
-            if isPlaying && pipManager.isPiPPossible && !pipManager.isPiPActive {
-                startPiP()
-            }
-        } else if newPhase == .active && pipManager.isPiPActive {
-            // Coming back to foreground while PiP is active
-            // PiP will handle the transition via onPiPRestoreUI
-        }
     }
 
     // MARK: - Controls
 
     private func togglePlayPause() {
-        if isPlaying {
+        if isPlaying || isCountingDown {
             pause()
         } else {
-            play()
+            startCountdownThenPlay()
         }
         resetControlsTimer()
     }
 
+    private func startCountdownThenPlay() {
+        // If countdown is 0, play immediately
+        guard settings.countdownSeconds > 0 else {
+            play()
+            return
+        }
+
+        // Start countdown
+        countdownValue = settings.countdownSeconds
+        isCountingDown = true
+        pipManager.updateState(elapsedTime: elapsedTime, isPlaying: isPlaying, currentWordIndex: currentWordIndex, countdownValue: countdownValue, isCountingDown: true)
+
+        countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            Task { @MainActor in
+                withAnimation(.snappy) {
+                    countdownValue -= 1
+                }
+                pipManager.updateState(elapsedTime: elapsedTime, isPlaying: isPlaying, currentWordIndex: currentWordIndex, countdownValue: countdownValue, isCountingDown: countdownValue > 0)
+
+                if countdownValue <= 0 {
+                    stopCountdownTimer()
+                    isCountingDown = false
+                    play()
+                }
+            }
+        }
+    }
+
+    private func stopCountdownTimer() {
+        countdownTimer?.invalidate()
+        countdownTimer = nil
+    }
+
     private func play() {
+        guard settings.autoScroll else {
+            isPlaying = true
+            startTimer()
+            pipManager.updateState(elapsedTime: elapsedTime, isPlaying: true, currentWordIndex: currentWordIndex)
+            Analytics.logEvent("teleprompter_play", parameters: nil)
+            resetControlsTimer()
+            return
+        }
         isPlaying = true
         startTimer()
-        pipManager.updateState(
-            segmentIndex: currentSegmentIndex,
-            scrollOffset: scrollOffset,
-            elapsedTime: elapsedTime,
-            isPlaying: true
-        )
+        pipManager.updateState(elapsedTime: elapsedTime, isPlaying: true, currentWordIndex: currentWordIndex)
         Analytics.logEvent("teleprompter_play", parameters: nil)
         resetControlsTimer()
     }
 
     private func pause() {
+        // Cancel countdown if running
+        if isCountingDown {
+            stopCountdownTimer()
+            isCountingDown = false
+            pipManager.updateState(elapsedTime: elapsedTime, isPlaying: false, currentWordIndex: currentWordIndex, countdownValue: 0, isCountingDown: false)
+            return
+        }
         isPlaying = false
         stopTimer()
-        pipManager.updateState(
-            segmentIndex: currentSegmentIndex,
-            scrollOffset: scrollOffset,
-            elapsedTime: elapsedTime,
-            isPlaying: false
-        )
+        pipManager.updateState(elapsedTime: elapsedTime, isPlaying: false, currentWordIndex: currentWordIndex)
         Analytics.logEvent("teleprompter_pause", parameters: nil)
     }
 
     private func restart() {
         stopTimer()
+        stopCountdownTimer()
+        isCountingDown = false
         elapsedTime = 0
-        currentSegmentIndex = 0
+        currentWordIndex = 0
         scrollOffset = 0
         isPlaying = false
-        pipManager.updateState(
-            segmentIndex: 0,
-            scrollOffset: 0,
-            elapsedTime: 0,
-            isPlaying: false
-        )
+        pipManager.updateState(elapsedTime: 0, isPlaying: false, currentWordIndex: 0)
         Analytics.logEvent("teleprompter_restart", parameters: nil)
+    }
+
+    private func seekForward() {
+        // Seek forward 10 seconds worth of words
+        let wordsPerSecond = Double(settings.wordsPerMinute) / 60.0
+        let wordsToSkip = Int(10 * wordsPerSecond)
+        currentWordIndex = min(currentWordIndex + wordsToSkip, content.words.count - 1)
+        elapsedTime = Double(currentWordIndex) / wordsPerSecond
+        pipManager.updateState(elapsedTime: elapsedTime, isPlaying: isPlaying, currentWordIndex: currentWordIndex)
+    }
+
+    private func seekBackward() {
+        // Seek backward 10 seconds worth of words
+        let wordsPerSecond = Double(settings.wordsPerMinute) / 60.0
+        let wordsToSkip = Int(10 * wordsPerSecond)
+        currentWordIndex = max(currentWordIndex - wordsToSkip, 0)
+        elapsedTime = Double(currentWordIndex) / wordsPerSecond
+        pipManager.updateState(elapsedTime: elapsedTime, isPlaying: isPlaying, currentWordIndex: currentWordIndex)
     }
 
     private func stopAndDismiss() {
         stopTimer()
+        stopCountdownTimer()
         pipManager.cleanup()
         Analytics.logEvent("teleprompter_closed", parameters: [
-            "elapsed_time": elapsedTime
+            "elapsed_time": Int(elapsedTime)
         ])
         dismiss()
     }
@@ -311,10 +398,14 @@ struct TeleprompterView: View {
     // MARK: - Timer
 
     private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+        // Timer interval based on WPM setting
+        let wordsPerSecond = Double(settings.wordsPerMinute) / 60.0
+        let interval = 1.0 / 30.0
+
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { _ in
             Task { @MainActor in
-                elapsedTime += 1
-                updateCurrentSegment()
+                elapsedTime += interval
+                updateCurrentWord()
             }
         }
     }
@@ -324,42 +415,14 @@ struct TeleprompterView: View {
         timer = nil
     }
 
-    private func updateCurrentSegment() {
-        // Find the segment that contains the current elapsed time
-        for (index, segment) in content.segments.enumerated() {
-            if elapsedTime >= segment.startTimeSeconds {
-                if let duration = segment.durationSeconds {
-                    if elapsedTime < segment.startTimeSeconds + duration {
-                        if currentSegmentIndex != index {
-                            currentSegmentIndex = index
-                        }
-                        break
-                    }
-                } else {
-                    // No timing, stay on this segment
-                    if currentSegmentIndex != index {
-                        currentSegmentIndex = index
-                    }
-                }
-            }
+    private func updateCurrentWord() {
+        let wordsPerSecond = Double(settings.wordsPerMinute) / 60.0
+        let newWordIndex = min(Int(elapsedTime * wordsPerSecond), content.words.count - 1)
+        if newWordIndex != currentWordIndex && newWordIndex >= 0 {
+            currentWordIndex = newWordIndex
         }
 
-        // Auto-advance to next segment when duration expires
-        if let current = currentSegment,
-           let duration = current.durationSeconds,
-           elapsedTime >= current.startTimeSeconds + duration {
-            if currentSegmentIndex < content.segments.count - 1 {
-                currentSegmentIndex += 1
-            }
-        }
-
-        // Update PiP manager state
-        pipManager.updateState(
-            segmentIndex: currentSegmentIndex,
-            scrollOffset: scrollOffset,
-            elapsedTime: elapsedTime,
-            isPlaying: isPlaying
-        )
+        pipManager.updateState(elapsedTime: elapsedTime, isPlaying: isPlaying, currentWordIndex: currentWordIndex)
     }
 
     // MARK: - Controls Timer
@@ -383,82 +446,247 @@ struct TeleprompterView: View {
     }
 }
 
-/// View for a single teleprompter segment
-struct SegmentView: View {
-    let segment: TeleprompterSegment
+/// UITextView wrapper for attributed text with word highlighting
+struct AttributedTextView: UIViewRepresentable {
+    let content: TeleprompterContent
     let fontSize: CGFloat
-    let isCurrentSegment: Bool
+    let currentWordIndex: Int
+    let highlightProgress: Double
+    let colorScheme: ColorScheme
+    let autoScroll: Bool
+    let topPadding: CGFloat
+    let bottomPadding: CGFloat
+    let onTap: (() -> Void)?
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Timing badge
-            if let duration = segment.durationSeconds {
-                Text(TeleprompterParser.formatTime(duration))
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.black)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.yellow)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
-            }
-
-            // Segment text with note highlighting
-            FormattedTextView(text: segment.text, fontSize: fontSize)
-        }
-        .opacity(isCurrentSegment ? 1.0 : 0.4)
-        .animation(.easeInOut(duration: 0.3), value: isCurrentSegment)
-    }
-}
-
-/// View that formats text with [note] highlighting
-struct FormattedTextView: View {
-    let text: String
-    let fontSize: CGFloat
-
-    var body: some View {
-        let attributed = formatText(text)
-
-        Text(attributed)
-            .font(.system(size: fontSize, weight: .medium))
-            .foregroundStyle(.white)
-            .lineSpacing(fontSize * 0.4)
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onTap: onTap)
     }
 
-    private func formatText(_ text: String) -> AttributedString {
-        var result = AttributedString(text)
+    class Coordinator: NSObject {
+        var lastWordIndex: Int = -1
+        var lastContentId: String = ""
+        var lastProgressBucket: Double = -1
+        var onTap: (() -> Void)?
 
-        // Find and style [note content] tags
-        let notePattern = try! NSRegularExpression(
-            pattern: #"\[note\s+([^\]]+)\]"#,
-            options: []
-        )
+        init(onTap: (() -> Void)?) {
+            self.onTap = onTap
+        }
 
-        let nsText = text as NSString
-        let matches = notePattern.matches(
-            in: text,
-            options: [],
-            range: NSRange(location: 0, length: nsText.length)
-        )
+        @objc func handleTap() {
+            onTap?()
+        }
+    }
 
-        // Apply pink styling to note content
-        for match in matches.reversed() {
-            guard let fullRange = Range(match.range, in: text),
-                  let contentRange = Range(match.range(at: 1), in: text) else {
-                continue
+    func makeUIView(context: Context) -> UITextView {
+        let textView = UITextView()
+        textView.isEditable = false
+        textView.isSelectable = false
+        textView.backgroundColor = .clear
+        textView.showsVerticalScrollIndicator = false
+        textView.alwaysBounceVertical = true
+        textView.textContainerInset = UIEdgeInsets(top: topPadding, left: 24, bottom: bottomPadding, right: 24)
+        textView.textContainer.lineFragmentPadding = 0
+
+        let tapGesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap))
+        tapGesture.cancelsTouchesInView = false
+        textView.addGestureRecognizer(tapGesture)
+        return textView
+    }
+
+    func updateUIView(_ textView: UITextView, context: Context) {
+        context.coordinator.onTap = onTap
+        textView.textContainerInset = UIEdgeInsets(top: topPadding, left: 24, bottom: bottomPadding, right: 24)
+        let contentId = content.fullText
+        let progressBucket = (highlightProgress * 10).rounded(.down) / 10
+        let needsFullRebuild = context.coordinator.lastContentId != contentId
+        let needsHighlightUpdate = context.coordinator.lastProgressBucket != progressBucket
+
+        // Only rebuild attributed string if content changed or word index changed
+        if needsFullRebuild || context.coordinator.lastWordIndex != currentWordIndex || needsHighlightUpdate {
+            let attributedString = buildAttributedString()
+
+            // Save current offset before updating
+            let savedOffset = textView.contentOffset
+
+            textView.attributedText = attributedString
+            textView.layoutIfNeeded()
+
+            // Restore offset when highlighting updates (avoid jumping to top)
+            if needsFullRebuild {
+                textView.contentOffset = .zero
+            } else {
+                textView.setContentOffset(savedOffset, animated: false)
             }
 
-            // Find the range in AttributedString
-            if let attrRange = result.range(of: String(text[fullRange])) {
-                // Replace with just the content, styled pink
-                var replacement = AttributedString(String(text[contentRange]))
-                replacement.foregroundColor = .pink
-                replacement.font = .system(size: fontSize, weight: .bold)
-                result.replaceSubrange(attrRange, with: replacement)
+            context.coordinator.lastWordIndex = currentWordIndex
+            context.coordinator.lastContentId = contentId
+            context.coordinator.lastProgressBucket = progressBucket
+        }
+
+        // Auto-scroll to current word
+        if autoScroll && currentWordIndex > 0 {
+            let wordRanges = getWordRanges()
+            if currentWordIndex < wordRanges.count {
+                let range = wordRanges[currentWordIndex]
+                let glyphRange = textView.layoutManager.glyphRange(forCharacterRange: range, actualCharacterRange: nil)
+                let rect = textView.layoutManager.boundingRect(forGlyphRange: glyphRange, in: textView.textContainer)
+
+                let targetY = rect.origin.y + topPadding - (textView.bounds.height / 3)
+                let maxY = textView.contentSize.height - textView.bounds.height
+                let scrollY = max(0, min(targetY, maxY))
+
+                UIView.animate(withDuration: 0.3, delay: 0, options: [.curveEaseInOut, .allowUserInteraction]) {
+                    textView.contentOffset = CGPoint(x: 0, y: scrollY)
+                }
             }
         }
+    }
+
+    private func buildAttributedString() -> NSAttributedString {
+        let result = NSMutableAttributedString()
+        let paragraphs = content.fullText.components(separatedBy: "\n\n")
+
+        let textColor = colorScheme == .dark ? AppColors.UIColors.Dark.textPrimary : AppColors.UIColors.Light.textPrimary
+        let pinkColor = colorScheme == .dark ? AppColors.UIColors.Dark.pink : AppColors.UIColors.Light.pink
+        let noteKern = fontSize * 0.05
+        let fadeRange = 2.0
+
+        var globalWordIndex = 0
+
+        func smoothstep(_ edge0: Double, _ edge1: Double, _ x: Double) -> Double {
+            let t = min(max((x - edge0) / (edge1 - edge0), 0.0), 1.0)
+            return t * t * (3.0 - 2.0 * t)
+        }
+
+        func highlightAlpha(for index: Int) -> CGFloat {
+            let distance = highlightProgress - Double(index)
+            let blend = smoothstep(-fadeRange, 0.0, distance)
+            return 0.3 + CGFloat(blend) * 0.7
+        }
+
+        for (paragraphIndex, paragraph) in paragraphs.enumerated() {
+            if paragraphIndex > 0 {
+                result.append(NSAttributedString(string: "\n"))
+            }
+
+            let lines = paragraph.components(separatedBy: "\n")
+
+            for (lineIndex, line) in lines.enumerated() {
+                if lineIndex > 0 {
+                    result.append(NSAttributedString(string: "\n"))
+                }
+
+                if line.isEmpty { continue }
+
+                // Check if this is a note line
+                if line.contains("[note") {
+                    let noteContent = extractNoteContent(from: line)
+                    let noteAttrs: [NSAttributedString.Key: Any] = [
+                        .font: UIFont.systemFont(ofSize: fontSize * 0.72, weight: .semibold),
+                        .foregroundColor: pinkColor,
+                        .kern: noteKern
+                    ]
+                    let noteWords = noteContent.split(separator: " ", omittingEmptySubsequences: true)
+                    for (wordIndex, word) in noteWords.enumerated() {
+                        if wordIndex > 0 {
+                            result.append(NSAttributedString(string: " ", attributes: noteAttrs))
+                        }
+                        result.append(NSAttributedString(string: String(word), attributes: noteAttrs))
+                        globalWordIndex += 1
+                    }
+                } else {
+                    // Regular text with word highlighting
+                    let words = line.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+
+                    for (wordIndex, word) in words.enumerated() {
+                        if wordIndex > 0 {
+                            result.append(NSAttributedString(string: " ", attributes: [
+                                .font: UIFont.systemFont(ofSize: fontSize, weight: .medium),
+                                .foregroundColor: textColor
+                            ]))
+                        }
+
+                        let weight: UIFont.Weight = .medium
+                        let alpha = highlightAlpha(for: globalWordIndex)
+                        let color = textColor.withAlphaComponent(alpha)
+
+                        let attrs: [NSAttributedString.Key: Any] = [
+                            .font: UIFont.systemFont(ofSize: fontSize, weight: weight),
+                            .foregroundColor: color
+                        ]
+                        result.append(NSAttributedString(string: word, attributes: attrs))
+
+                        globalWordIndex += 1
+                    }
+                }
+            }
+        }
+
+        // Add paragraph style for line spacing
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = fontSize * 0.18
+        paragraphStyle.paragraphSpacing = fontSize * 0.45
+        result.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: result.length))
 
         return result
+    }
+
+    private func getWordRanges() -> [NSRange] {
+        var ranges: [NSRange] = []
+        let fullText = NSMutableString()
+        let paragraphs = content.fullText.components(separatedBy: "\n\n")
+
+        for (paragraphIndex, paragraph) in paragraphs.enumerated() {
+            if paragraphIndex > 0 {
+                fullText.append("\n")
+            }
+
+            let lines = paragraph.components(separatedBy: "\n")
+
+            for (lineIndex, line) in lines.enumerated() {
+                if lineIndex > 0 {
+                    fullText.append("\n")
+                }
+
+                if line.isEmpty { continue }
+
+                if line.contains("[note") {
+                    let noteContent = extractNoteContent(from: line)
+                    let noteWords = noteContent.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+                    for (wordIndex, word) in noteWords.enumerated() {
+                        if wordIndex > 0 {
+                            fullText.append(" ")
+                        }
+                        let location = fullText.length
+                        fullText.append(word)
+                        ranges.append(NSRange(location: location, length: word.count))
+                    }
+                } else {
+                    let words = line.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+
+                    for (wordIndex, word) in words.enumerated() {
+                        if wordIndex > 0 {
+                            fullText.append(" ")
+                        }
+                        let location = fullText.length
+                        fullText.append(word)
+                        ranges.append(NSRange(location: location, length: word.count))
+                    }
+                }
+            }
+        }
+
+        return ranges
+    }
+
+    private func extractNoteContent(from line: String) -> String {
+        let pattern = #"\[note\s+([^\]]+)\]"#
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: line, range: NSRange(line.startIndex..., in: line)),
+              let contentRange = Range(match.range(at: 1), in: line) else {
+            return line
+        }
+        return String(line[contentRange])
     }
 }
 
@@ -467,15 +695,19 @@ struct FormattedTextView: View {
         content: TeleprompterParser.parseNotes("""
             Welcome everyone!
 
-            [time 00:30]
-            I'm excited to be here today.
+            I'm excited to be here today to talk about our new product launch.
             [note smile and pause]
 
-            [time 01:00]
-            Let me walk you through the key features.
+            Let me walk you through the key features that make this release special.
+
+            First, we've completely redesigned the user interface.
+            Second, performance improvements of up to 50%.
             [note emphasize this point]
 
-            Thank you!
+            In conclusion, this is our most ambitious update yet.
+
+            Thank you for your time!
+            [note pause for questions]
             """),
         settings: .default
     )

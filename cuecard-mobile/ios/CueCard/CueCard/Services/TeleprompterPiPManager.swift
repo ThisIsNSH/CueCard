@@ -1,9 +1,8 @@
 import AVKit
 import UIKit
-import Combine
+import SwiftUI
 
 /// Manager for Picture-in-Picture teleprompter functionality
-/// Uses AVPictureInPictureVideoCallViewController for camera-compatible PiP
 @MainActor
 class TeleprompterPiPManager: NSObject, ObservableObject {
     static let shared = TeleprompterPiPManager()
@@ -16,11 +15,15 @@ class TeleprompterPiPManager: NSObject, ObservableObject {
 
     // MARK: - Content Properties
 
-    private(set) var segments: [TeleprompterSegment] = []
+    private(set) var text: String = ""
     private(set) var settings: TeleprompterSettings = .default
-    private(set) var currentSegmentIndex: Int = 0
-    private(set) var scrollOffset: CGFloat = 0
-    private(set) var elapsedTime: Int = 0
+    private(set) var timerDuration: Int = 0
+    private(set) var elapsedTime: Double = 0
+    private(set) var currentWordIndex: Int = 0
+    private(set) var isDarkMode: Bool = true
+    private(set) var totalWords: Int = 0
+    private(set) var countdownValue: Int = 0
+    private(set) var isCountingDown: Bool = false
 
     // MARK: - PiP Components
 
@@ -33,7 +36,6 @@ class TeleprompterPiPManager: NSObject, ObservableObject {
     // MARK: - Timers
 
     private var displayLink: CADisplayLink?
-    private var scrollTimer: Timer?
 
     // MARK: - Callbacks
 
@@ -49,22 +51,28 @@ class TeleprompterPiPManager: NSObject, ObservableObject {
     // MARK: - Public API
 
     /// Configure the PiP manager with content
-    func configure(segments: [TeleprompterSegment], settings: TeleprompterSettings) {
-        self.segments = segments
+    func configure(text: String, settings: TeleprompterSettings, timerDuration: Int, colorScheme: ColorScheme) {
+        cleanup()
+        self.text = text
         self.settings = settings
-        self.currentSegmentIndex = 0
-        self.scrollOffset = 0
+        self.timerDuration = timerDuration
         self.elapsedTime = 0
+        self.currentWordIndex = 0
+        self.isDarkMode = colorScheme == .dark
+
+        let parsedContent = TeleprompterParser.parseNotes(text)
+        totalWords = parsedContent.words.count
 
         setupPiP()
     }
 
     /// Update current state from TeleprompterView
-    func updateState(segmentIndex: Int, scrollOffset: CGFloat, elapsedTime: Int, isPlaying: Bool) {
-        self.currentSegmentIndex = segmentIndex
-        self.scrollOffset = scrollOffset
+    func updateState(elapsedTime: Double, isPlaying: Bool, currentWordIndex: Int = 0, countdownValue: Int = 0, isCountingDown: Bool = false) {
         self.elapsedTime = elapsedTime
         self.isPlaying = isPlaying
+        self.currentWordIndex = currentWordIndex
+        self.countdownValue = countdownValue
+        self.isCountingDown = isCountingDown
         updateContentView()
     }
 
@@ -91,17 +99,25 @@ class TeleprompterPiPManager: NSObject, ObservableObject {
     /// Toggle play/pause
     func togglePlayPause() {
         isPlaying.toggle()
-        if isPlaying {
-            startScrollTimer()
-        } else {
-            stopScrollTimer()
-        }
+        updateContentView()
+    }
+
+    /// Seek forward 10 seconds
+    func seekForward() {
+        elapsedTime = min(elapsedTime + 10, timerDuration > 0 ? Double(timerDuration + 60) : 3600)
+        updateCurrentWordIndex()
+        updateContentView()
+    }
+
+    /// Seek backward 10 seconds
+    func seekBackward() {
+        elapsedTime = max(elapsedTime - 10, 0)
+        updateCurrentWordIndex()
         updateContentView()
     }
 
     /// Cleanup resources
     func cleanup() {
-        stopScrollTimer()
         stopDisplayLink()
         pipController?.stopPictureInPicture()
         pipController = nil
@@ -124,18 +140,31 @@ class TeleprompterPiPManager: NSObject, ObservableObject {
             return
         }
 
-        // Create a hidden window for PiP content
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
             print("No window scene available")
             return
         }
 
+        let screenBounds = windowScene.screen.bounds
+        let maxWidth = screenBounds.width
+        let maxHeight = screenBounds.height
+        let ratio = settings.overlayAspectRatio.ratio
+        var preferredWidth = maxWidth
+        var preferredHeight = preferredWidth / ratio
+        if preferredHeight > maxHeight {
+            preferredHeight = maxHeight
+            preferredWidth = preferredHeight * ratio
+        }
+        let preferredSize = CGSize(width: preferredWidth, height: preferredHeight)
+        let pipWidth = preferredSize.width
+        let pipHeight = preferredSize.height
+
         // Create the teleprompter content view
-        let contentView = TeleprompterPiPContentView(frame: CGRect(x: 0, y: 0, width: 400, height: 300))
-        contentView.backgroundColor = .black
+        let contentView = TeleprompterPiPContentView(frame: CGRect(x: 0, y: 0, width: pipWidth, height: pipHeight))
+        contentView.isDarkMode = isDarkMode
         self.teleprompterContentView = contentView
 
-        // Create a host view controller (NOT the PiP VC itself)
+        // Create a host view controller
         let hostVC = UIViewController()
         hostVC.view.addSubview(contentView)
         contentView.translatesAutoresizingMaskIntoConstraints = false
@@ -148,19 +177,19 @@ class TeleprompterPiPManager: NSObject, ObservableObject {
 
         // Create a hidden window to host the source view
         let window = UIWindow(windowScene: windowScene)
-        window.frame = CGRect(x: -1000, y: -1000, width: 400, height: 300)
+        window.frame = CGRect(x: -1000, y: -1000, width: pipWidth, height: pipHeight)
         window.rootViewController = hostVC
         window.isHidden = false
         window.windowLevel = .normal - 1
         self.pipWindow = window
 
-        // Create the PiP video call view controller (managed by PiP system, not us)
+        // Create the PiP video call view controller
         let pipVC = AVPictureInPictureVideoCallViewController()
-        pipVC.preferredContentSize = CGSize(width: 400, height: 300)
+        pipVC.preferredContentSize = preferredSize
 
         // Add content to PiP VC's view
         let pipContent = TeleprompterPiPContentView(frame: .zero)
-        pipContent.backgroundColor = .black
+        pipContent.isDarkMode = isDarkMode
         pipVC.view.addSubview(pipContent)
         pipContent.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -211,83 +240,54 @@ class TeleprompterPiPManager: NSObject, ObservableObject {
     }
 
     private func updateContentView() {
-        guard currentSegmentIndex < segments.count else { return }
+        let fontSize = CGFloat(settings.pipFontSize)
+        let remainingTime = timerDuration > 0 ? timerDuration - Int(elapsedTime) : Int(elapsedTime)
 
-        let segment = segments[currentSegmentIndex]
-        let fontSize = CGFloat(settings.fontSize) * 0.5
-        let timerText = segment.durationSeconds.map { duration in
-            let remaining = max(0, duration - (elapsedTime - segment.startTimeSeconds))
-            return TeleprompterParser.formatTime(remaining)
-        }
+        // Show countdown value if counting down, otherwise show timer
+        let timerText = isCountingDown ? "\(countdownValue)" : TeleprompterParser.formatTime(remainingTime)
 
-        // Update both content views (source view and PiP view)
+        let wordsPerSecond = Double(settings.wordsPerMinute) / 60.0
+        let highlightProgress = settings.autoScroll
+            ? ((elapsedTime == 0 && !isPlaying) ? -Double.greatestFiniteMagnitude : (elapsedTime * wordsPerSecond))
+            : Double.greatestFiniteMagnitude
+
         teleprompterContentView?.update(
-            text: segment.text,
+            text: text,
             fontSize: fontSize,
             isPlaying: isPlaying,
             timerText: timerText,
-            scrollOffset: scrollOffset
+            timerDuration: timerDuration,
+            remainingTime: remainingTime,
+            currentWordIndex: currentWordIndex,
+            highlightProgress: highlightProgress,
+            autoScroll: settings.autoScroll
         )
 
         pipContentView?.update(
-            text: segment.text,
+            text: text,
             fontSize: fontSize,
             isPlaying: isPlaying,
             timerText: timerText,
-            scrollOffset: scrollOffset
+            timerDuration: timerDuration,
+            remainingTime: remainingTime,
+            currentWordIndex: currentWordIndex,
+            highlightProgress: highlightProgress,
+            autoScroll: settings.autoScroll
         )
     }
 
+    private func updateCurrentWordIndex() {
+        guard totalWords > 0 else {
+            currentWordIndex = 0
+            return
+        }
+        let wordsPerSecond = Double(settings.wordsPerMinute) / 60.0
+        let newWordIndex = min(Int(Double(elapsedTime) * wordsPerSecond), totalWords - 1)
+        currentWordIndex = max(newWordIndex, 0)
+    }
+
     // MARK: - Scroll Timer
-
-    private func startScrollTimer() {
-        stopScrollTimer()
-        scrollTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                guard let self = self else { return }
-                self.elapsedTime += 1
-                self.updateCurrentSegment()
-                self.scrollOffset += CGFloat(self.settings.scrollSpeed) * 15
-                self.updateContentView()
-            }
-        }
-    }
-
-    private func stopScrollTimer() {
-        scrollTimer?.invalidate()
-        scrollTimer = nil
-    }
-
-    private func updateCurrentSegment() {
-        for (index, segment) in segments.enumerated() {
-            if elapsedTime >= segment.startTimeSeconds {
-                if let duration = segment.durationSeconds {
-                    if elapsedTime < segment.startTimeSeconds + duration {
-                        if currentSegmentIndex != index {
-                            currentSegmentIndex = index
-                            scrollOffset = 0
-                        }
-                        break
-                    }
-                } else {
-                    if currentSegmentIndex != index {
-                        currentSegmentIndex = index
-                        scrollOffset = 0
-                    }
-                }
-            }
-        }
-
-        // Auto-advance
-        if let current = segments[safe: currentSegmentIndex],
-           let duration = current.durationSeconds,
-           elapsedTime >= current.startTimeSeconds + duration {
-            if currentSegmentIndex < segments.count - 1 {
-                currentSegmentIndex += 1
-                scrollOffset = 0
-            }
-        }
-    }
+    // Intentionally no internal timer; PiP mirrors the teleprompter state.
 }
 
 // MARK: - AVPictureInPictureControllerDelegate
@@ -296,9 +296,6 @@ extension TeleprompterPiPManager: AVPictureInPictureControllerDelegate {
     nonisolated func pictureInPictureControllerWillStartPictureInPicture(_ pictureInPictureController: AVPictureInPictureController) {
         Task { @MainActor in
             isPiPActive = true
-            if isPlaying {
-                startScrollTimer()
-            }
         }
     }
 
@@ -310,7 +307,6 @@ extension TeleprompterPiPManager: AVPictureInPictureControllerDelegate {
 
     nonisolated func pictureInPictureControllerWillStopPictureInPicture(_ pictureInPictureController: AVPictureInPictureController) {
         Task { @MainActor in
-            stopScrollTimer()
         }
     }
 
@@ -332,9 +328,17 @@ extension TeleprompterPiPManager: AVPictureInPictureControllerDelegate {
 // MARK: - Teleprompter PiP Content View
 
 private class TeleprompterPiPContentView: UIView {
-    private let textLabel = UILabel()
+    private let textView = UITextView()
     private let timerLabel = UILabel()
-    private let playPauseIndicator = UIImageView()
+    private var lastContentId: String = ""
+    private var lastWordIndex: Int = -1
+    private var lastProgressBucket: Double = -1
+
+    var isDarkMode: Bool = true {
+        didSet {
+            updateColors()
+        }
+    }
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -347,131 +351,256 @@ private class TeleprompterPiPContentView: UIView {
     }
 
     private func setupViews() {
-        backgroundColor = .black
+        textView.isEditable = false
+        textView.isSelectable = false
+        textView.isScrollEnabled = true
+        textView.showsVerticalScrollIndicator = false
+        textView.backgroundColor = .clear
+        textView.textContainerInset = UIEdgeInsets(top: 8, left: 12, bottom: 12, right: 12)
+        textView.textContainer.lineFragmentPadding = 0
+        textView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(textView)
 
-        // Text label
-        textLabel.numberOfLines = 0
-        textLabel.textColor = .white
-        textLabel.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(textLabel)
-
-        // Timer label
-        timerLabel.font = .monospacedDigitSystemFont(ofSize: 12, weight: .bold)
-        timerLabel.textColor = .white
-        timerLabel.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+        timerLabel.font = .monospacedDigitSystemFont(ofSize: 16, weight: .bold)
         timerLabel.textAlignment = .center
-        timerLabel.layer.cornerRadius = 4
+        timerLabel.layer.cornerRadius = 6
         timerLabel.layer.masksToBounds = true
         timerLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(timerLabel)
 
-        // Play/Pause indicator
-        playPauseIndicator.tintColor = .white.withAlphaComponent(0.8)
-        playPauseIndicator.contentMode = .scaleAspectFit
-        playPauseIndicator.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(playPauseIndicator)
-
         NSLayoutConstraint.activate([
-            // Timer at top left
             timerLabel.topAnchor.constraint(equalTo: topAnchor, constant: 8),
-            timerLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
-            timerLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 50),
-            timerLabel.heightAnchor.constraint(equalToConstant: 24),
+            timerLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
+            timerLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 60),
+            timerLabel.heightAnchor.constraint(equalToConstant: 28),
 
-            // Play/Pause at top right
-            playPauseIndicator.topAnchor.constraint(equalTo: topAnchor, constant: 8),
-            playPauseIndicator.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
-            playPauseIndicator.widthAnchor.constraint(equalToConstant: 20),
-            playPauseIndicator.heightAnchor.constraint(equalToConstant: 20),
-
-            // Text in main area
-            textLabel.topAnchor.constraint(equalTo: timerLabel.bottomAnchor, constant: 8),
-            textLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
-            textLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
-            textLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12)
+            textView.topAnchor.constraint(equalTo: timerLabel.bottomAnchor, constant: 6),
+            textView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
+            textView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
+            textView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12)
         ])
+
+        updateColors()
     }
 
-    func update(text: String, fontSize: CGFloat, isPlaying: Bool, timerText: String?, scrollOffset: CGFloat) {
-        // Update text with note highlighting
-        textLabel.attributedText = createAttributedText(text, fontSize: fontSize)
-
-        // Update timer
-        if let timer = timerText {
-            timerLabel.text = " \(timer) "
-            timerLabel.isHidden = false
-        } else {
-            timerLabel.isHidden = true
-        }
-
-        // Update play/pause indicator
-        let imageName = isPlaying ? "pause.fill" : "play.fill"
-        playPauseIndicator.image = UIImage(systemName: imageName)
-
-        // Apply scroll offset as content offset transform
-        let maxOffset = max(0, textLabel.intrinsicContentSize.height - bounds.height + 60)
-        let clampedOffset = min(scrollOffset, maxOffset)
-        textLabel.transform = CGAffineTransform(translationX: 0, y: -clampedOffset)
+    private func updateColors() {
+        backgroundColor = isDarkMode ? AppColors.UIColors.Dark.background : AppColors.UIColors.Light.background
+        textView.textColor = isDarkMode ? AppColors.UIColors.Dark.textPrimary : AppColors.UIColors.Light.textPrimary
     }
 
-    private func createAttributedText(_ text: String, fontSize: CGFloat) -> NSAttributedString {
-        let result = NSMutableAttributedString()
-        let font = UIFont.systemFont(ofSize: fontSize, weight: .medium)
-        let notePattern = try! NSRegularExpression(pattern: #"\[note\s+([^\]]+)\]"#, options: [])
+    func update(
+        text: String,
+        fontSize: CGFloat,
+        isPlaying: Bool,
+        timerText: String,
+        timerDuration: Int,
+        remainingTime: Int,
+        currentWordIndex: Int,
+        highlightProgress: Double,
+        autoScroll: Bool
+    ) {
+        let contentId = text
+        let progressBucket = (highlightProgress * 10).rounded(.down) / 10
+        let needsFullRebuild = lastContentId != contentId
+        let needsHighlightUpdate = lastWordIndex != currentWordIndex || lastProgressBucket != progressBucket
 
-        let nsText = text as NSString
-        var lastEnd = 0
+        if needsFullRebuild || needsHighlightUpdate {
+            let savedOffset = textView.contentOffset
+            textView.attributedText = buildAttributedString(
+                text: text,
+                fontSize: fontSize,
+                currentWordIndex: currentWordIndex,
+                highlightProgress: highlightProgress
+            )
+            textView.layoutIfNeeded()
 
-        let matches = notePattern.matches(in: text, options: [], range: NSRange(location: 0, length: nsText.length))
-
-        for match in matches {
-            // Add text before the note
-            if match.range.location > lastEnd {
-                let beforeRange = NSRange(location: lastEnd, length: match.range.location - lastEnd)
-                let beforeText = nsText.substring(with: beforeRange)
-                result.append(NSAttributedString(
-                    string: beforeText,
-                    attributes: [.font: font, .foregroundColor: UIColor.white]
-                ))
+            if needsFullRebuild {
+                textView.contentOffset = .zero
+            } else {
+                textView.setContentOffset(savedOffset, animated: false)
             }
 
-            // Add the note content (highlighted in pink)
-            let contentRange = match.range(at: 1)
-            let noteContent = nsText.substring(with: contentRange)
-            result.append(NSAttributedString(
-                string: noteContent,
-                attributes: [
-                    .font: UIFont.systemFont(ofSize: fontSize, weight: .bold),
-                    .foregroundColor: UIColor.systemPink
-                ]
-            ))
-
-            lastEnd = match.range.location + match.range.length
+            lastContentId = contentId
+            lastWordIndex = currentWordIndex
+            lastProgressBucket = progressBucket
         }
 
-        // Add remaining text
-        if lastEnd < nsText.length {
-            let remainingRange = NSRange(location: lastEnd, length: nsText.length - lastEnd)
-            let remainingText = nsText.substring(with: remainingRange)
-            result.append(NSAttributedString(
-                string: remainingText,
-                attributes: [.font: font, .foregroundColor: UIColor.white]
-            ))
+        if autoScroll && currentWordIndex > 0 {
+            let wordRanges = getWordRanges(from: text)
+            if currentWordIndex < wordRanges.count {
+                let range = wordRanges[currentWordIndex]
+                let glyphRange = textView.layoutManager.glyphRange(forCharacterRange: range, actualCharacterRange: nil)
+                let rect = textView.layoutManager.boundingRect(forGlyphRange: glyphRange, in: textView.textContainer)
+
+                let targetY = rect.origin.y + textView.textContainerInset.top - (textView.bounds.height / 3)
+                let maxY = textView.contentSize.height - textView.bounds.height
+                let scrollY = max(0, min(targetY, maxY))
+
+                UIView.animate(withDuration: 0.55, delay: 0, options: [.curveEaseInOut, .allowUserInteraction]) {
+                    self.textView.contentOffset = CGPoint(x: 0, y: scrollY)
+                }
+            }
         }
 
-        // Add paragraph style
+        timerLabel.text = " \(timerText) "
+        timerLabel.textColor = AppColors.timerUIColor(
+            remainingSeconds: remainingTime,
+            totalSeconds: timerDuration,
+            isDarkMode: isDarkMode
+        )
+        timerLabel.backgroundColor = (isDarkMode ? AppColors.UIColors.Dark.background : AppColors.UIColors.Light.background).withAlphaComponent(0.8)
+    }
+
+    private func buildAttributedString(
+        text: String,
+        fontSize: CGFloat,
+        currentWordIndex: Int,
+        highlightProgress: Double
+    ) -> NSAttributedString {
+        let result = NSMutableAttributedString()
+        let font = UIFont.systemFont(ofSize: fontSize, weight: .medium)
+        let noteFont = UIFont.systemFont(ofSize: fontSize * 0.72, weight: .semibold)
+        let noteKern = fontSize * 0.05
+        let notePattern = try! NSRegularExpression(pattern: #"\[note\s+([^\]]+)\]"#, options: [])
+        let fadeRange = 2.0
+
+        func smoothstep(_ edge0: Double, _ edge1: Double, _ x: Double) -> Double {
+            let t = min(max((x - edge0) / (edge1 - edge0), 0.0), 1.0)
+            return t * t * (3.0 - 2.0 * t)
+        }
+
+        func highlightAlpha(for index: Int) -> CGFloat {
+            let distance = highlightProgress - Double(index)
+            let blend = smoothstep(-fadeRange, 0.0, distance)
+            return 0.3 + CGFloat(blend) * 0.7
+        }
+
+        let textColor = isDarkMode ? AppColors.UIColors.Dark.textPrimary : AppColors.UIColors.Light.textPrimary
+        let pinkColor = isDarkMode ? AppColors.UIColors.Dark.pink : AppColors.UIColors.Light.pink
+
+        var globalWordIndex = 0
+        let paragraphs = text.components(separatedBy: "\n\n")
+
+        for (paragraphIndex, paragraph) in paragraphs.enumerated() {
+            if paragraphIndex > 0 {
+                result.append(NSAttributedString(string: "\n"))
+            }
+
+            let lines = paragraph.components(separatedBy: "\n")
+
+            for (lineIndex, line) in lines.enumerated() {
+                if lineIndex > 0 {
+                    result.append(NSAttributedString(string: "\n"))
+                }
+
+                if line.isEmpty { continue }
+
+                if line.contains("[note") {
+                    let noteContent = extractNoteContent(from: line)
+                    let noteAttrs: [NSAttributedString.Key: Any] = [
+                        .font: noteFont,
+                        .foregroundColor: pinkColor,
+                        .kern: noteKern
+                    ]
+                    let noteWords = noteContent.split(separator: " ", omittingEmptySubsequences: true)
+                    for (wordIndex, word) in noteWords.enumerated() {
+                        if wordIndex > 0 {
+                            result.append(NSAttributedString(string: " ", attributes: noteAttrs))
+                        }
+                        result.append(NSAttributedString(string: String(word), attributes: noteAttrs))
+                        globalWordIndex += 1
+                    }
+                } else {
+                    let words = line.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+
+                    for (wordIndex, word) in words.enumerated() {
+                        if wordIndex > 0 {
+                            result.append(NSAttributedString(string: " ", attributes: [
+                                .font: font,
+                                .foregroundColor: textColor
+                            ]))
+                        }
+
+                        let alpha = highlightAlpha(for: globalWordIndex)
+                        let color = textColor.withAlphaComponent(alpha)
+
+                        let attrs: [NSAttributedString.Key: Any] = [
+                            .font: font,
+                            .foregroundColor: color
+                        ]
+                        result.append(NSAttributedString(string: word, attributes: attrs))
+
+                        globalWordIndex += 1
+                    }
+                }
+            }
+        }
+
         let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineSpacing = fontSize * 0.3
-        result.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: result.length))
+        paragraphStyle.lineSpacing = fontSize * 0.18
+        paragraphStyle.paragraphSpacing = fontSize * 0.45
+        if result.length > 0 {
+            result.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: result.length))
+        }
 
         return result
     }
-}
 
-// MARK: - Array Extension
+    private func getWordRanges(from text: String) -> [NSRange] {
+        var ranges: [NSRange] = []
+        let fullText = NSMutableString()
+        let paragraphs = text.components(separatedBy: "\n\n")
 
-private extension Array {
-    subscript(safe index: Int) -> Element? {
-        return indices.contains(index) ? self[index] : nil
+        for (paragraphIndex, paragraph) in paragraphs.enumerated() {
+            if paragraphIndex > 0 {
+                fullText.append("\n")
+            }
+
+            let lines = paragraph.components(separatedBy: "\n")
+
+            for (lineIndex, line) in lines.enumerated() {
+                if lineIndex > 0 {
+                    fullText.append("\n")
+                }
+
+                if line.isEmpty { continue }
+
+                if line.contains("[note") {
+                    let noteContent = extractNoteContent(from: line)
+                    let noteWords = noteContent.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+                    for (wordIndex, word) in noteWords.enumerated() {
+                        if wordIndex > 0 {
+                            fullText.append(" ")
+                        }
+                        let location = fullText.length
+                        fullText.append(word)
+                        ranges.append(NSRange(location: location, length: word.count))
+                    }
+                } else {
+                    let words = line.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+
+                    for (wordIndex, word) in words.enumerated() {
+                        if wordIndex > 0 {
+                            fullText.append(" ")
+                        }
+                        let location = fullText.length
+                        fullText.append(word)
+                        ranges.append(NSRange(location: location, length: word.count))
+                    }
+                }
+            }
+        }
+
+        return ranges
+    }
+
+    private func extractNoteContent(from line: String) -> String {
+        let pattern = #"\[note\s+([^\]]+)\]"#
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: line, range: NSRange(line.startIndex..., in: line)),
+              let contentRange = Range(match.range(at: 1), in: line) else {
+            return line
+        }
+        return String(line[contentRange])
     }
 }

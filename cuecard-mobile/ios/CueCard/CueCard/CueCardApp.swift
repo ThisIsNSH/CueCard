@@ -13,6 +13,7 @@ struct CueCardApp: App {
             ContentView()
                 .environmentObject(authService)
                 .environmentObject(settingsService)
+                .preferredColorScheme(settingsService.settings.themePreference.colorScheme)
         }
     }
 }

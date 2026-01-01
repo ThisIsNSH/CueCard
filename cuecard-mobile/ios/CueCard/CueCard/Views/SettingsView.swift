@@ -5,6 +5,7 @@ struct SettingsView: View {
     @EnvironmentObject var authService: AuthenticationService
     @EnvironmentObject var settingsService: SettingsService
     @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         NavigationStack {
@@ -38,67 +39,102 @@ struct SettingsView: View {
                     }
                 }
 
+                Section("Countdown") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Start Delay")
+                            Spacer()
+                            Text("\(settingsService.settings.countdownSeconds) seconds")
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                        }
+
+                        Slider(
+                            value: Binding(
+                                get: { Double(settingsService.settings.countdownSeconds) },
+                                set: { settingsService.settings.countdownSeconds = Int($0) }
+                            ),
+                            in: 0...10,
+                            step: 1
+                        )
+                    }
+                    .padding(.vertical, 4)
+                }
+
                 // Teleprompter settings
                 Section("Teleprompter") {
-                    // Font Size
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Font Size")
-                            Spacer()
-                            Text("\(settingsService.settings.fontSize)px")
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
+                    // Highlight words toggle
+                    Toggle("Highlight Words", isOn: $settingsService.settings.autoScroll)
+
+                    // Reading Speed (Words Per Minute) - only show when highlighting is enabled
+                    if settingsService.settings.autoScroll {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("Highlight Speed")
+                                Spacer()
+                                Text("\(settingsService.settings.wordsPerMinute) WPM")
+                                    .foregroundStyle(.secondary)
+                                    .monospacedDigit()
+                            }
+
+                            Slider(
+                                value: Binding(
+                                    get: { Double(settingsService.settings.wordsPerMinute) },
+                                    set: { settingsService.settings.wordsPerMinute = Int($0) }
+                                ),
+                                in: Double(TeleprompterSettings.wpmRange.lowerBound)...Double(TeleprompterSettings.wpmRange.upperBound),
+                                step: 10
+                            )
                         }
-
-                        Slider(
-                            value: Binding(
-                                get: { Double(settingsService.settings.fontSize) },
-                                set: { settingsService.settings.fontSize = Int($0) }
-                            ),
-                            in: Double(TeleprompterSettings.fontSizeRange.lowerBound)...Double(TeleprompterSettings.fontSizeRange.upperBound),
-                            step: 1
-                        )
+                        .padding(.vertical, 4)
                     }
-                    .padding(.vertical, 4)
+                }
 
-                    // Scroll Speed
+                // Text size settings
+                Section("Text Size") {
                     VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Scroll Speed")
-                            Spacer()
-                            Text(String(format: "%.1fx", settingsService.settings.scrollSpeed))
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
+                        Text("App Text Size")
+                        Picker("App Text Size", selection: $settingsService.settings.fontSizePreset) {
+                            ForEach(FontSizePreset.allCases, id: \.self) { preset in
+                                Text(preset.rawValue).tag(preset)
+                            }
                         }
-
-                        Slider(
-                            value: $settingsService.settings.scrollSpeed,
-                            in: TeleprompterSettings.scrollSpeedRange,
-                            step: 0.1
-                        )
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
                     }
-                    .padding(.vertical, 4)
 
-                    // Opacity
                     VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Opacity")
-                            Spacer()
-                            Text("\(settingsService.settings.opacity)%")
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
+                        Text("Overlay Text Size")
+                        Picker("Overlay Text Size", selection: $settingsService.settings.pipFontSizePreset) {
+                            ForEach(FontSizePreset.allCases, id: \.self) { preset in
+                                Text(preset.rawValue).tag(preset)
+                            }
                         }
-
-                        Slider(
-                            value: Binding(
-                                get: { Double(settingsService.settings.opacity) },
-                                set: { settingsService.settings.opacity = Int($0) }
-                            ),
-                            in: Double(TeleprompterSettings.opacityRange.lowerBound)...Double(TeleprompterSettings.opacityRange.upperBound),
-                            step: 1
-                        )
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
                     }
-                    .padding(.vertical, 4)
+                }
+
+                Section("Overlay") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Overlay Dimension Ratio")
+                        Picker("Overlay Dimension Ratio", selection: $settingsService.settings.overlayAspectRatio) {
+                            ForEach(OverlayAspectRatio.allCases, id: \.self) { ratio in
+                                Text(ratio.rawValue).tag(ratio)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                    }
+                }
+
+                // Appearance settings
+                Section("Appearance") {
+                    Picker("Theme", selection: $settingsService.settings.themePreference) {
+                        ForEach(ThemePreference.allCases, id: \.self) { theme in
+                            Text(theme.rawValue).tag(theme)
+                        }
+                    }
                 }
 
                 // Reset settings
@@ -119,6 +155,7 @@ struct SettingsView: View {
                             Text("Sign Out")
                         }
                     }
+                    .foregroundStyle(AppColors.red(for: colorScheme))
                 }
             }
             .navigationTitle("Settings")

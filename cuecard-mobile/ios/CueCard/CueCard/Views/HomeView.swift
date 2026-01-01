@@ -4,8 +4,10 @@ import FirebaseAnalytics
 struct HomeView: View {
     @EnvironmentObject var authService: AuthenticationService
     @EnvironmentObject var settingsService: SettingsService
+    @Environment(\.colorScheme) var colorScheme
     @State private var showingSettings = false
     @State private var showingTeleprompter = false
+    @State private var showingTimerPicker = false
     @FocusState private var isTextEditorFocused: Bool
 
     private var hasNotes: Bool {
@@ -14,64 +16,136 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Notes editor
-                NotesEditorView(
-                    text: $settingsService.notes,
-                    isFocused: $isTextEditorFocused
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            ZStack {
+                // Background - matches TeleprompterView
+                AppColors.background(for: colorScheme)
+                    .ignoresSafeArea()
 
-                // Bottom action bar
-                VStack(spacing: 12) {
-                    Divider()
-
-                    HStack(spacing: 16) {
-                        // Tips button
-                        Button(action: {
-                            insertSampleNotes()
-                        }) {
-                            Label("Example", systemImage: "lightbulb")
-                                .font(.subheadline)
-                        }
-                        .buttonStyle(.bordered)
-                        .tint(.secondary)
-
-                        Spacer()
-
-                        // Start teleprompter button
-                        Button(action: {
-                            isTextEditorFocused = false
-                            showingTeleprompter = true
-                        }) {
-                            Label("Start", systemImage: "play.fill")
-                                .font(.headline)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .disabled(!hasNotes)
-                    }
-                    .padding(.horizontal)
-                    .padding(.bottom, 8)
+                VStack(spacing: 0) {
+                    // Notes editor
+                    NotesEditorView(
+                        text: $settingsService.notes,
+                        isFocused: $isTextEditorFocused,
+                        colorScheme: colorScheme
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .background(Color(.systemBackground))
             }
-            .background(Color(.systemGroupedBackground))
+            .overlay(alignment: .bottom) {
+                HStack(alignment: .bottom, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        if showingTimerPicker {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text("Timer")
+                                        .font(.headline)
+                                        .foregroundStyle(AppColors.textPrimary(for: colorScheme))
+
+                                    Spacer()
+
+                                    Button(action: {
+                                        withAnimation(.easeInOut(duration: 0.2)) {
+                                            showingTimerPicker = false
+                                        }
+                                    }) {
+                                        Image(systemName: "xmark")
+                                            .font(.system(size: 12, weight: .semibold))
+                                            .foregroundStyle(AppColors.textSecondary(for: colorScheme))
+                                            .padding(6)
+                                            .background(
+                                                Circle()
+                                                    .fill(AppColors.background(for: colorScheme).opacity(0.85))
+                                            )
+                                    }
+                                }
+
+                                HStack(spacing: 12) {
+                                    Text("Duration")
+                                        .foregroundStyle(AppColors.textSecondary(for: colorScheme))
+
+                                    Spacer()
+
+                                    Picker("Minutes", selection: $settingsService.settings.timerMinutes) {
+                                        ForEach(0..<60) { minute in
+                                            Text("\(minute)").tag(minute)
+                                        }
+                                    }
+                                    .pickerStyle(.wheel)
+                                    .frame(width: 60, height: 88)
+                                    .clipped()
+
+                                    Text(":")
+                                        .font(.headline)
+                                        .foregroundStyle(AppColors.textSecondary(for: colorScheme))
+
+                                    Picker("Seconds", selection: $settingsService.settings.timerSeconds) {
+                                        ForEach(0..<60) { second in
+                                            Text(String(format: "%02d", second)).tag(second)
+                                        }
+                                    }
+                                    .pickerStyle(.wheel)
+                                    .frame(width: 60, height: 88)
+                                    .clipped()
+                                }
+                            }
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(AppColors.background(for: colorScheme))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .stroke(AppColors.textSecondary(for: colorScheme).opacity(0.2))
+                            )
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                        }
+
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                showingTimerPicker.toggle()
+                            }
+                        }) {
+                            Text(showingTimerPicker ? "Done" : "Set Timer")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(AppColors.textPrimary(for: colorScheme))
+                                .padding(.horizontal, 16)
+                                .frame(height: 52)
+                                .glassedEffect(in: Capsule())
+                        }
+                    }
+
+                    Spacer(minLength: 12)
+
+                    Button(action: {
+                        isTextEditorFocused = false
+                        showingTeleprompter = true
+                    }) {
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(colorScheme == .dark ? .black : .white)
+                            .frame(width: 52, height: 52)
+                            .background(
+                                Circle()
+                                    .fill(AppColors.green(for: colorScheme))
+                            )
+                            .glassedEffect(in: Circle())
+                    }
+                    .disabled(!hasNotes)
+                    .opacity(hasNotes ? 1.0 : 0.6)
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 24)
+            }
             .navigationTitle("CueCard")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(AppColors.background(for: colorScheme), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: { showingSettings = true }) {
                         Image(systemName: "gearshape")
                             .font(.title3)
-                    }
-                }
-
-                ToolbarItem(placement: .keyboard) {
-                    HStack {
-                        Spacer()
-                        Button("Done") {
-                            isTextEditorFocused = false
-                        }
+                            .foregroundStyle(AppColors.textPrimary(for: colorScheme))
                     }
                 }
             }
@@ -91,42 +165,20 @@ struct HomeView: View {
             ])
         }
     }
-
-    private func insertSampleNotes() {
-        settingsService.notes = """
-        Welcome everyone!
-
-        [time 00:30]
-        I'm excited to be here today to talk about our new product launch.
-        [note smile and pause]
-
-        [time 01:00]
-        Let me walk you through the key features that make this release special.
-
-        First, we've completely redesigned the user interface.
-        Second, performance improvements of up to 50%.
-        [note emphasize this point]
-
-        [time 00:45]
-        In conclusion, this is our most ambitious update yet.
-
-        Thank you for your time!
-        [note pause for questions]
-        """
-    }
 }
 
-/// Notes editor with syntax highlighting for [time] and [note] tags
+/// Notes editor with syntax highlighting for [note] tags
 struct NotesEditorView: View {
     @Binding var text: String
     var isFocused: FocusState<Bool>.Binding
+    let colorScheme: ColorScheme
 
     var body: some View {
         ZStack(alignment: .topLeading) {
             // Placeholder
             if text.isEmpty {
-                Text("Paste your notes here...\n\nUse [time mm:ss] for timer checkpoints\nUse [note text] for delivery cues")
-                    .foregroundStyle(.tertiary)
+                Text("Paste your script here...\n\nUse [note text] for delivery cues\nSet timer duration below")
+                    .foregroundStyle(AppColors.textSecondary(for: colorScheme).opacity(0.6))
                     .padding(.horizontal, 20)
                     .padding(.vertical, 16)
                     .allowsHitTesting(false)
@@ -138,7 +190,8 @@ struct NotesEditorView: View {
                 .scrollContentBackground(.hidden)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .font(.body)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(AppColors.textPrimary(for: colorScheme))
         }
     }
 }
