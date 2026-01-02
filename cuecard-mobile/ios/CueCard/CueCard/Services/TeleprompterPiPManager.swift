@@ -227,15 +227,6 @@ class TeleprompterPiPManager: NSObject, ObservableObject {
         // Create the teleprompter content view
         let contentView = TeleprompterPiPContentView(frame: CGRect(x: 0, y: 0, width: pipWidth, height: pipHeight))
         contentView.isDarkMode = isDarkMode
-        contentView.onPlayPauseTapped = { [weak self] in
-            self?.togglePlayPauseFromPiP()
-        }
-        contentView.onRestartTapped = { [weak self] in
-            self?.restartFromPiP()
-        }
-        contentView.onExpandTapped = { [weak self] in
-            self?.expandFromPiP()
-        }
         self.teleprompterContentView = contentView
 
         // Create a host view controller
@@ -264,15 +255,6 @@ class TeleprompterPiPManager: NSObject, ObservableObject {
         // Add content to PiP VC's view
         let pipContent = TeleprompterPiPContentView(frame: .zero)
         pipContent.isDarkMode = isDarkMode
-        pipContent.onPlayPauseTapped = { [weak self] in
-            self?.togglePlayPauseFromPiP()
-        }
-        pipContent.onRestartTapped = { [weak self] in
-            self?.restartFromPiP()
-        }
-        pipContent.onExpandTapped = { [weak self] in
-            self?.expandFromPiP()
-        }
         pipVC.view.addSubview(pipContent)
         pipContent.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -418,19 +400,9 @@ extension TeleprompterPiPManager: AVPictureInPictureControllerDelegate {
 private class TeleprompterPiPContentView: UIView {
     private let textView = UITextView()
     private let timerLabel = UILabel()
-    private let controlsContainer = UIView()
-    private let playPauseButton = UIButton(type: .system)
-    private let restartButton = UIButton(type: .system)
-    private let expandButton = UIButton(type: .system)
     private var lastContentId: String = ""
     private var lastWordIndex: Int = -1
     private var lastProgressBucket: Double = -1
-    private var currentIsPlaying: Bool = false
-
-    // Callbacks for button actions
-    var onPlayPauseTapped: (() -> Void)?
-    var onRestartTapped: (() -> Void)?
-    var onExpandTapped: (() -> Void)?
 
     var isDarkMode: Bool = true {
         didSet {
@@ -454,7 +426,7 @@ private class TeleprompterPiPContentView: UIView {
         textView.isScrollEnabled = true
         textView.showsVerticalScrollIndicator = false
         textView.backgroundColor = .clear
-        textView.textContainerInset = UIEdgeInsets(top: 8, left: 12, bottom: 60, right: 12)
+        textView.textContainerInset = UIEdgeInsets(top: 8, left: 12, bottom: 12, right: 12)
         textView.textContainer.lineFragmentPadding = 0
         textView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(textView)
@@ -466,36 +438,6 @@ private class TeleprompterPiPContentView: UIView {
         timerLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(timerLabel)
 
-        // Setup controls container with blur effect
-        controlsContainer.translatesAutoresizingMaskIntoConstraints = false
-        controlsContainer.backgroundColor = .clear
-        addSubview(controlsContainer)
-
-        // Add blur effect to controls
-        let blurEffect = UIBlurEffect(style: isDarkMode ? .dark : .light)
-        let blurView = UIVisualEffectView(effect: blurEffect)
-        blurView.translatesAutoresizingMaskIntoConstraints = false
-        blurView.layer.cornerRadius = 16
-        blurView.clipsToBounds = true
-        controlsContainer.insertSubview(blurView, at: 0)
-
-        // Setup buttons
-        setupButton(restartButton, systemName: "arrow.counterclockwise", action: #selector(restartTapped))
-        setupButton(playPauseButton, systemName: "play.fill", action: #selector(playPauseTapped))
-        setupButton(expandButton, systemName: "arrow.up.left.and.arrow.down.right", action: #selector(expandTapped))
-
-        // Make play button slightly larger
-        playPauseButton.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
-
-        // Create horizontal stack for buttons
-        let buttonStack = UIStackView(arrangedSubviews: [restartButton, playPauseButton, expandButton])
-        buttonStack.axis = .horizontal
-        buttonStack.spacing = 20
-        buttonStack.alignment = .center
-        buttonStack.distribution = .equalSpacing
-        buttonStack.translatesAutoresizingMaskIntoConstraints = false
-        controlsContainer.addSubview(buttonStack)
-
         NSLayoutConstraint.activate([
             timerLabel.topAnchor.constraint(equalTo: topAnchor, constant: 6),
             timerLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
@@ -505,65 +447,15 @@ private class TeleprompterPiPContentView: UIView {
             textView.topAnchor.constraint(equalTo: timerLabel.bottomAnchor, constant: 4),
             textView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
             textView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
-            textView.bottomAnchor.constraint(equalTo: controlsContainer.topAnchor, constant: -4),
-
-            controlsContainer.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
-            controlsContainer.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
-            controlsContainer.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8),
-            controlsContainer.heightAnchor.constraint(equalToConstant: 44),
-
-            blurView.topAnchor.constraint(equalTo: controlsContainer.topAnchor),
-            blurView.bottomAnchor.constraint(equalTo: controlsContainer.bottomAnchor),
-            blurView.leadingAnchor.constraint(equalTo: controlsContainer.leadingAnchor),
-            blurView.trailingAnchor.constraint(equalTo: controlsContainer.trailingAnchor),
-
-            buttonStack.centerXAnchor.constraint(equalTo: controlsContainer.centerXAnchor),
-            buttonStack.centerYAnchor.constraint(equalTo: controlsContainer.centerYAnchor),
-
-            restartButton.widthAnchor.constraint(equalToConstant: 32),
-            restartButton.heightAnchor.constraint(equalToConstant: 32),
-            playPauseButton.widthAnchor.constraint(equalToConstant: 36),
-            playPauseButton.heightAnchor.constraint(equalToConstant: 36),
-            expandButton.widthAnchor.constraint(equalToConstant: 32),
-            expandButton.heightAnchor.constraint(equalToConstant: 32)
+            textView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8)
         ])
 
         updateColors()
     }
 
-    private func setupButton(_ button: UIButton, systemName: String, action: Selector) {
-        let config = UIImage.SymbolConfiguration(pointSize: 16, weight: .semibold)
-        button.setImage(UIImage(systemName: systemName, withConfiguration: config), for: .normal)
-        button.tintColor = isDarkMode ? .white : .black
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.addTarget(self, action: action, for: .touchUpInside)
-    }
-
-    @objc private func playPauseTapped() {
-        onPlayPauseTapped?()
-    }
-
-    @objc private func restartTapped() {
-        onRestartTapped?()
-    }
-
-    @objc private func expandTapped() {
-        onExpandTapped?()
-    }
-
     private func updateColors() {
         backgroundColor = isDarkMode ? AppColors.UIColors.Dark.background : AppColors.UIColors.Light.background
         textView.textColor = isDarkMode ? AppColors.UIColors.Dark.textPrimary : AppColors.UIColors.Light.textPrimary
-
-        let buttonColor = isDarkMode ? UIColor.white : UIColor.black
-        playPauseButton.tintColor = buttonColor
-        restartButton.tintColor = buttonColor
-        expandButton.tintColor = buttonColor
-
-        // Update blur effect
-        if let blurView = controlsContainer.subviews.first as? UIVisualEffectView {
-            blurView.effect = UIBlurEffect(style: isDarkMode ? .dark : .light)
-        }
     }
 
     func update(
@@ -627,14 +519,6 @@ private class TeleprompterPiPContentView: UIView {
             isDarkMode: isDarkMode
         )
         timerLabel.backgroundColor = (isDarkMode ? AppColors.UIColors.Dark.background : AppColors.UIColors.Light.background).withAlphaComponent(0.8)
-
-        // Update play/pause button icon
-        if currentIsPlaying != isPlaying {
-            currentIsPlaying = isPlaying
-            let config = UIImage.SymbolConfiguration(pointSize: 16, weight: .semibold)
-            let iconName = isPlaying ? "pause.fill" : "play.fill"
-            playPauseButton.setImage(UIImage(systemName: iconName, withConfiguration: config), for: .normal)
-        }
     }
 
     private func buildAttributedString(

@@ -135,7 +135,7 @@ struct TeleprompterView: View {
 
                                 // Play/Pause button
                                 Button(action: { togglePlayPause() }) {
-                                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                                    Image(systemName: (isPlaying || isCountingDown) ? "pause.fill" : "play.fill")
                                         .font(.system(size: 28, weight: .semibold))
                                         .foregroundStyle(colorScheme == .dark ? .black : .white)
                                         .frame(width: 72, height: 72)
@@ -231,7 +231,7 @@ struct TeleprompterView: View {
             stopControlsTimer()
             stopCountdownTimer()
         }
-        .onChange(of: scenePhase) { oldPhase, newPhase in
+        .onChange(of: scenePhase) { newPhase in
             if newPhase == .background && !pipManager.isPiPActive && pipManager.isPiPPossible {
                 // Auto-start PiP when app goes to background (like YouTube)
                 startPiP(minimizeApp: false)
@@ -447,6 +447,9 @@ struct TeleprompterView: View {
     // MARK: - Timer
 
     private func startTimer() {
+        // Prevent multiple timers from running simultaneously
+        stopTimer()
+
         // Timer interval based on WPM setting
         let wordsPerSecond = Double(settings.wordsPerMinute) / 60.0
         let interval = 1.0 / 30.0
