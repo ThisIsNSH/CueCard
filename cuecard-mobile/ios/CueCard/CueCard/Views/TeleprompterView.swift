@@ -20,7 +20,6 @@ struct TeleprompterView: View {
     @State private var controlsTimer: Timer?
     @State private var currentWordIndex: Int = 0
     @State private var dragOffset: CGFloat = 0
-    @State private var showingSettings = false
     @State private var countdownValue: Int = 0
     @State private var isCountingDown = false
     @State private var countdownTimer: Timer?
@@ -191,17 +190,6 @@ struct TeleprompterView: View {
                             .foregroundStyle(AppColors.textPrimary(for: colorScheme))
                     }
                 }
-
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: { showingSettings = true }) {
-                        Image(systemName: "gearshape")
-                            .font(.system(size: 16))
-                            .foregroundStyle(AppColors.textPrimary(for: colorScheme))
-                    }
-                }
-            }
-            .sheet(isPresented: $showingSettings) {
-                SettingsView()
             }
         }
         .persistentSystemOverlays(.hidden)
