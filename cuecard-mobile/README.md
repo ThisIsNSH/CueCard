@@ -1,13 +1,6 @@
 # CueCard Mobile
 
-Native iOS and Android apps for CueCard - your AI-powered flashcard companion.
-
-## Features
-
-- **Google Authentication** via Firebase Auth SDK (native)
-- **Firebase Analytics** for usage tracking
-- **SwiftUI** (iOS) and **Jetpack Compose** (Android) for modern UI
-- **Material 3** design system on Android
+CueCard Teleprompter keeps your speaker notes visible above any app, so you can stay on script without switching screens. Whether you’re recording a video, presenting, or speaking live, your notes flow with you wherever you go.
 
 ## Bundle IDs
 
@@ -67,8 +60,6 @@ cd ios/CueCard
 xcodebuild -scheme CueCard -destination 'platform=iOS Simulator,name=iPhone 15 Pro'
 ```
 
-**First build:** Xcode will automatically fetch Swift Package dependencies (Firebase SDK, GoogleSignIn).
-
 ### Android
 
 ```bash
@@ -79,67 +70,3 @@ open -a "Android Studio" android/
 cd android
 ./gradlew assembleDebug
 ```
-
-**First build:** Gradle will automatically download dependencies.
-
-## Running
-
-### iOS Simulator
-
-1. Open `ios/CueCard/CueCard.xcodeproj` in Xcode
-2. Select target device (e.g., iPhone 15 Pro)
-3. Press Cmd+R or click Run
-
-### Android Emulator
-
-1. Open `android/` folder in Android Studio
-2. Create/select an AVD (API 26+)
-3. Press Run or Shift+F10
-
-## Architecture
-
-### iOS (SwiftUI)
-
-```
-CueCardApp.swift          # App entry point, Firebase initialization
-├── ContentView.swift     # Root view, auth state routing
-├── Views/
-│   ├── LoginView.swift   # Google Sign-In UI
-│   ├── HomeView.swift    # Main flashcard view
-│   └── ProfileView.swift # User profile sheet
-└── Services/
-    └── AuthenticationService.swift  # Firebase Auth + Google Sign-In
-```
-
-### Android (Jetpack Compose)
-
-```
-CueCardApplication.kt     # Application class, Firebase init
-├── MainActivity.kt       # Single activity
-├── ui/
-│   ├── screens/
-│   │   ├── MainScreen.kt     # Navigation host
-│   │   ├── LoginScreen.kt    # Google Sign-In UI
-│   │   ├── HomeScreen.kt     # Main flashcard view
-│   │   └── ProfileSheet.kt   # User profile bottom sheet
-│   └── theme/
-│       └── Theme.kt          # Material 3 theming
-└── services/
-    └── AuthenticationService.kt  # Firebase Auth + Credential Manager
-```
-
-## Dependencies
-
-### iOS (Swift Package Manager)
-
-- `firebase-ios-sdk` - Firebase Analytics & Auth
-- `GoogleSignIn-iOS` - Google Sign-In
-
-### Android (Gradle)
-
-- Firebase BOM 32.7.0
-  - `firebase-analytics-ktx`
-  - `firebase-auth-ktx`
-- Jetpack Compose BOM 2023.10.01
-- Google Identity Services (Credential Manager)
-- Coil for image loading

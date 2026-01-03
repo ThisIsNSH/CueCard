@@ -8,6 +8,9 @@ struct HomeView: View {
     @State private var showingSettings = false
     @State private var showingTeleprompter = false
     @State private var showingTimerPicker = false
+    @State private var showingSavedNotes = false
+    @State private var showingSaveDialog = false
+    @State private var saveNoteTitle = ""
     @FocusState private var isTextEditorFocused: Bool
 
     private var hasNotes: Bool {
@@ -141,16 +144,71 @@ struct HomeView: View {
             .toolbarBackground(AppColors.background(for: colorScheme), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: { showingSettings = true }) {
-                        Image(systemName: "gearshape")
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(action: { showingSavedNotes = true }) {
+                        Image(systemName: "folder")
                             .font(.title3)
                             .foregroundStyle(AppColors.textPrimary(for: colorScheme))
+                    }
+                }
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    HStack(spacing: 16) {
+                        Menu {
+                            if settingsService.currentNoteId != nil && settingsService.hasUnsavedChanges {
+                                Button(action: {
+                                    settingsService.saveChangesToCurrentNote()
+                                }) {
+                                    Label("Save", systemImage: "square.and.arrow.down")
+                                }
+                            }
+
+                            Button(action: {
+                                saveNoteTitle = ""
+                                showingSaveDialog = true
+                            }) {
+                                Label("Save as New", systemImage: "doc.badge.plus")
+                            }
+                            .disabled(!hasNotes)
+
+                            Divider()
+
+                            Button(action: {
+                                settingsService.createNewNote()
+                            }) {
+                                Label("New Note", systemImage: "square.and.pencil")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                                .font(.title3)
+                                .foregroundStyle(AppColors.textPrimary(for: colorScheme))
+                        }
+
+                        Button(action: { showingSettings = true }) {
+                            Image(systemName: "gearshape")
+                                .font(.title3)
+                                .foregroundStyle(AppColors.textPrimary(for: colorScheme))
+                        }
                     }
                 }
             }
             .sheet(isPresented: $showingSettings) {
                 SettingsView()
+            }
+            .sheet(isPresented: $showingSavedNotes) {
+                SavedNotesView()
+            }
+            .alert("Save Note", isPresented: $showingSaveDialog) {
+                TextField("Note title", text: $saveNoteTitle)
+                Button("Cancel", role: .cancel) { }
+                Button("Save") {
+                    let title = saveNoteTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !title.isEmpty {
+                        settingsService.saveCurrentNote(title: title)
+                    }
+                }
+            } message: {
+                Text("Enter a title for your note")
             }
             .fullScreenCover(isPresented: $showingTeleprompter) {
                 TeleprompterView(
@@ -196,8 +254,124 @@ struct NotesEditorView: View {
     }
 }
 
+/// View for displaying and managing saved notes
+struct SavedNotesView: View {
+    @EnvironmentObject var settingsService: SettingsService
+    @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) var colorScheme
+    @State private var noteToRename: SavedNote?
+    @State private var renameTitle = ""
+
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter
+    }()
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if settingsService.savedNotes.isEmpty {
+                    VStack(spacing: 16) {
+                        Image(systemName: "folder")
+                            .font(.system(size: 48))
+                            .foregroundStyle(AppColors.textSecondary(for: colorScheme))
+
+                        Text("No Saved Notes")
+                            .font(.headline)
+                            .foregroundStyle(AppColors.textPrimary(for: colorScheme))
+
+                        Text("Save your notes to access them later")
+                            .font(.subheadline)
+                            .foregroundStyle(AppColors.textSecondary(for: colorScheme))
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(AppColors.background(for: colorScheme))
+                } else {
+                    List {
+                        ForEach(settingsService.savedNotes.sorted { $0.updatedAt > $1.updatedAt }) { note in
+                            Button(action: {
+                                settingsService.loadNote(note)
+                                dismiss()
+                            }) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(note.title)
+                                        .font(.headline)
+                                        .foregroundStyle(AppColors.textPrimary(for: colorScheme))
+
+                                    Text(note.content.prefix(100).replacingOccurrences(of: "\n", with: " "))
+                                        .font(.subheadline)
+                                        .foregroundStyle(AppColors.textSecondary(for: colorScheme))
+                                        .lineLimit(2)
+
+                                    Text(dateFormatter.string(from: note.updatedAt))
+                                        .font(.caption)
+                                        .foregroundStyle(AppColors.textSecondary(for: colorScheme).opacity(0.7))
+                                }
+                                .padding(.vertical, 4)
+                            }
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    settingsService.deleteNote(id: note.id)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
+                            .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                                Button {
+                                    renameTitle = note.title
+                                    noteToRename = note
+                                } label: {
+                                    Label("Rename", systemImage: "pencil")
+                                }
+                                .tint(.orange)
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Saved Notes")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+            .alert("Rename Note", isPresented: Binding(
+                get: { noteToRename != nil },
+                set: { if !$0 { noteToRename = nil } }
+            )) {
+                TextField("Note title", text: $renameTitle)
+                Button("Cancel", role: .cancel) {
+                    noteToRename = nil
+                }
+                Button("Rename") {
+                    if let note = noteToRename {
+                        let title = renameTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if !title.isEmpty {
+                            settingsService.updateNote(id: note.id, title: title)
+                        }
+                    }
+                    noteToRename = nil
+                }
+            } message: {
+                Text("Enter a new title for your note")
+            }
+        }
+    }
+}
+
 #Preview {
     HomeView()
         .environmentObject(AuthenticationService.shared)
+        .environmentObject(SettingsService.shared)
+}
+
+#Preview("Saved Notes") {
+    SavedNotesView()
         .environmentObject(SettingsService.shared)
 }

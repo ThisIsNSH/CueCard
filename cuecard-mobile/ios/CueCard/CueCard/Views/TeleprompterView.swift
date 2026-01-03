@@ -744,23 +744,7 @@ struct AttributedTextView: UIViewRepresentable {
 
 #Preview {
     TeleprompterView(
-        content: TeleprompterParser.parseNotes("""
-            Welcome everyone!
-
-            I'm excited to be here today to talk about our new product launch.
-            [note smile and pause]
-
-            Let me walk you through the key features that make this release special.
-
-            First, we've completely redesigned the user interface.
-            Second, performance improvements of up to 50%.
-            [note emphasize this point]
-
-            In conclusion, this is our most ambitious update yet.
-
-            Thank you for your time!
-            [note pause for questions]
-            """),
+        content: TeleprompterParser.parseNotes(""),
         settings: .default
     )
 }

@@ -180,6 +180,23 @@ struct TeleprompterSettings: Codable, Equatable {
     }
 }
 
+/// Saved note model
+struct SavedNote: Codable, Identifiable, Equatable {
+    let id: UUID
+    var title: String
+    var content: String
+    let createdAt: Date
+    var updatedAt: Date
+
+    init(id: UUID = UUID(), title: String, content: String, createdAt: Date = Date(), updatedAt: Date = Date()) {
+        self.id = id
+        self.title = title
+        self.content = content
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+    }
+}
+
 /// Service for persisting user settings
 @MainActor
 class SettingsService: ObservableObject {
@@ -188,6 +205,9 @@ class SettingsService: ObservableObject {
     private let userDefaults = UserDefaults.standard
     private let settingsKey = "cuecard_settings"
     private let notesKey = "cuecard_notes"
+    private let savedNotesKey = "cuecard_saved_notes"
+    private let currentNoteIdKey = "cuecard_current_note_id"
+    private var isLoadingNote = false
 
     @Published var settings: TeleprompterSettings {
         didSet {
@@ -198,8 +218,53 @@ class SettingsService: ObservableObject {
     @Published var notes: String {
         didSet {
             saveNotes()
+            // Update the timestamp on the current note when content changes (but not when loading)
+            if !isLoadingNote,
+               let id = currentNoteId,
+               let index = savedNotes.firstIndex(where: { $0.id == id }) {
+                savedNotes[index].updatedAt = Date()
+            }
         }
     }
+
+    @Published var savedNotes: [SavedNote] = [] {
+        didSet {
+            saveSavedNotes()
+        }
+    }
+
+    @Published var currentNoteId: UUID? {
+        didSet {
+            saveCurrentNoteId()
+        }
+    }
+
+    /// Default text for new notes
+    static let defaultNoteText = """
+Welcome everyone.
+
+I'm excited to be here today to talk about CueCard.
+
+[note smile and pause]
+
+It keeps your speaker notes visible above all apps, so you can use your existing camera apps and still read your notes.
+
+[note pause]
+
+It has a timer so you know if you're being brief… or too passionate.
+
+[note light chuckle]
+
+And the pink highlights?
+
+[note emphasize]
+
+Those are your secret cues — reminders to smile, pause, or not panic.
+
+[note pause]
+
+Try it out. I think you'll love it.
+"""
 
     private init() {
         // Load settings from UserDefaults
@@ -212,6 +277,23 @@ class SettingsService: ObservableObject {
 
         // Load notes from UserDefaults
         self.notes = userDefaults.string(forKey: notesKey) ?? ""
+
+        // Load saved notes from UserDefaults
+        if let data = userDefaults.data(forKey: savedNotesKey),
+           let decoded = try? JSONDecoder().decode([SavedNote].self, from: data) {
+            self.savedNotes = decoded
+        }
+
+        // Load current note id
+        if let idString = userDefaults.string(forKey: currentNoteIdKey),
+           let id = UUID(uuidString: idString) {
+            self.currentNoteId = id
+        }
+
+        // If notes are empty and no saved notes exist, load default sample text
+        if self.notes.isEmpty && self.savedNotes.isEmpty {
+            self.notes = Self.defaultNoteText
+        }
     }
 
     private func saveSettings() {
@@ -224,16 +306,100 @@ class SettingsService: ObservableObject {
         userDefaults.set(notes, forKey: notesKey)
     }
 
+    private func saveSavedNotes() {
+        if let encoded = try? JSONEncoder().encode(savedNotes) {
+            userDefaults.set(encoded, forKey: savedNotesKey)
+        }
+    }
+
+    private func saveCurrentNoteId() {
+        if let id = currentNoteId {
+            userDefaults.set(id.uuidString, forKey: currentNoteIdKey)
+        } else {
+            userDefaults.removeObject(forKey: currentNoteIdKey)
+        }
+    }
+
     /// Reset settings to defaults
     func resetSettings() {
         settings = .default
+    }
+
+    /// Save current notes as a new note
+    func saveCurrentNote(title: String) {
+        let trimmedContent = notes.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedContent.isEmpty else { return }
+
+        let note = SavedNote(title: title, content: notes)
+        savedNotes.insert(note, at: 0)
+        currentNoteId = note.id
+    }
+
+    /// Update an existing saved note
+    func updateNote(id: UUID, title: String? = nil, content: String? = nil) {
+        guard let index = savedNotes.firstIndex(where: { $0.id == id }) else { return }
+        if let title = title {
+            savedNotes[index].title = title
+        }
+        if let content = content {
+            savedNotes[index].content = content
+        }
+        savedNotes[index].updatedAt = Date()
+    }
+
+    /// Save current changes to the currently loaded note
+    func saveChangesToCurrentNote() {
+        guard let id = currentNoteId else { return }
+        updateNote(id: id, content: notes)
+    }
+
+    /// Load a saved note into the editor
+    func loadNote(_ note: SavedNote) {
+        isLoadingNote = true
+        notes = note.content
+        currentNoteId = note.id
+        isLoadingNote = false
+    }
+
+    /// Delete a saved note
+    func deleteNote(id: UUID) {
+        savedNotes.removeAll { $0.id == id }
+        if currentNoteId == id {
+            currentNoteId = nil
+        }
+    }
+
+    /// Create a new note with default text
+    func createNewNote() {
+        isLoadingNote = true
+        notes = Self.defaultNoteText
+        currentNoteId = nil
+        isLoadingNote = false
+    }
+
+    /// Get the currently loaded note if any
+    var currentNote: SavedNote? {
+        guard let id = currentNoteId else { return nil }
+        return savedNotes.first { $0.id == id }
+    }
+
+    /// Check if current notes have unsaved changes
+    var hasUnsavedChanges: Bool {
+        guard let current = currentNote else {
+            return !notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+        return current.content != notes
     }
 
     /// Clear all stored data
     func clearAllData() {
         settings = .default
         notes = ""
+        savedNotes = []
+        currentNoteId = nil
         userDefaults.removeObject(forKey: settingsKey)
         userDefaults.removeObject(forKey: notesKey)
+        userDefaults.removeObject(forKey: savedNotesKey)
+        userDefaults.removeObject(forKey: currentNoteIdKey)
     }
 }

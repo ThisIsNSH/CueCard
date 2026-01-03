@@ -28,36 +28,11 @@ struct LoginView: View {
                             .font(.system(size: 36, weight: .bold))
                             .foregroundStyle(AppColors.textPrimary(for: colorScheme))
 
-                        Text("Professional Teleprompter")
+                        Text("Floating Teleprompter")
                             .font(.title3)
                             .fontWeight(.medium)
                             .foregroundStyle(AppColors.textSecondary(for: colorScheme))
                     }
-
-                    // Feature highlights
-                    VStack(spacing: 16) {
-                        FeatureRow(
-                            icon: "text.alignleft",
-                            title: "Smooth Scrolling",
-                            description: "Word-by-word highlighting",
-                            colorScheme: colorScheme
-                        )
-
-                        FeatureRow(
-                            icon: "timer",
-                            title: "Smart Timer",
-                            description: "Color-coded countdown",
-                            colorScheme: colorScheme
-                        )
-
-                        FeatureRow(
-                            icon: "rectangle.on.rectangle",
-                            title: "Overlay",
-                            description: "Read while recording",
-                            colorScheme: colorScheme
-                        )
-                    }
-                    .padding(.top, 16)
                 }
                 .frame(maxWidth: .infinity)
 
