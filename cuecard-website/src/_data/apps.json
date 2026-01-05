@@ -1,0 +1,206 @@
+[
+  {
+    "slug": "app",
+    "name": "CueCard Mobile",
+    "platform": "both",
+    "title": "CueCard Teleprompter for iOS and Android",
+    "description": "CueCard Teleprompter keeps your speaker notes visible above any app on your phone. Stay on script while recording videos, presenting, or streaming. Available for iOS and Android.",
+    "keywords": "teleprompter app, speaker notes app, floating notes ios, floating notes android, script reader app, on camera notes, mobile teleprompter, iphone teleprompter, android teleprompter",
+    "canonical": "https://cuecard.dev/app/",
+    "ogTitle": "CueCard Teleprompter - Mobile App",
+    "ogDescription": "Keep your speaker notes visible above any app. Stay on script while recording, presenting, or streaming on your phone.",
+    "heroSubtitle": "Your speaker notes, floating above <span class=\"highlight highlight-green\">any app</span>.<br class=\"desktop-br\"> Stay on script while <span class=\"highlight highlight-yellow\">recording</span>, <span class=\"highlight highlight-pink\">presenting</span>, or streaming.",
+    "promotionalText": "No more switching screens or using custom setups.",
+    "appDescription": "CueCard Teleprompter keeps your speaker notes visible above any app, so you can stay on script without switching screens. Whether you're recording a video, presenting, or speaking live, your notes flow with you wherever you go.",
+    "showIos": true,
+    "showAndroid": true,
+    "features": [
+      {
+        "title": "Floats Over All Apps",
+        "description": "Your notes stay visible while using Camera, Instagram, TikTok, or any other app.",
+        "icon": "layers"
+      },
+      {
+        "title": "Resizable Window",
+        "description": "Adjust the teleprompter size to fit your screen perfectly.",
+        "icon": "resize"
+      },
+      {
+        "title": "Adjustable Text",
+        "description": "Customize font size and scroll speed for comfortable reading.",
+        "icon": "type"
+      }
+    ],
+    "faq": [
+      {
+        "question": "How does the floating teleprompter work?",
+        "answer": "CueCard creates a floating window that stays on top of all your apps. You can record videos, go live, or present while your notes remain visible only to you."
+      },
+      {
+        "question": "Is CueCard available for iPhone and Android?",
+        "answer": "Yes! CueCard is coming soon to both the App Store (iOS) and Google Play Store (Android)."
+      },
+      {
+        "question": "Can I use it with my camera app?",
+        "answer": "CueCard floats over any app including your native camera, Instagram, TikTok, YouTube, and more."
+      },
+      {
+        "question": "Is there a desktop version?",
+        "answer": "Yes! CueCard is also available for macOS and Windows with additional features like Google Slides sync. <a href=\"/\">Try the desktop version</a>."
+      }
+    ]
+  },
+  {
+    "slug": "mobile",
+    "name": "CueCard Mobile",
+    "platform": "both",
+    "title": "CueCard Teleprompter for iOS and Android",
+    "description": "CueCard Teleprompter keeps your speaker notes visible above any app on your phone. Stay on script while recording videos, presenting, or streaming. Available for iOS and Android.",
+    "keywords": "teleprompter app, speaker notes app, floating notes ios, floating notes android, script reader app, on camera notes, mobile teleprompter, iphone teleprompter, android teleprompter",
+    "canonical": "https://cuecard.dev/app/",
+    "ogTitle": "CueCard Teleprompter - Mobile App",
+    "ogDescription": "Keep your speaker notes visible above any app. Stay on script while recording, presenting, or streaming on your phone.",
+    "heroSubtitle": "Your speaker notes, floating above <span class=\"highlight highlight-green\">any app</span>.<br class=\"desktop-br\"> Stay on script while <span class=\"highlight highlight-yellow\">recording</span>, <span class=\"highlight highlight-pink\">presenting</span>, or streaming.",
+    "promotionalText": "No more switching screens or using custom setups.",
+    "appDescription": "CueCard Teleprompter keeps your speaker notes visible above any app, so you can stay on script without switching screens. Whether you're recording a video, presenting, or speaking live, your notes flow with you wherever you go.",
+    "showIos": true,
+    "showAndroid": true,
+    "features": [
+      {
+        "title": "Floats Over All Apps",
+        "description": "Your notes stay visible while using Camera, Instagram, TikTok, or any other app.",
+        "icon": "layers"
+      },
+      {
+        "title": "Resizable Window",
+        "description": "Adjust the teleprompter size to fit your screen perfectly.",
+        "icon": "resize"
+      },
+      {
+        "title": "Adjustable Text",
+        "description": "Customize font size and scroll speed for comfortable reading.",
+        "icon": "type"
+      }
+    ],
+    "faq": [
+      {
+        "question": "How does the floating teleprompter work?",
+        "answer": "CueCard creates a floating window that stays on top of all your apps. You can record videos, go live, or present while your notes remain visible only to you."
+      },
+      {
+        "question": "Is CueCard available for iPhone and Android?",
+        "answer": "Yes! CueCard is coming soon to both the App Store (iOS) and Google Play Store (Android)."
+      },
+      {
+        "question": "Can I use it with my camera app?",
+        "answer": "CueCard floats over any app including your native camera, Instagram, TikTok, YouTube, and more."
+      },
+      {
+        "question": "Is there a desktop version?",
+        "answer": "Yes! CueCard is also available for macOS and Windows with additional features like Google Slides sync. <a href=\"/\">Try the desktop version</a>."
+      }
+    ]
+  },
+  {
+    "slug": "ios",
+    "name": "CueCard for iOS",
+    "platform": "ios",
+    "title": "CueCard Teleprompter for iOS",
+    "description": "CueCard Teleprompter for iOS keeps your speaker notes visible above any app on your iPhone or iPad. Stay on script while recording videos, presenting, or streaming.",
+    "keywords": "teleprompter ios, iphone teleprompter, ipad teleprompter, speaker notes iphone, floating notes ios, script reader ios, on camera notes iphone, apple teleprompter app",
+    "canonical": "https://cuecard.dev/ios/",
+    "ogTitle": "CueCard Teleprompter for iOS",
+    "ogDescription": "Keep your speaker notes visible above any app on iPhone and iPad. Stay on script while recording, presenting, or streaming.",
+    "heroSubtitle": "Your speaker notes, floating above <span class=\"highlight highlight-green\">any app</span>.<br class=\"desktop-br\"> On your <span class=\"highlight highlight-yellow\">iPhone</span> or <span class=\"highlight highlight-pink\">iPad</span>.",
+    "promotionalText": "Stay on script while recording, presenting, or streaming—without switching screens.",
+    "appDescription": "CueCard Teleprompter keeps your speaker notes visible above any app, so you can stay on script without switching screens. Whether you're recording a video, presenting, or speaking live, your notes flow with you wherever you go.",
+    "showIos": true,
+    "showAndroid": false,
+    "features": [
+      {
+        "title": "Floats Over All Apps",
+        "description": "Your notes stay visible while using Camera, Instagram, TikTok, or any other app.",
+        "icon": "layers"
+      },
+      {
+        "title": "Resizable Window",
+        "description": "Adjust the teleprompter size to fit your iPhone or iPad screen.",
+        "icon": "resize"
+      },
+      {
+        "title": "Adjustable Text",
+        "description": "Customize font size and scroll speed for comfortable reading.",
+        "icon": "type"
+      }
+    ],
+    "faq": [
+      {
+        "question": "How does the floating teleprompter work on iOS?",
+        "answer": "CueCard uses iOS Picture-in-Picture to create a floating window that stays on top of all your apps. You can record videos, go live, or present while your notes remain visible only to you."
+      },
+      {
+        "question": "Is CueCard available on the App Store?",
+        "answer": "CueCard for iOS is coming soon to the App Store!"
+      },
+      {
+        "question": "Does it work on iPad?",
+        "answer": "Yes! CueCard works on both iPhone and iPad, taking advantage of the larger screen for an even better experience."
+      },
+      {
+        "question": "Is there a desktop version for Mac?",
+        "answer": "Yes! CueCard is also available for macOS with additional features like Google Slides sync. <a href=\"/\">Try the desktop version</a>."
+      }
+    ]
+  },
+  {
+    "slug": "android",
+    "name": "CueCard for Android",
+    "platform": "android",
+    "title": "CueCard Teleprompter for Android",
+    "description": "CueCard Teleprompter for Android keeps your speaker notes visible above any app on your phone. Stay on script while recording videos, presenting, or streaming.",
+    "keywords": "teleprompter android, android teleprompter app, speaker notes android, floating notes android, script reader android, on camera notes android, samsung teleprompter",
+    "canonical": "https://cuecard.dev/android/",
+    "ogTitle": "CueCard Teleprompter for Android",
+    "ogDescription": "Keep your speaker notes visible above any app on Android. Stay on script while recording, presenting, or streaming.",
+    "heroSubtitle": "Your speaker notes, floating above <span class=\"highlight highlight-green\">any app</span>.<br class=\"desktop-br\"> On your <span class=\"highlight highlight-yellow\">Android</span> device.",
+    "promotionalText": "Stay on script while recording, presenting, or streaming—without switching screens.",
+    "appDescription": "CueCard Teleprompter keeps your speaker notes visible above any app, so you can stay on script without switching screens. Whether you're recording a video, presenting, or speaking live, your notes flow with you wherever you go.",
+    "showIos": false,
+    "showAndroid": true,
+    "features": [
+      {
+        "title": "Floats Over All Apps",
+        "description": "Your notes stay visible while using Camera, Instagram, TikTok, or any other app.",
+        "icon": "layers"
+      },
+      {
+        "title": "Resizable Window",
+        "description": "Adjust the teleprompter size to fit your screen perfectly.",
+        "icon": "resize"
+      },
+      {
+        "title": "Adjustable Text",
+        "description": "Customize font size and scroll speed for comfortable reading.",
+        "icon": "type"
+      }
+    ],
+    "faq": [
+      {
+        "question": "How does the floating teleprompter work on Android?",
+        "answer": "CueCard uses Android's overlay feature to create a floating window that stays on top of all your apps. You can record videos, go live, or present while your notes remain visible only to you."
+      },
+      {
+        "question": "Is CueCard available on Google Play?",
+        "answer": "CueCard for Android is coming soon to the Google Play Store!"
+      },
+      {
+        "question": "Does it work with all Android phones?",
+        "answer": "CueCard works with most Android devices running Android 8.0 or later, including Samsung, Google Pixel, OnePlus, and more."
+      },
+      {
+        "question": "Is there a desktop version for Windows?",
+        "answer": "Yes! CueCard is also available for Windows with additional features like Google Slides sync. <a href=\"/\">Try the desktop version</a>."
+      }
+    ]
+  }
+]
