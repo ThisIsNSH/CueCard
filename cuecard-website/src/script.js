@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize FAQ accordion
     initFAQAccordion();
 
+    // Initialize FAQ search
+    initFaqSearch();
+
     // Initialize timestamp countdown demo
     initTimestampCountdowns();
 
@@ -180,6 +183,34 @@ function initFAQAccordion() {
             });
         }
     });
+}
+
+function initFaqSearch() {
+    const searchInput = document.getElementById('faq-search');
+    if (!searchInput) return;
+
+    const faqPage = searchInput.closest('[data-faq-page]') || document;
+    const faqItems = Array.from(faqPage.querySelectorAll('.faq-item'));
+
+    const indexedItems = faqItems.map((item) => ({
+        item,
+        text: item.textContent.toLowerCase().replace(/\s+/g, ' ').trim()
+    }));
+
+    const filterItems = () => {
+        const query = searchInput.value.toLowerCase().trim();
+
+        indexedItems.forEach(({ item, text }) => {
+            const isMatch = !query || text.includes(query);
+            item.style.display = isMatch ? '' : 'none';
+            if (!isMatch && item.open) {
+                item.open = false;
+            }
+        });
+    };
+
+    searchInput.addEventListener('input', filterItems);
+    filterItems();
 }
 
 function initAppScreenshotGallery() {

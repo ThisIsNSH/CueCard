@@ -108,6 +108,7 @@ ogLocale: "en_US"
     {% set downloadDesc = "Download CueCard and never fumble through a presentation again." %}
     {% include "partials/download.njk" %}
 
+    {% set showFaqCta = false %}
     {% include "partials/faq.njk" %}
 
     <!-- Mobile App FAQ -->
@@ -126,6 +127,7 @@ ogLocale: "en_US"
                 </p>
             </div>
         </details>
+        {% include "partials/faq-cta.njk" %}
     </section>
 </main>
 

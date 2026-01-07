@@ -63,6 +63,7 @@
 {% include "partials/nav.njk" %}
 
 <main>
+    {% set faqLink = "#faq" %}
     {% set heroSubtitle = profession.heroSubtitle %}
     {% include "partials/hero.njk" %}
     {% include "partials/features.njk" %}
@@ -91,7 +92,7 @@
         </details>
         {% endfor %}
 
-        {% include "partials/faq-default-desktop.njk" %}
+        {% include "partials/faq-cta.njk" %}
     </section>
 </main>
 

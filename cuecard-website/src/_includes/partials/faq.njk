@@ -111,5 +111,8 @@
             </p>
         </div>
     </details>
-    </div>
+
+    {% if showFaqCta !== false %}
+        {% include "partials/faq-cta.njk" %}
+    {% endif %}
 </section>
