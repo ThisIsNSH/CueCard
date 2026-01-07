@@ -2360,11 +2360,9 @@ main {
         overflow-x: auto;
         scroll-snap-type: x mandatory;
         -webkit-overflow-scrolling: touch;
-        width: calc(100% + var(--space-lg) * 2);
-        margin-left: calc(var(--space-lg) * -1);
-        margin-right: calc(var(--space-lg) * -1);
-        padding: 0 var(--space-lg);
-        scroll-padding-inline: var(--space-lg);
+        width: 100vw;
+        margin-left: calc(50% - 50vw);
+        padding: 0;
         gap: var(--space-md);
         overscroll-behavior-x: contain;
         scrollbar-width: none;
@@ -2379,6 +2377,14 @@ main {
         width: 70vw;
         flex: 0 0 70vw;
         scroll-snap-align: center;
+    }
+
+    .hero.hero-app .app-screenshot-card:first-child {
+        margin-left: var(--space-lg);
+    }
+
+    .hero.hero-app .app-screenshot-card:last-child {
+        margin-right: var(--space-lg);
     }
 }
 
