@@ -1,0 +1,95 @@
+{% extends "layouts/base.njk" %}
+
+{% block jsonld %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "CueCard for {{ profession.name }}",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "macOS, Windows",
+    "description": "{{ profession.description }}",
+    "url": "{{ profession.canonical }}",
+    "downloadUrl": "https://github.com/thisisnsh/cuecard/releases",
+    "softwareVersion": "1.3.1",
+    "author": {
+        "@type": "Organization",
+        "name": "CueCard",
+        "url": "https://cuecard.dev"
+    },
+    "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+    },
+    "featureList": [
+        "Invisible speaker notes during screen sharing",
+        "Sync notes from Google Slides",
+        "Works with Zoom, Google Meet, Microsoft Teams",
+        "Built-in timer and note tags",
+        "Undetectable teleprompter",
+        "Free and open source"
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {% for faq in profession.faq %}
+        {
+            "@type": "Question",
+            "name": "{{ faq.question }}",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "{{ faq.answer | replace('"', '\\"') | striptags }}"
+            }
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ]
+}
+</script>
+{% endblock %}
+
+{% block body %}
+{% set navCtaText = "Download on iOS or Android" %}
+{% set navCtaTextMobile = "Download for Mobile" %}
+{% if profession.mobileCounterpart %}
+{% set navCtaHref = "/mobile/" + profession.mobileCounterpart + "/" %}
+{% else %}
+{% set navCtaHref = "/mobile/" %}
+{% endif %}
+{% include "partials/nav.njk" %}
+
+<main>
+    {% set heroSubtitle = profession.heroSubtitle %}
+    {% include "partials/hero.njk" %}
+    {% include "partials/features.njk" %}
+    {% include "partials/download.njk" %}
+
+    <!-- Profession FAQ Section -->
+    <section class="faq" id="faq">
+        <div class="section-header">
+            <span class="section-tag">FAQ</span>
+            <h2 class="section-title">Questions?<br />We've got answers.</h2>
+        </div>
+
+        {% for faq in profession.faq %}
+        <details class="faq-item" {% if loop.first %}open{% endif %}>
+            <summary class="faq-question">
+                <span>{{ faq.question }}</span>
+                <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9l6 6 6-6" />
+                </svg>
+            </summary>
+            <div class="faq-answer">
+                <p>{{ faq.answer | safe }}</p>
+            </div>
+        </details>
+        {% endfor %}
+    </section>
+</main>
+
+{% include "partials/footer.njk" %}
+{% endblock %}

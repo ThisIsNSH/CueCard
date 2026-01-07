@@ -1938,13 +1938,54 @@ main {
 .footer-content {
     max-width: 1400px;
     margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-xl);
+    margin-bottom: var(--space-2xl);
+    padding-bottom: var(--space-xl);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.footer-section-title {
+    font-family: var(--font-display);
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-md);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.footer-section-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.footer-section-links a {
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    transition: color 0.2s ease;
+}
+
+.footer-section-links a:hover {
+    color: var(--text-primary);
+}
+
+.footer-bottom {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--space-lg);
+    gap: var(--space-md);
     text-align: center;
-    position: relative;
-    z-index: 1;
 }
 
 .footer-brand {
@@ -1953,27 +1994,6 @@ main {
     gap: var(--space-sm);
     font-family: var(--font-display);
     font-weight: 700;
-}
-
-.footer-links {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: var(--space-md);
-}
-
-.footer-links a {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-}
-
-.footer-links a:hover {
-    color: var(--text-primary);
-}
-
-.footer-divider {
-    color: var(--text-muted);
 }
 
 .footer-copy {
@@ -2212,13 +2232,24 @@ main {
         font-size: 1rem;
     }
 
-    .footer-links {
-        flex-direction: column;
-        gap: var(--space-sm);
+    .footer-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-lg);
+    }
+}
+
+@media (max-width: 480px) {
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-xl);
     }
 
-    .footer-divider {
-        display: none;
+    .footer-section {
+        text-align: center;
+    }
+
+    .footer-section-links {
+        align-items: center;
     }
 }
 

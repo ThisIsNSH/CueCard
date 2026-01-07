@@ -1,0 +1,386 @@
+[
+  {
+    "slug": "content-creators",
+    "name": "Content Creators",
+    "title": "CueCard for Content Creators - Floating Teleprompter for Video Recording",
+    "description": "CueCard helps content creators record perfect videos with a floating teleprompter. Keep your script visible while recording on Camera, Instagram, TikTok, or any app.",
+    "keywords": "content creator teleprompter, video recording notes, floating teleprompter app, script reader for creators, on camera notes, mobile teleprompter for creators",
+    "canonical": "https://cuecard.dev/mobile/content-creators/",
+    "ogTitle": "CueCard for Content Creators - Floating Teleprompter",
+    "ogDescription": "Record perfect videos with a floating teleprompter. Keep your script visible above any recording app.",
+    "heroSubtitle": "Your <span class=\"highlight highlight-yellow\">script</span>, floating above your camera.<br class=\"desktop-br\"> Stay on message while <span class=\"highlight highlight-green\">recording</span> content.",
+    "targetAudience": "content creators",
+    "desktopCounterpart": null,
+    "useCases": ["YouTube videos", "Instagram Reels", "TikTok content", "Brand collaborations"],
+    "faq": [
+      {
+        "question": "Does the teleprompter show in my recordings?",
+        "answer": "No! CueCard floats above your camera app. Your viewers only see you, not your script or notes."
+      },
+      {
+        "question": "Can I use it with Instagram and TikTok?",
+        "answer": "Yes! CueCard floats above any app including Instagram, TikTok, YouTube, and your native camera."
+      },
+      {
+        "question": "Can I control the scroll speed?",
+        "answer": "Absolutely! Adjust the auto-scroll speed to match your natural reading pace."
+      },
+      {
+        "question": "Is CueCard free?",
+        "answer": "Yes! CueCard is completely free and available for iOS and Android."
+      }
+    ]
+  },
+  {
+    "slug": "vloggers",
+    "name": "Vloggers",
+    "title": "CueCard for Vloggers - Never Forget What to Say on Camera",
+    "description": "CueCard helps vloggers stay on script with a floating teleprompter. Keep your talking points visible while recording vlogs on your phone.",
+    "keywords": "vlogger teleprompter, vlogging script app, video blog notes, on camera teleprompter, mobile vlogging tips, vlog recording helper",
+    "canonical": "https://cuecard.dev/mobile/vloggers/",
+    "ogTitle": "CueCard for Vloggers - Floating Teleprompter",
+    "ogDescription": "Never forget what to say on camera. Keep your vlog script visible with a floating teleprompter.",
+    "heroSubtitle": "Never forget what to <span class=\"highlight highlight-yellow\">say on camera</span>.<br class=\"desktop-br\"> Keep your <span class=\"highlight highlight-green\">vlog script</span> floating above your camera.",
+    "targetAudience": "vloggers",
+    "desktopCounterpart": null,
+    "useCases": ["Daily vlogs", "Travel vlogs", "Lifestyle content", "Behind-the-scenes"],
+    "faq": [
+      {
+        "question": "Can I see my script while recording vlogs?",
+        "answer": "Yes! CueCard creates a floating teleprompter that stays above your camera app. Your script is always visible while you record."
+      },
+      {
+        "question": "Will viewers see the teleprompter in my vlogs?",
+        "answer": "No! The floating window is only visible to you. Your viewers see your natural, confident delivery."
+      },
+      {
+        "question": "Is it good for on-the-go vlogging?",
+        "answer": "Absolutely! Perfect for travel vlogs or any situation where you need to remember key points while recording."
+      },
+      {
+        "question": "Can I adjust the text size?",
+        "answer": "Yes! Customize the font size and window size to fit your screen and reading preference."
+      }
+    ]
+  },
+  {
+    "slug": "youtubers",
+    "name": "YouTubers",
+    "title": "CueCard for YouTubers - Professional Teleprompter for YouTube Videos",
+    "description": "CueCard helps YouTubers record professional videos with a floating teleprompter. Keep your script visible while recording with your phone camera.",
+    "keywords": "youtube teleprompter, youtuber script app, youtube video notes, on camera teleprompter for youtube, mobile youtube recording, youtube creator tools",
+    "canonical": "https://cuecard.dev/mobile/youtubers/",
+    "ogTitle": "CueCard for YouTubers - Floating Teleprompter",
+    "ogDescription": "Record professional YouTube videos with a floating teleprompter. Keep your script visible above your camera.",
+    "heroSubtitle": "Record <span class=\"highlight highlight-yellow\">professional YouTube videos</span> with ease.<br class=\"desktop-br\"> Your <span class=\"highlight highlight-green\">script</span> floats right above your camera.",
+    "targetAudience": "YouTubers",
+    "desktopCounterpart": null,
+    "useCases": ["YouTube videos", "Shorts", "Channel intros", "Sponsored content"],
+    "faq": [
+      {
+        "question": "Can I use CueCard for YouTube Shorts?",
+        "answer": "Yes! CueCard is perfect for Shorts. Keep your hook and key points visible while recording quick vertical videos."
+      },
+      {
+        "question": "Does it help with sponsored content?",
+        "answer": "Absolutely! Keep sponsor talking points, required disclosures, and key messages visible while recording ad reads."
+      },
+      {
+        "question": "Can I read longer scripts for full videos?",
+        "answer": "Yes! Use auto-scroll for longer scripts. CueCard scrolls at your preferred pace so you stay focused on delivery."
+      },
+      {
+        "question": "Is CueCard free for YouTubers?",
+        "answer": "Yes! CueCard is completely free. Perfect for creators at any subscriber count."
+      }
+    ]
+  },
+  {
+    "slug": "tiktokers",
+    "name": "TikTokers",
+    "title": "CueCard for TikTokers - Nail Every Take with a Floating Teleprompter",
+    "description": "CueCard helps TikTokers nail every take with a floating teleprompter. Keep your script visible while recording directly in the TikTok app.",
+    "keywords": "tiktok teleprompter, tiktoker script app, tiktok recording tips, on camera teleprompter tiktok, tiktok creator tools, floating notes tiktok",
+    "canonical": "https://cuecard.dev/mobile/tiktokers/",
+    "ogTitle": "CueCard for TikTokers - Floating Teleprompter",
+    "ogDescription": "Nail every TikTok take with a floating teleprompter. Keep your script visible while recording.",
+    "heroSubtitle": "Nail every <span class=\"highlight highlight-yellow\">TikTok</span> in one take.<br class=\"desktop-br\"> Your <span class=\"highlight highlight-green\">script</span> floats right above the record button.",
+    "targetAudience": "TikTokers",
+    "desktopCounterpart": null,
+    "useCases": ["TikTok videos", "Trending sounds", "Duets", "Brand partnerships"],
+    "faq": [
+      {
+        "question": "Does CueCard work with the TikTok app?",
+        "answer": "Yes! CueCard floats above the TikTok app, so you can see your script while recording directly in TikTok."
+      },
+      {
+        "question": "Can it help me nail trending sounds?",
+        "answer": "Absolutely! Keep your lip-sync lyrics or talking points visible so you nail the timing on trending sounds."
+      },
+      {
+        "question": "Is the teleprompter visible in my TikToks?",
+        "answer": "No! CueCard is only visible to you. Your followers see your confident, natural delivery."
+      },
+      {
+        "question": "Can I resize the teleprompter window?",
+        "answer": "Yes! Resize and position the floating window wherever works best for your recording setup."
+      }
+    ]
+  },
+  {
+    "slug": "podcasters",
+    "name": "Podcasters",
+    "title": "CueCard for Podcasters - Stay on Track with Floating Episode Notes",
+    "description": "CueCard helps podcasters stay on track with floating episode notes. Keep your outline, questions, and talking points visible while recording video podcasts.",
+    "keywords": "podcast teleprompter, video podcast notes, podcast recording tips, episode outline app, on camera podcast notes, podcaster tools",
+    "canonical": "https://cuecard.dev/mobile/podcasters/",
+    "ogTitle": "CueCard for Podcasters - Floating Episode Notes",
+    "ogDescription": "Stay on track with floating episode notes. Keep your outline visible while recording video podcasts.",
+    "heroSubtitle": "Stay on track with your <span class=\"highlight highlight-yellow\">episode outline</span>.<br class=\"desktop-br\"> Keep <span class=\"highlight highlight-green\">questions</span> and talking points at your fingertips.",
+    "targetAudience": "podcasters",
+    "desktopCounterpart": null,
+    "useCases": ["Video podcasts", "Solo episodes", "Guest interviews", "Live recordings"],
+    "faq": [
+      {
+        "question": "Can I use CueCard for video podcasts?",
+        "answer": "Yes! CueCard is perfect for video podcasts. Keep your episode outline floating while you record on your phone."
+      },
+      {
+        "question": "Does it help during guest interviews?",
+        "answer": "Absolutely! Keep your interview questions and guest background visible so you never lose your place."
+      },
+      {
+        "question": "Can viewers see my notes in the recording?",
+        "answer": "No! CueCard floats above your camera app. Your audience sees you, not your episode notes."
+      },
+      {
+        "question": "Is it good for solo episodes?",
+        "answer": "Yes! Keep your talking points visible so you cover everything without rambling or forgetting key segments."
+      }
+    ]
+  },
+  {
+    "slug": "streamers",
+    "name": "Streamers",
+    "title": "CueCard for Streamers - Keep Talking Points Visible While Going Live",
+    "description": "CueCard helps streamers keep talking points visible while going live. Float your notes above any streaming app on your phone.",
+    "keywords": "streamer teleprompter, live streaming notes, twitch mobile notes, on camera streaming tips, floating notes for streamers, live stream helper",
+    "canonical": "https://cuecard.dev/mobile/streamers/",
+    "ogTitle": "CueCard for Streamers - Floating Stream Notes",
+    "ogDescription": "Keep talking points visible while going live. Float your notes above any streaming app.",
+    "heroSubtitle": "Keep your <span class=\"highlight highlight-yellow\">talking points</span> visible while live.<br class=\"desktop-br\"> Float your <span class=\"highlight highlight-green\">notes</span> above any streaming app.",
+    "targetAudience": "streamers",
+    "desktopCounterpart": null,
+    "useCases": ["Mobile IRL streams", "Just Chatting", "Live Q&A", "Event coverage"],
+    "faq": [
+      {
+        "question": "Does CueCard work with mobile streaming apps?",
+        "answer": "Yes! CueCard floats above any app including Twitch, YouTube Live, TikTok Live, and Instagram Live."
+      },
+      {
+        "question": "Can viewers see my notes during the stream?",
+        "answer": "No! CueCard is only visible to you. Your viewers see your stream, not your floating notes."
+      },
+      {
+        "question": "Is it useful for IRL streams?",
+        "answer": "Absolutely! Keep location info, talking points, or sponsor reminders visible while streaming on the go."
+      },
+      {
+        "question": "Can I use it for live Q&A sessions?",
+        "answer": "Yes! Keep prepared answers or topic notes visible so you can engage confidently with your chat."
+      }
+    ]
+  },
+  {
+    "slug": "teachers",
+    "name": "Teachers",
+    "title": "CueCard for Teachers - Record Educational Videos with a Floating Teleprompter",
+    "description": "CueCard helps teachers record educational videos with a floating teleprompter. Keep your lesson outline visible while creating content for students.",
+    "keywords": "teacher teleprompter mobile, educational video recording, lesson video notes, teacher content creation, floating notes for educators, mobile teaching tools",
+    "canonical": "https://cuecard.dev/mobile/teachers/",
+    "ogTitle": "CueCard for Teachers - Floating Teleprompter",
+    "ogDescription": "Record educational videos with a floating teleprompter. Keep your lesson outline visible while recording.",
+    "heroSubtitle": "Record <span class=\"highlight highlight-yellow\">educational videos</span> with confidence.<br class=\"desktop-br\"> Keep your <span class=\"highlight highlight-green\">lesson outline</span> visible while recording.",
+    "targetAudience": "teachers and educators",
+    "desktopCounterpart": "teachers",
+    "useCases": ["Lesson videos", "Explainer content", "Assignment instructions", "Student feedback videos"],
+    "faq": [
+      {
+        "question": "Can I use CueCard to record lesson videos for students?",
+        "answer": "Yes! CueCard is perfect for recording educational content. Keep your lesson outline floating while you record on your phone."
+      },
+      {
+        "question": "Will students see the teleprompter in my videos?",
+        "answer": "No! CueCard floats above your camera app. Students only see you teaching, not your notes."
+      },
+      {
+        "question": "Is there a desktop version for live online classes?",
+        "answer": "Yes! CueCard Desktop lets you keep invisible notes during live Zoom, Meet, or Teams classes. <a href=\"/teachers/\">Learn more about CueCard for Teachers on desktop</a>."
+      },
+      {
+        "question": "Is CueCard free for educators?",
+        "answer": "Yes! CueCard is completely free and open source. Perfect for teachers at any level."
+      }
+    ]
+  },
+  {
+    "slug": "coaches",
+    "name": "Coaches",
+    "title": "CueCard for Coaches - Record Motivational Content with a Floating Teleprompter",
+    "description": "CueCard helps coaches record motivational content with a floating teleprompter. Keep your message visible while creating videos for clients and social media.",
+    "keywords": "coach teleprompter mobile, coaching video recording, motivational content notes, life coach content creation, floating notes for coaches, mobile coaching tools",
+    "canonical": "https://cuecard.dev/mobile/coaches/",
+    "ogTitle": "CueCard for Coaches - Floating Teleprompter",
+    "ogDescription": "Record motivational content with a floating teleprompter. Keep your message visible while recording.",
+    "heroSubtitle": "Record <span class=\"highlight highlight-yellow\">motivational content</span> that inspires.<br class=\"desktop-br\"> Keep your <span class=\"highlight highlight-green\">message</span> visible while recording.",
+    "targetAudience": "business and life coaches",
+    "desktopCounterpart": "coaches",
+    "useCases": ["Motivational videos", "Social media content", "Client check-ins", "Course content"],
+    "faq": [
+      {
+        "question": "Can I use CueCard for recording coaching videos?",
+        "answer": "Yes! CueCard is perfect for recording motivational content, tips videos, and client messages on your phone."
+      },
+      {
+        "question": "Will viewers see my notes in the video?",
+        "answer": "No! CueCard floats above your camera app. Your audience sees your authentic delivery, not your notes."
+      },
+      {
+        "question": "Is there a desktop version for live coaching sessions?",
+        "answer": "Yes! CueCard Desktop lets you keep invisible notes during Zoom coaching sessions. <a href=\"/coaches/\">Learn more about CueCard for Coaches on desktop</a>."
+      },
+      {
+        "question": "Can I use it for Instagram and LinkedIn content?",
+        "answer": "Absolutely! Record professional coaching content directly in any app with your script floating above."
+      }
+    ]
+  },
+  {
+    "slug": "course-creators",
+    "name": "Course Creators",
+    "title": "CueCard for Course Creators - Record Course Videos with a Floating Teleprompter",
+    "description": "CueCard helps course creators record polished course videos with a floating teleprompter. Keep your lesson script visible while recording on your phone.",
+    "keywords": "course creator teleprompter mobile, online course video recording, lesson recording notes, course content creation, floating notes for educators, mobile course tools",
+    "canonical": "https://cuecard.dev/mobile/course-creators/",
+    "ogTitle": "CueCard for Course Creators - Floating Teleprompter",
+    "ogDescription": "Record polished course videos with a floating teleprompter. Keep your lesson script visible while recording.",
+    "heroSubtitle": "Record <span class=\"highlight highlight-yellow\">polished course videos</span> in fewer takes.<br class=\"desktop-br\"> Keep your <span class=\"highlight highlight-green\">lesson script</span> visible while recording.",
+    "targetAudience": "online course creators",
+    "desktopCounterpart": "course-creators",
+    "useCases": ["Course videos", "Promotional content", "Student updates", "Quick tips"],
+    "faq": [
+      {
+        "question": "Can I record course content on my phone with CueCard?",
+        "answer": "Yes! CueCard is perfect for recording mobile course content with a floating teleprompter."
+      },
+      {
+        "question": "Will students see the teleprompter in course videos?",
+        "answer": "No! CueCard floats above your camera. Students see your polished lesson, not your notes."
+      },
+      {
+        "question": "Is there a desktop version for screencast recordings?",
+        "answer": "Yes! CueCard Desktop lets you keep invisible notes during screen recordings. <a href=\"/course-creators/\">Learn more about CueCard for Course Creators on desktop</a>."
+      },
+      {
+        "question": "Is CueCard free for course creators?",
+        "answer": "Yes! CueCard is completely free and open source."
+      }
+    ]
+  },
+  {
+    "slug": "realtors",
+    "name": "Real Estate Agents",
+    "title": "CueCard for Realtors - Record Property Walkthroughs with a Floating Teleprompter",
+    "description": "CueCard helps realtors record property walkthrough videos with a floating teleprompter. Keep property details visible while filming on your phone.",
+    "keywords": "realtor teleprompter mobile, property video recording, real estate content creation, property walkthrough notes, floating notes for realtors, mobile realtor tools",
+    "canonical": "https://cuecard.dev/mobile/realtors/",
+    "ogTitle": "CueCard for Realtors - Floating Teleprompter",
+    "ogDescription": "Record property walkthrough videos with a floating teleprompter. Keep property details visible while filming.",
+    "heroSubtitle": "Record <span class=\"highlight highlight-yellow\">property walkthroughs</span> like a pro.<br class=\"desktop-br\"> Keep <span class=\"highlight highlight-green\">property details</span> visible while filming.",
+    "targetAudience": "real estate agents",
+    "desktopCounterpart": "realtors",
+    "useCases": ["Property walkthroughs", "Listing videos", "Market updates", "Client testimonials"],
+    "faq": [
+      {
+        "question": "Can I use CueCard while filming property walkthroughs?",
+        "answer": "Yes! CueCard floats your property details above the camera so you never forget square footage, features, or pricing."
+      },
+      {
+        "question": "Will buyers see my notes in the video?",
+        "answer": "No! CueCard floats above your camera app. Buyers see the property tour, not your notes."
+      },
+      {
+        "question": "Is there a desktop version for virtual showings?",
+        "answer": "Yes! CueCard Desktop lets you keep invisible notes during Zoom property tours. <a href=\"/realtors/\">Learn more about CueCard for Realtors on desktop</a>."
+      },
+      {
+        "question": "Can I use it for listing videos on social media?",
+        "answer": "Absolutely! Record professional property videos directly for Instagram, Facebook, or YouTube."
+      }
+    ]
+  },
+  {
+    "slug": "fitness-instructors",
+    "name": "Fitness Instructors",
+    "title": "CueCard for Fitness Instructors - Record Workout Videos with a Floating Teleprompter",
+    "description": "CueCard helps fitness instructors record workout videos with a floating teleprompter. Keep your exercise sequence visible while filming workout content.",
+    "keywords": "fitness instructor teleprompter mobile, workout video recording, exercise sequence notes, fitness content creation, floating notes for trainers, mobile fitness tools",
+    "canonical": "https://cuecard.dev/mobile/fitness-instructors/",
+    "ogTitle": "CueCard for Fitness Instructors - Floating Teleprompter",
+    "ogDescription": "Record workout videos with a floating teleprompter. Keep your exercise sequence visible while filming.",
+    "heroSubtitle": "Record <span class=\"highlight highlight-yellow\">workout videos</span> without forgetting a rep.<br class=\"desktop-br\"> Keep your <span class=\"highlight highlight-green\">exercise sequence</span> visible while filming.",
+    "targetAudience": "fitness instructors",
+    "desktopCounterpart": "fitness-instructors",
+    "useCases": ["Workout videos", "Exercise tutorials", "Fitness tips", "Client programs"],
+    "faq": [
+      {
+        "question": "Can I see my workout sequence while filming?",
+        "answer": "Yes! CueCard floats your exercise list, reps, and sets above your camera so you never miss a beat."
+      },
+      {
+        "question": "Will followers see the teleprompter in my videos?",
+        "answer": "No! CueCard floats above your camera app. Your followers see you working out, not your notes."
+      },
+      {
+        "question": "Is there a desktop version for live virtual classes?",
+        "answer": "Yes! CueCard Desktop lets you keep invisible notes during Zoom fitness classes. <a href=\"/fitness-instructors/\">Learn more about CueCard for Fitness Instructors on desktop</a>."
+      },
+      {
+        "question": "Can I include timing for each exercise?",
+        "answer": "Yes! Include timing like '[30 sec squats]' in your notes. CueCard also auto-scrolls at your preferred pace."
+      }
+    ]
+  },
+  {
+    "slug": "sales",
+    "name": "Sales Professionals",
+    "title": "CueCard for Sales - Record Product Videos with a Floating Teleprompter",
+    "description": "CueCard helps sales professionals record product showcase videos with a floating teleprompter. Keep your pitch points visible while filming sales content.",
+    "keywords": "sales teleprompter mobile, product video recording, sales pitch notes, product showcase creation, floating notes for sales, mobile sales tools",
+    "canonical": "https://cuecard.dev/mobile/sales/",
+    "ogTitle": "CueCard for Sales - Floating Teleprompter",
+    "ogDescription": "Record product showcase videos with a floating teleprompter. Keep your pitch points visible while filming.",
+    "heroSubtitle": "Record <span class=\"highlight highlight-yellow\">product showcases</span> that convert.<br class=\"desktop-br\"> Keep your <span class=\"highlight highlight-green\">pitch points</span> visible while filming.",
+    "targetAudience": "sales professionals",
+    "desktopCounterpart": "sales",
+    "useCases": ["Product showcases", "Social selling videos", "Personalized outreach", "Demo recordings"],
+    "faq": [
+      {
+        "question": "Can I use CueCard for recording product videos?",
+        "answer": "Yes! CueCard is perfect for recording product showcases, feature highlights, and personalized sales videos."
+      },
+      {
+        "question": "Will prospects see my notes in the video?",
+        "answer": "No! CueCard floats above your camera app. Prospects see your professional presentation, not your talking points."
+      },
+      {
+        "question": "Is there a desktop version for live demo calls?",
+        "answer": "Yes! CueCard Desktop lets you keep invisible notes during Zoom product demos. <a href=\"/sales/\">Learn more about CueCard for Sales on desktop</a>."
+      },
+      {
+        "question": "Can I use it for LinkedIn video content?",
+        "answer": "Absolutely! Record professional sales content for LinkedIn, email outreach, or any social platform."
+      }
+    ]
+  }
+]

@@ -1,0 +1,386 @@
+[
+  {
+    "slug": "teachers",
+    "name": "Teachers",
+    "title": "CueCard for Teachers - Invisible Speaker Notes for Online Classes",
+    "description": "CueCard helps teachers deliver engaging online lessons with invisible speaker notes. Keep lesson plans visible during Zoom, Google Meet, or Teams classes without students seeing.",
+    "keywords": "teacher teleprompter, online teaching notes, zoom teaching tips, google meet for teachers, invisible notes for educators, online class speaker notes, lesson plan teleprompter",
+    "canonical": "https://cuecard.dev/teachers/",
+    "ogTitle": "CueCard for Teachers - Invisible Speaker Notes",
+    "ogDescription": "Deliver engaging online lessons with invisible speaker notes. Your lesson plans stay visible only to you during screen sharing.",
+    "heroSubtitle": "Keep your <span class=\"highlight highlight-yellow\">lesson plans</span> visible during online classes.<br class=\"desktop-br\"> Your students see your screen, not your <span class=\"highlight highlight-green\">notes</span>.",
+    "targetAudience": "teachers and educators",
+    "mobileCounterpart": "teachers",
+    "useCases": ["Online classes", "Virtual lectures", "Student presentations review", "Parent-teacher meetings"],
+    "faq": [
+      {
+        "question": "Can students see my notes during screen sharing?",
+        "answer": "No! CueCard is designed to be invisible during screen sharing on Zoom, Google Meet, and Microsoft Teams. Your lesson plans and notes remain private."
+      },
+      {
+        "question": "Can I sync notes from my Google Slides presentations?",
+        "answer": "Yes! CueCard can sync speaker notes directly from Google Slides, so you can use your existing lesson presentations."
+      },
+      {
+        "question": "Is CueCard suitable for live online classes?",
+        "answer": "Absolutely! CueCard is perfect for live teaching. Keep your talking points, student names, or lesson flow visible while sharing your screen."
+      },
+      {
+        "question": "Is there a mobile version for recording educational videos?",
+        "answer": "Yes! CueCard Mobile lets you record educational content with a floating teleprompter. <a href=\"/mobile/teachers/\">Learn more about CueCard for Teachers on mobile</a>."
+      }
+    ]
+  },
+  {
+    "slug": "students",
+    "name": "Students",
+    "title": "CueCard for Students - Ace Your Presentations with Invisible Notes",
+    "description": "CueCard helps students deliver confident presentations with invisible speaker notes. Keep your talking points visible during class presentations on Zoom, Meet, or Teams.",
+    "keywords": "student presentation tips, presentation notes app, college presentation teleprompter, student speaker notes, class presentation help, virtual presentation notes",
+    "canonical": "https://cuecard.dev/students/",
+    "ogTitle": "CueCard for Students - Invisible Presentation Notes",
+    "ogDescription": "Deliver confident presentations with invisible speaker notes. Your talking points stay visible only to you.",
+    "heroSubtitle": "Ace your <span class=\"highlight highlight-yellow\">presentations</span> with invisible notes.<br class=\"desktop-br\"> Your classmates see your slides, not your <span class=\"highlight highlight-green\">talking points</span>.",
+    "targetAudience": "students",
+    "mobileCounterpart": null,
+    "useCases": ["Class presentations", "Thesis defense", "Group projects", "Virtual debates"],
+    "faq": [
+      {
+        "question": "Will my professor see my notes during the presentation?",
+        "answer": "No! CueCard is invisible during screen sharing. Your professor and classmates only see your presentation, not your speaker notes."
+      },
+      {
+        "question": "Can I use CueCard for thesis or dissertation defense?",
+        "answer": "Yes! CueCard is perfect for high-stakes presentations like thesis defense. Keep your key points and data references handy without anyone noticing."
+      },
+      {
+        "question": "Does it work with PowerPoint and Google Slides?",
+        "answer": "CueCard works alongside any presentation software. For Google Slides, you can even sync your speaker notes automatically."
+      },
+      {
+        "question": "Is CueCard free for students?",
+        "answer": "Yes! CueCard is completely free and open source. Perfect for students on a budget."
+      }
+    ]
+  },
+  {
+    "slug": "sales",
+    "name": "Sales Professionals",
+    "title": "CueCard for Sales - Never Miss a Talking Point in Demo Calls",
+    "description": "CueCard helps sales professionals deliver flawless product demos with invisible speaker notes. Keep pricing, features, and objection handlers visible during Zoom and Teams calls.",
+    "keywords": "sales demo teleprompter, product demo notes, sales presentation tips, zoom sales calls, invisible notes for sales, demo talking points, sales pitch notes",
+    "canonical": "https://cuecard.dev/sales/",
+    "ogTitle": "CueCard for Sales - Invisible Demo Notes",
+    "ogDescription": "Deliver flawless product demos with invisible speaker notes. Keep pricing and talking points visible only to you.",
+    "heroSubtitle": "Never miss a <span class=\"highlight highlight-yellow\">talking point</span> in demo calls.<br class=\"desktop-br\"> Keep <span class=\"highlight highlight-green\">pricing</span>, features, and objection handlers at your fingertips.",
+    "targetAudience": "sales professionals",
+    "mobileCounterpart": "sales",
+    "useCases": ["Product demos", "Sales pitches", "Discovery calls", "Pricing discussions"],
+    "faq": [
+      {
+        "question": "Can prospects see my notes during screen share demos?",
+        "answer": "No! CueCard is invisible during screen sharing. Your prospects only see your product demo, not your pricing notes or objection handlers."
+      },
+      {
+        "question": "Can I keep different notes for different products?",
+        "answer": "Yes! You can quickly paste or type different notes for each demo. Or sync from Google Slides if you use slide decks."
+      },
+      {
+        "question": "Does it work during live Zoom demos?",
+        "answer": "Absolutely! CueCard is designed for live calls. Keep your competitive differentiators, pricing tiers, and key features visible while demoing."
+      },
+      {
+        "question": "Is there a mobile version for recording sales videos?",
+        "answer": "Yes! CueCard Mobile lets you record product showcase videos with a floating teleprompter. <a href=\"/mobile/sales/\">Learn more about CueCard for Sales on mobile</a>."
+      }
+    ]
+  },
+  {
+    "slug": "trainers",
+    "name": "Corporate Trainers",
+    "title": "CueCard for Trainers - Deliver Polished Training Sessions",
+    "description": "CueCard helps corporate trainers deliver polished training sessions with invisible speaker notes. Keep your curriculum, exercises, and timing visible during virtual training.",
+    "keywords": "corporate training teleprompter, virtual training notes, training session tips, zoom training, invisible notes for trainers, workshop speaker notes, employee training tools",
+    "canonical": "https://cuecard.dev/trainers/",
+    "ogTitle": "CueCard for Trainers - Invisible Training Notes",
+    "ogDescription": "Deliver polished training sessions with invisible speaker notes. Keep your curriculum visible only to you.",
+    "heroSubtitle": "Deliver <span class=\"highlight highlight-yellow\">polished training</span> sessions every time.<br class=\"desktop-br\"> Keep your <span class=\"highlight highlight-green\">curriculum</span> and timing visible only to you.",
+    "targetAudience": "corporate trainers",
+    "mobileCounterpart": null,
+    "useCases": ["Employee onboarding", "Skills training", "Compliance workshops", "Virtual workshops"],
+    "faq": [
+      {
+        "question": "Can trainees see my notes during virtual training?",
+        "answer": "No! CueCard is invisible during screen sharing. Trainees only see your training materials, not your speaker notes or timing cues."
+      },
+      {
+        "question": "Can I include timing reminders in my notes?",
+        "answer": "Yes! Many trainers include timing cues like '[5 min]' or '[Break here]' in their notes. CueCard also has a built-in timer."
+      },
+      {
+        "question": "Does it work for multi-hour training sessions?",
+        "answer": "Absolutely! CueCard is perfect for long sessions. Keep your entire curriculum visible and scroll through as you progress."
+      },
+      {
+        "question": "Is CueCard free for corporate use?",
+        "answer": "Yes! CueCard is free and open source under the MIT License, suitable for personal and corporate use."
+      }
+    ]
+  },
+  {
+    "slug": "coaches",
+    "name": "Coaches",
+    "title": "CueCard for Coaches - Stay Present with Invisible Session Notes",
+    "description": "CueCard helps business and life coaches deliver impactful sessions with invisible speaker notes. Keep client notes, frameworks, and questions visible during coaching calls.",
+    "keywords": "coaching teleprompter, life coach notes, business coach tools, coaching session notes, zoom coaching, invisible notes for coaches, coaching frameworks",
+    "canonical": "https://cuecard.dev/coaches/",
+    "ogTitle": "CueCard for Coaches - Invisible Session Notes",
+    "ogDescription": "Deliver impactful coaching sessions with invisible notes. Keep client context and frameworks visible only to you.",
+    "heroSubtitle": "Stay <span class=\"highlight highlight-yellow\">present</span> with your clients.<br class=\"desktop-br\"> Keep <span class=\"highlight highlight-green\">session notes</span> and frameworks at your fingertips.",
+    "targetAudience": "business and life coaches",
+    "mobileCounterpart": "coaches",
+    "useCases": ["1:1 coaching sessions", "Group coaching", "Workshops", "Client check-ins"],
+    "faq": [
+      {
+        "question": "Can clients see my notes during video coaching sessions?",
+        "answer": "No! CueCard is invisible during screen sharing. Your clients experience your full presence while you have helpful context at hand."
+      },
+      {
+        "question": "Can I keep client-specific notes for each session?",
+        "answer": "Yes! Quickly paste client background, previous session notes, or coaching frameworks before each call."
+      },
+      {
+        "question": "Does it help with coaching frameworks?",
+        "answer": "Absolutely! Keep your favorite frameworks (GROW, CLEAR, etc.) visible as prompts during sessions."
+      },
+      {
+        "question": "Is there a mobile version for recording coaching content?",
+        "answer": "Yes! CueCard Mobile lets you record motivational videos with a floating teleprompter. <a href=\"/mobile/coaches/\">Learn more about CueCard for Coaches on mobile</a>."
+      }
+    ]
+  },
+  {
+    "slug": "executives",
+    "name": "Executives",
+    "title": "CueCard for Executives - Command Every Board Meeting and All-Hands",
+    "description": "CueCard helps executives deliver commanding presentations with invisible speaker notes. Keep key metrics, talking points, and announcements visible during board meetings and all-hands.",
+    "keywords": "executive presentation tools, CEO speaker notes, board meeting teleprompter, all-hands presentation, leadership presentation tips, invisible notes for executives",
+    "canonical": "https://cuecard.dev/executives/",
+    "ogTitle": "CueCard for Executives - Invisible Presentation Notes",
+    "ogDescription": "Command every presentation with invisible speaker notes. Keep key metrics and talking points visible only to you.",
+    "heroSubtitle": "Command every <span class=\"highlight highlight-yellow\">board meeting</span> and all-hands.<br class=\"desktop-br\"> Keep <span class=\"highlight highlight-green\">key metrics</span> and announcements at your fingertips.",
+    "targetAudience": "executives and leadership",
+    "mobileCounterpart": null,
+    "useCases": ["Board presentations", "All-hands meetings", "Investor updates", "Strategic reviews"],
+    "faq": [
+      {
+        "question": "Can board members see my notes during presentations?",
+        "answer": "No! CueCard is invisible during screen sharing. Your board sees your slides and data, not your talking points or sensitive notes."
+      },
+      {
+        "question": "Is it secure for confidential information?",
+        "answer": "CueCard runs locally on your computer. Your notes never leave your device or get uploaded anywhere."
+      },
+      {
+        "question": "Can I use it for investor presentations?",
+        "answer": "Absolutely! Keep your key metrics, funding details, and Q&A prep notes visible during high-stakes investor meetings."
+      },
+      {
+        "question": "Is CueCard free?",
+        "answer": "Yes! CueCard is completely free and open source under the MIT License."
+      }
+    ]
+  },
+  {
+    "slug": "consultants",
+    "name": "Consultants",
+    "title": "CueCard for Consultants - Deliver Expert Presentations Flawlessly",
+    "description": "CueCard helps consultants deliver expert presentations with invisible speaker notes. Keep recommendations, data points, and client context visible during strategy sessions.",
+    "keywords": "consulting presentation tools, consultant speaker notes, strategy presentation teleprompter, client presentation tips, McKinsey presentation, invisible notes for consultants",
+    "canonical": "https://cuecard.dev/consultants/",
+    "ogTitle": "CueCard for Consultants - Invisible Presentation Notes",
+    "ogDescription": "Deliver expert presentations with invisible speaker notes. Keep recommendations and data visible only to you.",
+    "heroSubtitle": "Deliver <span class=\"highlight highlight-yellow\">expert insights</span> with confidence.<br class=\"desktop-br\"> Keep <span class=\"highlight highlight-green\">recommendations</span> and client context at hand.",
+    "targetAudience": "consultants",
+    "mobileCounterpart": null,
+    "useCases": ["Strategy presentations", "Client workshops", "Stakeholder meetings", "Project updates"],
+    "faq": [
+      {
+        "question": "Can clients see my notes during virtual presentations?",
+        "answer": "No! CueCard is invisible during screen sharing. Clients see your polished deliverables, not your speaker notes."
+      },
+      {
+        "question": "Can I sync notes from my consulting slide deck?",
+        "answer": "Yes! If you use Google Slides, CueCard can sync your speaker notes automatically. Otherwise, paste notes for any presentation."
+      },
+      {
+        "question": "Does it help with complex data presentations?",
+        "answer": "Absolutely! Keep key data points, methodology notes, and talking points visible while presenting complex analyses."
+      },
+      {
+        "question": "Is CueCard free for consulting firms?",
+        "answer": "Yes! CueCard is free and open source under the MIT License, suitable for individual consultants and firms alike."
+      }
+    ]
+  },
+  {
+    "slug": "lawyers",
+    "name": "Lawyers",
+    "title": "CueCard for Lawyers - Present Cases with Invisible Notes",
+    "description": "CueCard helps lawyers present cases with invisible speaker notes. Keep case facts, citations, and arguments visible during virtual hearings and client meetings.",
+    "keywords": "lawyer presentation tools, legal presentation teleprompter, virtual court hearing notes, legal speaker notes, law firm presentation, invisible notes for attorneys",
+    "canonical": "https://cuecard.dev/lawyers/",
+    "ogTitle": "CueCard for Lawyers - Invisible Legal Notes",
+    "ogDescription": "Present cases confidently with invisible speaker notes. Keep case facts and citations visible only to you.",
+    "heroSubtitle": "Present your <span class=\"highlight highlight-yellow\">cases</span> with confidence.<br class=\"desktop-br\"> Keep <span class=\"highlight highlight-green\">citations</span> and arguments at your fingertips.",
+    "targetAudience": "lawyers and attorneys",
+    "mobileCounterpart": null,
+    "useCases": ["Virtual hearings", "Client presentations", "Depositions", "Settlement negotiations"],
+    "faq": [
+      {
+        "question": "Can opposing counsel see my notes during virtual hearings?",
+        "answer": "No! CueCard is invisible during screen sharing. Only you can see your case notes, citations, and arguments."
+      },
+      {
+        "question": "Is it secure for confidential case information?",
+        "answer": "CueCard runs entirely locally on your computer. Your notes never leave your device or get uploaded to any server."
+      },
+      {
+        "question": "Can I use it during depositions?",
+        "answer": "Yes! Keep your questions, case facts, and key points visible during virtual depositions without anyone noticing."
+      },
+      {
+        "question": "Is CueCard free for law firms?",
+        "answer": "Yes! CueCard is completely free and open source under the MIT License."
+      }
+    ]
+  },
+  {
+    "slug": "webinar-hosts",
+    "name": "Webinar Hosts",
+    "title": "CueCard for Webinar Hosts - Host Engaging Webinars with Invisible Notes",
+    "description": "CueCard helps webinar hosts deliver engaging presentations with invisible speaker notes. Keep your script, Q&A prompts, and timing cues visible during live webinars.",
+    "keywords": "webinar teleprompter, webinar speaker notes, live webinar tips, webinar hosting tools, invisible notes for webinars, webinar presentation",
+    "canonical": "https://cuecard.dev/webinar-hosts/",
+    "ogTitle": "CueCard for Webinar Hosts - Invisible Webinar Notes",
+    "ogDescription": "Host engaging webinars with invisible speaker notes. Keep your script and timing visible only to you.",
+    "heroSubtitle": "Host <span class=\"highlight highlight-yellow\">engaging webinars</span> without fumbling.<br class=\"desktop-br\"> Keep your <span class=\"highlight highlight-green\">script</span> and timing cues visible only to you.",
+    "targetAudience": "webinar hosts",
+    "mobileCounterpart": null,
+    "useCases": ["Product webinars", "Educational webinars", "Lead generation events", "Panel discussions"],
+    "faq": [
+      {
+        "question": "Can attendees see my notes during the webinar?",
+        "answer": "No! CueCard is invisible during screen sharing. Your attendees see your presentation, not your speaker notes or timing cues."
+      },
+      {
+        "question": "Can I include timing cues in my script?",
+        "answer": "Yes! Include timing markers like '[Pause for poll]' or '[15 min mark]' in your notes. CueCard also has a built-in timer."
+      },
+      {
+        "question": "Does it work with webinar platforms like Zoom Webinars?",
+        "answer": "Absolutely! CueCard works with Zoom Webinars, GoToWebinar, Webex Events, and any platform that uses screen sharing."
+      },
+      {
+        "question": "Is CueCard free?",
+        "answer": "Yes! CueCard is completely free and open source."
+      }
+    ]
+  },
+  {
+    "slug": "course-creators",
+    "name": "Course Creators",
+    "title": "CueCard for Course Creators - Record Polished Course Content",
+    "description": "CueCard helps course creators record polished educational content with invisible speaker notes. Keep your lesson outline visible while recording screencasts and presentations.",
+    "keywords": "course creator teleprompter, online course recording, screencast speaker notes, udemy course tips, educational content creation, invisible notes for courses",
+    "canonical": "https://cuecard.dev/course-creators/",
+    "ogTitle": "CueCard for Course Creators - Invisible Recording Notes",
+    "ogDescription": "Record polished course content with invisible speaker notes. Keep your lesson outline visible only to you.",
+    "heroSubtitle": "Record <span class=\"highlight highlight-yellow\">polished courses</span> in fewer takes.<br class=\"desktop-br\"> Keep your <span class=\"highlight highlight-green\">lesson outline</span> visible only to you.",
+    "targetAudience": "online course creators",
+    "mobileCounterpart": "course-creators",
+    "useCases": ["Course recording", "Tutorial creation", "Live cohort sessions", "Q&A sessions"],
+    "faq": [
+      {
+        "question": "Can students see my notes in the recorded video?",
+        "answer": "No! CueCard is invisible in screen recordings. Your students see your polished lesson, not your speaker notes."
+      },
+      {
+        "question": "Does it work for screencast recordings?",
+        "answer": "Yes! CueCard is perfect for recording screencasts. Keep your talking points visible while demonstrating software or concepts."
+      },
+      {
+        "question": "Can I use it for live cohort-based courses?",
+        "answer": "Absolutely! CueCard works great for live sessions on Zoom or other platforms, keeping your curriculum visible during teaching."
+      },
+      {
+        "question": "Is there a mobile version for recording course content?",
+        "answer": "Yes! CueCard Mobile lets you record educational videos on your phone with a floating teleprompter. <a href=\"/mobile/course-creators/\">Learn more about CueCard for Course Creators on mobile</a>."
+      }
+    ]
+  },
+  {
+    "slug": "realtors",
+    "name": "Real Estate Agents",
+    "title": "CueCard for Realtors - Deliver Perfect Virtual Property Tours",
+    "description": "CueCard helps real estate agents deliver perfect virtual property tours with invisible speaker notes. Keep property details, features, and pricing visible during Zoom walkthroughs.",
+    "keywords": "realtor teleprompter, virtual property tour tips, real estate presentation, zoom property showing, invisible notes for realtors, real estate agent tools",
+    "canonical": "https://cuecard.dev/realtors/",
+    "ogTitle": "CueCard for Realtors - Invisible Property Notes",
+    "ogDescription": "Deliver perfect virtual property tours with invisible notes. Keep property details visible only to you.",
+    "heroSubtitle": "Deliver <span class=\"highlight highlight-yellow\">perfect property tours</span> every time.<br class=\"desktop-br\"> Keep <span class=\"highlight highlight-green\">property details</span> and features at your fingertips.",
+    "targetAudience": "real estate agents",
+    "mobileCounterpart": "realtors",
+    "useCases": ["Virtual property tours", "Buyer consultations", "Listing presentations", "Market updates"],
+    "faq": [
+      {
+        "question": "Can buyers see my notes during virtual tours?",
+        "answer": "No! CueCard is invisible during screen sharing. Buyers see the property, not your notes about square footage, features, or pricing."
+      },
+      {
+        "question": "Can I keep different notes for different properties?",
+        "answer": "Yes! Quickly paste property details, comparable sales, or neighborhood info before each showing."
+      },
+      {
+        "question": "Does it work for listing presentations?",
+        "answer": "Absolutely! Keep your market analysis, pricing strategy, and marketing plan visible while presenting to sellers."
+      },
+      {
+        "question": "Is there a mobile version for recording property walkthrough videos?",
+        "answer": "Yes! CueCard Mobile lets you record property walkthrough videos with a floating teleprompter. <a href=\"/mobile/realtors/\">Learn more about CueCard for Realtors on mobile</a>."
+      }
+    ]
+  },
+  {
+    "slug": "fitness-instructors",
+    "name": "Fitness Instructors",
+    "title": "CueCard for Fitness Instructors - Lead Perfect Virtual Classes",
+    "description": "CueCard helps fitness instructors lead perfect virtual classes with invisible speaker notes. Keep your workout sequence, cues, and timing visible during live Zoom fitness classes.",
+    "keywords": "fitness instructor teleprompter, virtual fitness class tips, zoom workout notes, online fitness coaching, invisible notes for trainers, workout sequence notes",
+    "canonical": "https://cuecard.dev/fitness-instructors/",
+    "ogTitle": "CueCard for Fitness Instructors - Invisible Workout Notes",
+    "ogDescription": "Lead perfect virtual fitness classes with invisible notes. Keep your workout sequence visible only to you.",
+    "heroSubtitle": "Lead <span class=\"highlight highlight-yellow\">perfect virtual classes</span> every time.<br class=\"desktop-br\"> Keep your <span class=\"highlight highlight-green\">workout sequence</span> and cues visible only to you.",
+    "targetAudience": "fitness instructors",
+    "mobileCounterpart": "fitness-instructors",
+    "useCases": ["Live virtual classes", "Personal training sessions", "Workout recordings", "Nutrition consultations"],
+    "faq": [
+      {
+        "question": "Can clients see my notes during virtual fitness classes?",
+        "answer": "No! CueCard is invisible during screen sharing. Your clients see you leading the workout, not your exercise sequence or timing notes."
+      },
+      {
+        "question": "Can I include timing for each exercise?",
+        "answer": "Yes! Include timing like '[30 sec squats]' or '[Rest 15 sec]' in your notes. CueCard also has a built-in timer."
+      },
+      {
+        "question": "Does it work when I'm showing myself on camera?",
+        "answer": "Absolutely! Your notes stay invisible whether you're screen sharing or just on camera. Perfect for demonstrating exercises."
+      },
+      {
+        "question": "Is there a mobile version for recording workout videos?",
+        "answer": "Yes! CueCard Mobile lets you record fitness content with a floating teleprompter. <a href=\"/mobile/fitness-instructors/\">Learn more about CueCard for Fitness Instructors on mobile</a>."
+      }
+    ]
+  }
+]
