@@ -26,6 +26,8 @@
 	<array>
 		<string>audio</string>
 	</array>
+	<key>FirebaseAutomaticScreenReportingEnabled</key>
+	<false/>
 	<key>UILaunchScreen</key>
 	<dict/>
 </dict>
