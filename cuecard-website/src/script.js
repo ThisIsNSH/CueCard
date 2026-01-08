@@ -624,6 +624,9 @@ function showToast(message) {
 
 // GitHub API Integration
 const GITHUB_REPO = 'thisisnsh/cuecard';
+// Proxy endpoint for authenticated GitHub API calls (avoids rate limiting)
+// Deploy the Cloudflare Worker from /api/github-proxy-worker.js and set this URL
+const GITHUB_API_PROXY = 'https://cuecard.thisisnsh.workers.dev';
 let allReleases = [];
 let totalDownloads = 0;
 
@@ -786,7 +789,7 @@ function getSampleReleaseData() {
 
 async function fetchGitHubStars() {
     try {
-        const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}`);
+        const response = await fetch(`${GITHUB_API_PROXY}/repos/${GITHUB_REPO}`);
         if (!response.ok) throw new Error('Failed to fetch repo data');
         const data = await response.json();
         return data.stargazers_count;
@@ -798,7 +801,7 @@ async function fetchGitHubStars() {
 
 async function fetchGitHubReleases() {
     try {
-        const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases`);
+        const response = await fetch(`${GITHUB_API_PROXY}/repos/${GITHUB_REPO}/releases`);
         if (!response.ok) throw new Error('Failed to fetch releases');
         const releases = await response.json();
         return releases;
