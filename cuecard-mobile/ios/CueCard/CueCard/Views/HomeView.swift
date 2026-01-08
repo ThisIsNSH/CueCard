@@ -279,7 +279,7 @@ struct NotesEditorView: View {
         ZStack(alignment: .topLeading) {
             // Placeholder
             if text.isEmpty {
-                Text("Add your script here...\n\nTip: Use [note text] for delivery cues like \"Welcome Everyone [note smile and pause]\"")                    
+                Text("Add your script here...\n\nUse [note text] for delivery cues like \"Welcome Everyone [note smile and pause]\"")                    
                     .foregroundStyle(AppColors.textSecondary(for: colorScheme).opacity(0.6))
                     .padding(.horizontal, 20)
                     .padding(.vertical, 16)
