@@ -290,10 +290,7 @@ Try it out. I think you'll love it.
             self.currentNoteId = id
         }
 
-        // If notes are empty and no saved notes exist, load default sample text
-        if self.notes.isEmpty && self.savedNotes.isEmpty {
-            self.notes = Self.defaultNoteText
-        }
+        // Notes start empty - users can add sample text via the button
     }
 
     private func saveSettings() {
@@ -369,12 +366,17 @@ Try it out. I think you'll love it.
         }
     }
 
-    /// Create a new note with default text
+    /// Create a new empty note
     func createNewNote() {
         isLoadingNote = true
-        notes = Self.defaultNoteText
+        notes = ""
         currentNoteId = nil
         isLoadingNote = false
+    }
+
+    /// Add sample text to current note
+    func addSampleText() {
+        notes = Self.defaultNoteText
     }
 
     /// Get the currently loaded note if any

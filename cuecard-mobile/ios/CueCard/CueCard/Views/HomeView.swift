@@ -119,17 +119,30 @@ struct HomeView: View {
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                         }
 
-                        Button(action: {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                showingTimerPicker.toggle()
+                        if hasNotes || showingTimerPicker {
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    showingTimerPicker.toggle()
+                                }
+                            }) {
+                                Text(showingTimerPicker ? "Done" : "Set Timer")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(AppColors.textPrimary(for: colorScheme))
+                                    .padding(.horizontal, 16)
+                                    .frame(height: 52)
+                                    .glassedEffect(in: Capsule())
                             }
-                        }) {
-                            Text(showingTimerPicker ? "Done" : "Set Timer")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(AppColors.textPrimary(for: colorScheme))
-                                .padding(.horizontal, 16)
-                                .frame(height: 52)
-                                .glassedEffect(in: Capsule())
+                        } else {
+                            Button(action: {
+                                settingsService.addSampleText()
+                            }) {
+                                Text("Add Sample Text")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(AppColors.textPrimary(for: colorScheme))
+                                    .padding(.horizontal, 16)
+                                    .frame(height: 52)
+                                    .glassedEffect(in: Capsule())
+                            }
                         }
                     }
 
@@ -252,7 +265,7 @@ struct NotesEditorView: View {
         ZStack(alignment: .topLeading) {
             // Placeholder
             if text.isEmpty {
-                Text("Paste your script here...\n\nUse [note text] for delivery cues\nSet timer duration below")
+                Text("Add your script here...\n\nTip: Use [note text] for delivery cues like \"Welcome Everyone [note smile and pause]\"")                    
                     .foregroundStyle(AppColors.textSecondary(for: colorScheme).opacity(0.6))
                     .padding(.horizontal, 20)
                     .padding(.vertical, 16)
