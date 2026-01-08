@@ -151,7 +151,7 @@ fun HomeScreen(
                         Box {
                             if (localNotes.isEmpty()) {
                                 Text(
-                                    text = "Paste your script here...\n\nUse [note text] for delivery cues\nSet timer duration below",
+                                    text = "Add your script here...\n\nUse [note text] for delivery cues like \"Welcome Everyone [note smile and pause]\"",
                                     fontSize = 16.sp,
                                     color = AppColors.textSecondary(isDark).copy(alpha = 0.6f),
                                     lineHeight = 24.sp
@@ -269,24 +269,36 @@ fun HomeScreen(
                     }
                 }
 
-                // Bottom Row: Timer Button + Play Button
+                // Bottom Row: Timer/Sample Text Button + Play Button
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Bottom
                 ) {
-                    // Set Timer Button
+                    // Set Timer or Add Sample Text Button
                     Box(
                         modifier = Modifier
                             .height(52.dp)
                             .clip(RoundedCornerShape(50))
                             .glassEffect(isDark = isDark)
-                            .clickable { showTimerPicker = !showTimerPicker }
+                            .clickable {
+                                if (hasNotes || showTimerPicker) {
+                                    showTimerPicker = !showTimerPicker
+                                } else {
+                                    scope.launch {
+                                        settingsService.addSampleText()
+                                    }
+                                }
+                            }
                             .padding(horizontal = 16.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = if (showTimerPicker) "Done" else "Set Timer",
+                            text = when {
+                                showTimerPicker -> "Done"
+                                hasNotes -> "Set Timer"
+                                else -> "Add Sample Text"
+                            },
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = AppColors.textPrimary(isDark)

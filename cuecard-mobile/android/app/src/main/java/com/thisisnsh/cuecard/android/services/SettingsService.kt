@@ -28,6 +28,31 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 class SettingsService(private val context: Context) {
 
     companion object {
+        val DEFAULT_NOTE_TEXT = """
+Welcome everyone.
+
+I'm excited to be here today to talk about CueCard.
+
+[note smile and pause]
+
+It keeps your speaker notes visible above all apps, so you can use your existing camera apps and still read your notes.
+
+[note pause]
+
+It has a timer so you know if you're being brief… or too passionate.
+
+[note light chuckle]
+
+And the pink highlights?
+
+[note emphasize]
+
+Those are your secret cues — reminders to smile, pause, or not panic.
+
+[note pause]
+
+Try it out. I think you'll love it.
+""".trimIndent()
         // Preference keys
         private val FONT_SIZE_PRESET = stringPreferencesKey("font_size_preset")
         private val PIP_FONT_SIZE_PRESET = stringPreferencesKey("pip_font_size_preset")
@@ -177,5 +202,9 @@ class SettingsService(private val context: Context) {
 
     suspend fun updateCountdownSeconds(seconds: Int) {
         saveSettings(_settings.value.copy(countdownSeconds = seconds))
+    }
+
+    suspend fun addSampleText() {
+        saveNotes(DEFAULT_NOTE_TEXT)
     }
 }

@@ -42,11 +42,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.analytics.logEvent
 import com.google.firebase.auth.FirebaseUser
@@ -328,27 +326,37 @@ private fun UserProfileSection(
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
-        val hasDisplayName = !user.displayName.isNullOrEmpty()
+        val displayName = getDisplayNameForUser(user)
 
-        if (hasDisplayName) {
-            Text(
-                text = user.displayName!!,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = AppColors.textPrimary(isDark)
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-        }
+        Text(
+            text = displayName,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = AppColors.textPrimary(isDark)
+        )
+        Spacer(modifier = Modifier.height(4.dp))
 
         user.email?.let { email ->
             Text(
                 text = email,
-                fontSize = if (hasDisplayName) 14.sp else 18.sp,
-                fontWeight = if (hasDisplayName) FontWeight.Normal else FontWeight.SemiBold,
-                color = if (hasDisplayName) AppColors.textSecondary(isDark) else AppColors.textPrimary(isDark)
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                color = AppColors.textSecondary(isDark)
             )
         }
     }
+}
+
+private fun getDisplayNameForUser(user: FirebaseUser): String {
+    val displayName = user.displayName
+    if (!displayName.isNullOrEmpty()) {
+        return displayName
+    }
+    val email = user.email
+    if (email != null && email.contains("privaterelay.appleid.com")) {
+        return "Private User"
+    }
+    return "User"
 }
 
 @Composable
