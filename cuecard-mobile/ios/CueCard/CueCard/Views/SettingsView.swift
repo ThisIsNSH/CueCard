@@ -12,32 +12,26 @@ struct SettingsView: View {
     @State private var isDeletingAccount = false
     @State private var deleteErrorMessage: String?
 
+    private var isCrashlyticsTestEnabled: Bool {
+        ProcessInfo.processInfo.environment["CRASHLYTICS_TEST_CRASH"] == "1"
+    }
+
     var body: some View {
         NavigationStack {
             List {
                 // User info section
                 if let user = authService.user {
                     Section {
-                        HStack(spacing: 16) {
-                            AsyncImage(url: user.photoURL) { image in
-                                image
-                                    .resizable()
-                                    .scaledToFill()
-                            } placeholder: {
-                                Image(systemName: "person.circle.fill")
-                                    .resizable()
-                                    .foregroundStyle(.secondary)
-                            }
-                            .frame(width: 60, height: 60)
-                            .clipShape(Circle())
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(user.displayName ?? "User")
+                        VStack(alignment: .leading, spacing: 4) {
+                            if let displayName = user.displayName, !displayName.isEmpty {
+                                Text(displayName)
                                     .font(.headline)
+                            }
 
-                                Text(user.email ?? "")
+                            if let email = user.email {
+                                Text(email)
                                     .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(user.displayName != nil && !user.displayName!.isEmpty ? .secondary : .primary)
                             }
                         }
                         .padding(.vertical, 8)
@@ -147,6 +141,21 @@ struct SettingsView: View {
                     Button("Reset to Defaults") {
                         AnalyticsEvents.logButtonClick("reset_to_defaults", screen: "settings")
                         settingsService.resetSettings()
+                    }
+                }
+
+                if isCrashlyticsTestEnabled {
+                    Section("Diagnostics") {
+                        Button(role: .destructive) {
+                            AnalyticsEvents.logButtonClick("test_crash", screen: "settings")
+                            Crashlytics.crashlytics().log("Manually triggered test crash")
+                            fatalError("Crashlytics test crash")
+                        } label: {
+                            Text("Trigger Test Crash")
+                        }
+                    } footer: {
+                        Text("This intentionally crashes the app to verify Crashlytics reporting.")
+                            .font(.caption)
                     }
                 }
 

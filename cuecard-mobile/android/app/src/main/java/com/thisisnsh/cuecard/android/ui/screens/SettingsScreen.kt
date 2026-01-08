@@ -323,36 +323,29 @@ private fun UserProfileSection(
     user: FirebaseUser,
     isDark: Boolean
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(vertical = 8.dp)
     ) {
-        // Avatar
-        AsyncImage(
-            model = user.photoUrl,
-            contentDescription = "Profile Photo",
-            modifier = Modifier
-                .size(60.dp)
-                .clip(CircleShape),
-            contentScale = ContentScale.Crop
-        )
+        val hasDisplayName = !user.displayName.isNullOrEmpty()
 
-        Spacer(modifier = Modifier.width(16.dp))
-
-        Column {
+        if (hasDisplayName) {
             Text(
-                text = user.displayName ?: "User",
+                text = user.displayName!!,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = AppColors.textPrimary(isDark)
             )
             Spacer(modifier = Modifier.height(4.dp))
+        }
+
+        user.email?.let { email ->
             Text(
-                text = user.email ?: "",
-                fontSize = 14.sp,
-                color = AppColors.textSecondary(isDark)
+                text = email,
+                fontSize = if (hasDisplayName) 14.sp else 18.sp,
+                fontWeight = if (hasDisplayName) FontWeight.Normal else FontWeight.SemiBold,
+                color = if (hasDisplayName) AppColors.textSecondary(isDark) else AppColors.textPrimary(isDark)
             )
         }
     }
