@@ -7,6 +7,10 @@ struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
 
+    @State private var showingDeleteConfirmation = false
+    @State private var isDeletingAccount = false
+    @State private var deleteErrorMessage: String?
+
     var body: some View {
         NavigationStack {
             List {
@@ -157,6 +161,29 @@ struct SettingsView: View {
                     }
                     .foregroundStyle(AppColors.red(for: colorScheme))
                 }
+
+                // Delete account section
+                Section {
+                    Button(role: .destructive) {
+                        showingDeleteConfirmation = true
+                    } label: {
+                        HStack {
+                            if isDeletingAccount {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle())
+                                    .frame(width: 20, height: 20)
+                            } else {
+                                Image(systemName: "trash")
+                            }
+                            Text("Delete Account")
+                        }
+                    }
+                    .disabled(isDeletingAccount)
+                    .foregroundStyle(AppColors.red(for: colorScheme))
+                } footer: {
+                    Text("This will permanently delete your account and all data stored on this device.")
+                        .font(.caption)
+                }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
@@ -167,11 +194,45 @@ struct SettingsView: View {
                     }
                 }
             }
+            .alert("Delete Account", isPresented: $showingDeleteConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Delete", role: .destructive) {
+                    deleteAccount()
+                }
+            } message: {
+                Text("Are you sure you want to delete your account? This action cannot be undone.")
+            }
+            .alert("Error", isPresented: Binding(
+                get: { deleteErrorMessage != nil },
+                set: { if !$0 { deleteErrorMessage = nil } }
+            )) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(deleteErrorMessage ?? "An error occurred")
+            }
         }
         .onAppear {
             Analytics.logEvent(AnalyticsEventScreenView, parameters: [
                 AnalyticsParameterScreenName: "settings"
             ])
+        }
+    }
+
+    private func deleteAccount() {
+        isDeletingAccount = true
+        Task {
+            do {
+                try await authService.deleteAccount()
+                await MainActor.run {
+                    isDeletingAccount = false
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    isDeletingAccount = false
+                    deleteErrorMessage = error.localizedDescription
+                }
+            }
         }
     }
 }

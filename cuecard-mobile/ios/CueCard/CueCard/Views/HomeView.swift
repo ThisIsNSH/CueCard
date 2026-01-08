@@ -1,6 +1,22 @@
 import SwiftUI
 import FirebaseAnalytics
 
+private struct MenuDismissBehaviorIfAvailable: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 16.4, *) {
+            content.menuActionDismissBehavior(.enabled)
+        } else {
+            content
+        }
+    }
+}
+
+private extension View {
+    func applyMenuDismissBehaviorIfAvailable() -> some View {
+        self.modifier(MenuDismissBehaviorIfAvailable())
+    }
+}
+
 struct HomeView: View {
     @EnvironmentObject var authService: AuthenticationService
     @EnvironmentObject var settingsService: SettingsService
@@ -183,6 +199,7 @@ struct HomeView: View {
                                 .font(.title3)
                                 .foregroundStyle(AppColors.textPrimary(for: colorScheme))
                         }
+                        .applyMenuDismissBehaviorIfAvailable()
 
                         Button(action: { showingSettings = true }) {
                             Image(systemName: "gearshape")

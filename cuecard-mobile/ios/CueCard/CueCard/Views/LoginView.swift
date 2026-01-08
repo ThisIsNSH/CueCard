@@ -1,4 +1,5 @@
 import SwiftUI
+import AuthenticationServices
 
 struct LoginView: View {
     @EnvironmentObject var authService: AuthenticationService
@@ -50,6 +51,22 @@ struct LoginView: View {
 
                 // Sign in section
                 VStack(spacing: 16) {
+                    // Sign in with Apple button
+                    SignInWithAppleButton(.signIn) { request in
+                        request.requestedScopes = [.fullName, .email]
+                    } onCompletion: { _ in
+                        // Handled by AuthenticationService
+                    }
+                    .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
+                    .frame(height: 50)
+                    .cornerRadius(12)
+                    .disabled(authService.isLoading)
+                    .opacity(authService.isLoading ? 0.6 : 1)
+                    .onTapGesture {
+                        authService.signInWithApple()
+                    }
+                    .allowsHitTesting(!authService.isLoading)
+
                     // Google Sign in button
                     Button(action: {
                         Task {
