@@ -1,5 +1,8 @@
 RewriteEngine On
 
+# Custom error pages
+ErrorDocument 404 /404.html
+
 # Force HTTPS and non-www host
 RewriteCond %{HTTPS} !=on [OR]
 RewriteCond %{HTTP_HOST} ^www\.cuecard\.dev$ [NC]
