@@ -339,6 +339,7 @@ main {
     height: 200%;
     background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
     animation: pulse 8s ease-in-out infinite;
+    pointer-events: none;
 }
 
 @keyframes pulse {
