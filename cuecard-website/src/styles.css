@@ -2728,6 +2728,7 @@ main {
     transition: all var(--transition-fast);
     text-decoration: none;
     min-height: 48px;
+    cursor: pointer;
 }
 
 .app-store-btn:hover {
