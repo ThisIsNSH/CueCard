@@ -167,6 +167,23 @@ class AuthenticationService(private val context: Context) {
         analytics.logEvent("sign_out", null)
     }
 
+    suspend fun deleteAccount(): Result<Unit> {
+        val user = auth.currentUser ?: return Result.failure(Exception("No user logged in"))
+
+        return try {
+            user.delete().await()
+            analytics.logEvent("account_deleted", null)
+            _currentUser.value = null
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to delete account", e)
+            analytics.logEvent("account_delete_error") {
+                param("error", e.message ?: "unknown")
+            }
+            Result.failure(e)
+        }
+    }
+
     fun clearError() {
         _error.value = null
     }

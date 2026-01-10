@@ -26,12 +26,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -65,16 +74,21 @@ import kotlinx.coroutines.launch
 fun HomeScreen(
     settingsService: SettingsService,
     onNavigateToSettings: () -> Unit,
-    onNavigateToTeleprompter: () -> Unit
+    onNavigateToTeleprompter: () -> Unit,
+    onNavigateToSavedNotes: () -> Unit
 ) {
     val settings by settingsService.settings.collectAsState()
     val notes by settingsService.notes.collectAsState()
+    val currentNoteId by settingsService.currentNoteId.collectAsState()
     val scope = rememberCoroutineScope()
     val isDark = isSystemInDarkTheme()
     val focusManager = LocalFocusManager.current
 
     var showTimerPicker by remember { mutableStateOf(false) }
     var localNotes by remember { mutableStateOf(notes) }
+    var showMenuDropdown by remember { mutableStateOf(false) }
+    var showSaveDialog by remember { mutableStateOf(false) }
+    var saveNoteTitle by remember { mutableStateOf("") }
 
     // Sync local notes with service
     LaunchedEffect(notes) {
@@ -90,6 +104,7 @@ fun HomeScreen(
     }
 
     val hasNotes = localNotes.trim().isNotEmpty()
+    val hasUnsavedChanges = settingsService.hasUnsavedChanges
 
     Box(
         modifier = Modifier
@@ -108,7 +123,107 @@ fun HomeScreen(
                         color = AppColors.textPrimary(isDark)
                     )
                 },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        Firebase.analytics.logEvent("button_click") {
+                            param("button_name", "saved_notes")
+                            param("screen", "home")
+                        }
+                        onNavigateToSavedNotes()
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Folder,
+                            contentDescription = "Saved Notes",
+                            tint = AppColors.textPrimary(isDark)
+                        )
+                    }
+                },
                 actions = {
+                    // More menu with save options
+                    Box {
+                        IconButton(onClick = { showMenuDropdown = true }) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More options",
+                                tint = AppColors.textPrimary(isDark)
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showMenuDropdown,
+                            onDismissRequest = { showMenuDropdown = false },
+                            modifier = Modifier.background(AppColors.background(isDark))
+                        ) {
+                            // Save option (only show if editing existing note with changes)
+                            if (currentNoteId != null && hasUnsavedChanges) {
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = "Save",
+                                            color = AppColors.textPrimary(isDark)
+                                        )
+                                    },
+                                    onClick = {
+                                        Firebase.analytics.logEvent("button_click") {
+                                            param("button_name", "save_note")
+                                            param("screen", "home")
+                                        }
+                                        scope.launch {
+                                            settingsService.saveChangesToCurrentNote()
+                                        }
+                                        showMenuDropdown = false
+                                    }
+                                )
+                            }
+
+                            // Save as New option
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = "Save as New",
+                                        color = if (hasNotes) AppColors.textPrimary(isDark)
+                                        else AppColors.textSecondary(isDark)
+                                    )
+                                },
+                                onClick = {
+                                    if (hasNotes) {
+                                        Firebase.analytics.logEvent("button_click") {
+                                            param("button_name", "save_as_new")
+                                            param("screen", "home")
+                                        }
+                                        saveNoteTitle = ""
+                                        showSaveDialog = true
+                                        showMenuDropdown = false
+                                    }
+                                },
+                                enabled = hasNotes
+                            )
+
+                            HorizontalDivider(
+                                color = AppColors.textSecondary(isDark).copy(alpha = 0.2f)
+                            )
+
+                            // New Note option
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = "New Note",
+                                        color = AppColors.textPrimary(isDark)
+                                    )
+                                },
+                                onClick = {
+                                    Firebase.analytics.logEvent("button_click") {
+                                        param("button_name", "new_note")
+                                        param("screen", "home")
+                                    }
+                                    scope.launch {
+                                        settingsService.createNewNote()
+                                    }
+                                    showMenuDropdown = false
+                                }
+                            )
+                        }
+                    }
+
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(
                             imageVector = Icons.Default.Settings,
@@ -333,6 +448,66 @@ fun HomeScreen(
                 }
             }
         }
+    }
+
+    // Save Note Dialog
+    if (showSaveDialog) {
+        AlertDialog(
+            onDismissRequest = { showSaveDialog = false },
+            title = {
+                Text(
+                    text = "Save Note",
+                    color = AppColors.textPrimary(isDark)
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Enter a title for your note",
+                        color = AppColors.textSecondary(isDark),
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = saveNoteTitle,
+                        onValueChange = { saveNoteTitle = it },
+                        label = { Text("Note title") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = AppColors.green(isDark),
+                            cursorColor = AppColors.green(isDark)
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val title = saveNoteTitle.trim()
+                        if (title.isNotEmpty()) {
+                            scope.launch {
+                                settingsService.saveCurrentNote(title)
+                            }
+                        }
+                        showSaveDialog = false
+                    }
+                ) {
+                    Text(
+                        text = "Save",
+                        color = AppColors.green(isDark)
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSaveDialog = false }) {
+                    Text(
+                        text = "Cancel",
+                        color = AppColors.textSecondary(isDark)
+                    )
+                }
+            },
+            containerColor = AppColors.background(isDark)
+        )
     }
 }
 

@@ -1,6 +1,8 @@
 package com.thisisnsh.cuecard.android.models
 
 import kotlinx.serialization.Serializable
+import java.util.Date
+import java.util.UUID
 
 /**
  * Theme preference for the app
@@ -134,4 +136,15 @@ data class TeleprompterContent(
     val fullText: String,
     val words: List<WordInfo>,
     val noteRanges: List<NoteRange>
+)
+
+/**
+ * Saved note model
+ */
+data class SavedNote(
+    val id: String = UUID.randomUUID().toString(),
+    val title: String,
+    val content: String,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
 )

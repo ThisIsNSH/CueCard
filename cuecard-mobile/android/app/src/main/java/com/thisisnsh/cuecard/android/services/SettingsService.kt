@@ -11,8 +11,11 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.thisisnsh.cuecard.android.models.FontSizePreset
 import com.thisisnsh.cuecard.android.models.OverlayAspectRatio
+import com.thisisnsh.cuecard.android.models.SavedNote
 import com.thisisnsh.cuecard.android.models.TeleprompterSettings
 import com.thisisnsh.cuecard.android.models.ThemePreference
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -66,6 +69,8 @@ Try it out. I think you'll love it.
         private val THEME_PREFERENCE = stringPreferencesKey("theme_preference")
         private val COUNTDOWN_SECONDS = intPreferencesKey("countdown_seconds")
         private val NOTES = stringPreferencesKey("notes")
+        private val SAVED_NOTES = stringPreferencesKey("saved_notes")
+        private val CURRENT_NOTE_ID = stringPreferencesKey("current_note_id")
 
         @Volatile
         private var instance: SettingsService? = null
@@ -82,6 +87,16 @@ Try it out. I think you'll love it.
 
     private val _notes = MutableStateFlow("")
     val notes: StateFlow<String> = _notes.asStateFlow()
+
+    private val _savedNotes = MutableStateFlow<List<SavedNote>>(emptyList())
+    val savedNotes: StateFlow<List<SavedNote>> = _savedNotes.asStateFlow()
+
+    private val _currentNoteId = MutableStateFlow<String?>(null)
+    val currentNoteId: StateFlow<String?> = _currentNoteId.asStateFlow()
+
+    private var isLoadingNote = false
+
+    private val json = Json { ignoreUnknownKeys = true }
 
     /**
      * Flow of settings from DataStore
@@ -115,6 +130,19 @@ Try it out. I think you'll love it.
     suspend fun loadSettings() {
         _settings.value = settingsFlow.first()
         _notes.value = notesFlow.first()
+
+        // Load saved notes
+        context.dataStore.data.first().let { prefs ->
+            prefs[SAVED_NOTES]?.let { jsonStr ->
+                try {
+                    _savedNotes.value = json.decodeFromString<List<SavedNoteJson>>(jsonStr)
+                        .map { it.toSavedNote() }
+                } catch (e: Exception) {
+                    _savedNotes.value = emptyList()
+                }
+            }
+            _currentNoteId.value = prefs[CURRENT_NOTE_ID]
+        }
     }
 
     /**
@@ -206,5 +234,156 @@ Try it out. I think you'll love it.
 
     suspend fun addSampleText() {
         saveNotes(DEFAULT_NOTE_TEXT)
+    }
+
+    // ==================== Saved Notes Methods ====================
+
+    /**
+     * Save current notes as a new note
+     */
+    suspend fun saveCurrentNote(title: String) {
+        val trimmedContent = _notes.value.trim()
+        if (trimmedContent.isEmpty()) return
+
+        val note = SavedNote(
+            title = title,
+            content = _notes.value
+        )
+        val updatedNotes = listOf(note) + _savedNotes.value
+        _savedNotes.value = updatedNotes
+        _currentNoteId.value = note.id
+        saveSavedNotes()
+        saveCurrentNoteId()
+    }
+
+    /**
+     * Update an existing saved note
+     */
+    suspend fun updateNote(id: String, title: String? = null, content: String? = null) {
+        val index = _savedNotes.value.indexOfFirst { it.id == id }
+        if (index == -1) return
+
+        val currentNote = _savedNotes.value[index]
+        val updatedNote = currentNote.copy(
+            title = title ?: currentNote.title,
+            content = content ?: currentNote.content,
+            updatedAt = System.currentTimeMillis()
+        )
+
+        val updatedList = _savedNotes.value.toMutableList()
+        updatedList[index] = updatedNote
+        _savedNotes.value = updatedList
+        saveSavedNotes()
+    }
+
+    /**
+     * Save current changes to the currently loaded note
+     */
+    suspend fun saveChangesToCurrentNote() {
+        val id = _currentNoteId.value ?: return
+        updateNote(id, content = _notes.value)
+    }
+
+    /**
+     * Load a saved note into the editor
+     */
+    suspend fun loadNote(note: SavedNote) {
+        isLoadingNote = true
+        _notes.value = note.content
+        _currentNoteId.value = note.id
+        saveNotes(note.content)
+        saveCurrentNoteId()
+        isLoadingNote = false
+    }
+
+    /**
+     * Delete a saved note
+     */
+    suspend fun deleteNote(id: String) {
+        _savedNotes.value = _savedNotes.value.filter { it.id != id }
+        if (_currentNoteId.value == id) {
+            _currentNoteId.value = null
+            saveCurrentNoteId()
+        }
+        saveSavedNotes()
+    }
+
+    /**
+     * Create a new empty note
+     */
+    suspend fun createNewNote() {
+        isLoadingNote = true
+        _notes.value = ""
+        _currentNoteId.value = null
+        saveNotes("")
+        saveCurrentNoteId()
+        isLoadingNote = false
+    }
+
+    /**
+     * Get the currently loaded note if any
+     */
+    val currentNote: SavedNote?
+        get() {
+            val id = _currentNoteId.value ?: return null
+            return _savedNotes.value.find { it.id == id }
+        }
+
+    /**
+     * Check if current notes have unsaved changes
+     */
+    val hasUnsavedChanges: Boolean
+        get() {
+            val current = currentNote ?: return _notes.value.trim().isNotEmpty()
+            return current.content != _notes.value
+        }
+
+    private suspend fun saveSavedNotes() {
+        val jsonList = _savedNotes.value.map { SavedNoteJson.fromSavedNote(it) }
+        val jsonStr = json.encodeToString(jsonList)
+        context.dataStore.edit { prefs ->
+            prefs[SAVED_NOTES] = jsonStr
+        }
+    }
+
+    private suspend fun saveCurrentNoteId() {
+        context.dataStore.edit { prefs ->
+            val id = _currentNoteId.value
+            if (id != null) {
+                prefs[CURRENT_NOTE_ID] = id
+            } else {
+                prefs.remove(CURRENT_NOTE_ID)
+            }
+        }
+    }
+}
+
+/**
+ * JSON serializable version of SavedNote
+ */
+@kotlinx.serialization.Serializable
+private data class SavedNoteJson(
+    val id: String,
+    val title: String,
+    val content: String,
+    val createdAt: Long,
+    val updatedAt: Long
+) {
+    fun toSavedNote() = SavedNote(
+        id = id,
+        title = title,
+        content = content,
+        createdAt = createdAt,
+        updatedAt = updatedAt
+    )
+
+    companion object {
+        fun fromSavedNote(note: SavedNote) = SavedNoteJson(
+            id = note.id,
+            title = note.title,
+            content = note.content,
+            createdAt = note.createdAt,
+            updatedAt = note.updatedAt
+        )
     }
 }

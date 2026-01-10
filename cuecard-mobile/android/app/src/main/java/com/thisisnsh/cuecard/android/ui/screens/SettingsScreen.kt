@@ -20,6 +20,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -38,7 +41,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -70,6 +75,10 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     val isDark = isSystemInDarkTheme()
     val scrollState = rememberScrollState()
+
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var isDeletingAccount by remember { mutableStateOf(false) }
+    var deleteErrorMessage by remember { mutableStateOf<String?>(null) }
 
     // Log screen view
     LaunchedEffect(Unit) {
@@ -289,6 +298,10 @@ fun SettingsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
+                                Firebase.analytics.logEvent("button_click") {
+                                    param("button_name", "sign_out")
+                                    param("screen", "settings")
+                                }
                                 authService.signOut()
                                 onDismiss()
                             }
@@ -310,9 +323,136 @@ fun SettingsScreen(
                     }
                 }
 
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Delete Account Section
+                SettingsSection(title = "", isDark = isDark) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = !isDeletingAccount) {
+                                Firebase.analytics.logEvent("button_click") {
+                                    param("button_name", "delete_account")
+                                    param("screen", "settings")
+                                }
+                                showDeleteConfirmation = true
+                            }
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (isDeletingAccount) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = AppColors.red(isDark),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete Account",
+                                tint = AppColors.red(isDark),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Delete Account",
+                            color = AppColors.red(isDark),
+                            fontSize = 16.sp
+                        )
+                    }
+                    Text(
+                        text = "This will permanently delete your account and all data stored on this device.",
+                        fontSize = 12.sp,
+                        color = AppColors.textSecondary(isDark),
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(48.dp))
             }
         }
+    }
+
+    // Delete Confirmation Dialog
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = {
+                Text(
+                    text = "Delete Account",
+                    color = AppColors.textPrimary(isDark)
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to delete your account? This action cannot be undone.",
+                    color = AppColors.textSecondary(isDark)
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteConfirmation = false
+                        isDeletingAccount = true
+                        scope.launch {
+                            val result = authService.deleteAccount()
+                            isDeletingAccount = false
+                            result.fold(
+                                onSuccess = {
+                                    onDismiss()
+                                },
+                                onFailure = { error ->
+                                    deleteErrorMessage = error.message ?: "An error occurred"
+                                }
+                            )
+                        }
+                    }
+                ) {
+                    Text(
+                        text = "Delete",
+                        color = AppColors.red(isDark)
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = false }) {
+                    Text(
+                        text = "Cancel",
+                        color = AppColors.textSecondary(isDark)
+                    )
+                }
+            },
+            containerColor = AppColors.background(isDark)
+        )
+    }
+
+    // Error Dialog
+    if (deleteErrorMessage != null) {
+        AlertDialog(
+            onDismissRequest = { deleteErrorMessage = null },
+            title = {
+                Text(
+                    text = "Error",
+                    color = AppColors.textPrimary(isDark)
+                )
+            },
+            text = {
+                Text(
+                    text = deleteErrorMessage ?: "An error occurred",
+                    color = AppColors.textSecondary(isDark)
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { deleteErrorMessage = null }) {
+                    Text(
+                        text = "OK",
+                        color = AppColors.green(isDark)
+                    )
+                }
+            },
+            containerColor = AppColors.background(isDark)
+        )
     }
 }
 

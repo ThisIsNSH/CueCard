@@ -22,6 +22,7 @@ sealed class Screen(val route: String) {
     data object Home : Screen("home")
     data object Settings : Screen("settings")
     data object Teleprompter : Screen("teleprompter")
+    data object SavedNotes : Screen("saved_notes")
 }
 
 @Composable
@@ -82,6 +83,9 @@ fun MainScreen() {
                 },
                 onNavigateToTeleprompter = {
                     navController.navigate(Screen.Teleprompter.route)
+                },
+                onNavigateToSavedNotes = {
+                    navController.navigate(Screen.SavedNotes.route)
                 }
             )
         }
@@ -105,6 +109,32 @@ fun MainScreen() {
                 authService = authService,
                 settingsService = settingsService,
                 onDismiss = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = Screen.SavedNotes.route,
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Up,
+                    animationSpec = tween(300)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Down,
+                    animationSpec = tween(300)
+                )
+            }
+        ) {
+            SavedNotesScreen(
+                settingsService = settingsService,
+                onDismiss = {
+                    navController.popBackStack()
+                },
+                onNoteSelected = {
                     navController.popBackStack()
                 }
             )
