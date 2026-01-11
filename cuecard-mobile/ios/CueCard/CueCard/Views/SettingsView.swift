@@ -124,29 +124,25 @@ struct SettingsView: View {
 
     private var teleprompterSection: some View {
         Section("Teleprompter") {
-            Toggle("Highlight Words", isOn: $settingsService.settings.autoScroll)
-
-            if settingsService.settings.autoScroll {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Highlight Speed")
-                        Spacer()
-                        Text("\(settingsService.settings.wordsPerMinute) WPM")
-                            .foregroundStyle(.secondary)
-                            .monospacedDigit()
-                    }
-
-                    Slider(
-                        value: Binding(
-                            get: { Double(settingsService.settings.wordsPerMinute) },
-                            set: { settingsService.settings.wordsPerMinute = Int($0) }
-                        ),
-                        in: Double(TeleprompterSettings.wpmRange.lowerBound)...Double(TeleprompterSettings.wpmRange.upperBound),
-                        step: 10
-                    )
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Highlight Speed")
+                    Spacer()
+                    Text("\(settingsService.settings.wordsPerMinute) WPM")
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
                 }
-                .padding(.vertical, 4)
+
+                Slider(
+                    value: Binding(
+                        get: { Double(settingsService.settings.wordsPerMinute) },
+                        set: { settingsService.settings.wordsPerMinute = Int($0) }
+                    ),
+                    in: Double(TeleprompterSettings.wpmRange.lowerBound)...Double(TeleprompterSettings.wpmRange.upperBound),
+                    step: 10
+                )
             }
+            .padding(.vertical, 4)
         }
     }
 

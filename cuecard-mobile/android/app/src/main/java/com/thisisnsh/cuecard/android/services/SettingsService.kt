@@ -111,7 +111,7 @@ Try it out. I think you'll love it.
             linesPerMinute = prefs[LINES_PER_MINUTE] ?: 10,
             timerMinutes = prefs[TIMER_MINUTES] ?: 1,
             timerSeconds = prefs[TIMER_SECONDS] ?: 0,
-            autoScroll = prefs[AUTO_SCROLL] ?: true,
+            autoScroll = true,
             themePreference = ThemePreference.fromString(prefs[THEME_PREFERENCE] ?: ThemePreference.SYSTEM.displayName),
             countdownSeconds = prefs[COUNTDOWN_SECONDS] ?: 5
         )
@@ -149,19 +149,20 @@ Try it out. I think you'll love it.
      * Save settings to DataStore
      */
     suspend fun saveSettings(newSettings: TeleprompterSettings) {
-        _settings.value = newSettings
+        val normalizedSettings = newSettings.copy(autoScroll = true)
+        _settings.value = normalizedSettings
         context.dataStore.edit { prefs ->
-            prefs[FONT_SIZE_PRESET] = newSettings.fontSizePreset.displayName
-            prefs[PIP_FONT_SIZE_PRESET] = newSettings.pipFontSizePreset.displayName
-            prefs[OVERLAY_ASPECT_RATIO] = newSettings.overlayAspectRatio.displayName
-            prefs[SCROLL_SPEED] = newSettings.scrollSpeed
-            prefs[WORDS_PER_MINUTE] = newSettings.wordsPerMinute
-            prefs[LINES_PER_MINUTE] = newSettings.linesPerMinute
-            prefs[TIMER_MINUTES] = newSettings.timerMinutes
-            prefs[TIMER_SECONDS] = newSettings.timerSeconds
-            prefs[AUTO_SCROLL] = newSettings.autoScroll
-            prefs[THEME_PREFERENCE] = newSettings.themePreference.displayName
-            prefs[COUNTDOWN_SECONDS] = newSettings.countdownSeconds
+            prefs[FONT_SIZE_PRESET] = normalizedSettings.fontSizePreset.displayName
+            prefs[PIP_FONT_SIZE_PRESET] = normalizedSettings.pipFontSizePreset.displayName
+            prefs[OVERLAY_ASPECT_RATIO] = normalizedSettings.overlayAspectRatio.displayName
+            prefs[SCROLL_SPEED] = normalizedSettings.scrollSpeed
+            prefs[WORDS_PER_MINUTE] = normalizedSettings.wordsPerMinute
+            prefs[LINES_PER_MINUTE] = normalizedSettings.linesPerMinute
+            prefs[TIMER_MINUTES] = normalizedSettings.timerMinutes
+            prefs[TIMER_SECONDS] = normalizedSettings.timerSeconds
+            prefs[AUTO_SCROLL] = normalizedSettings.autoScroll
+            prefs[THEME_PREFERENCE] = normalizedSettings.themePreference.displayName
+            prefs[COUNTDOWN_SECONDS] = normalizedSettings.countdownSeconds
         }
     }
 
@@ -221,7 +222,7 @@ Try it out. I think you'll love it.
     }
 
     suspend fun updateAutoScroll(enabled: Boolean) {
-        saveSettings(_settings.value.copy(autoScroll = enabled))
+        saveSettings(_settings.value.copy(autoScroll = true))
     }
 
     suspend fun updateThemePreference(theme: ThemePreference) {

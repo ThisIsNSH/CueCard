@@ -268,11 +268,18 @@ Try it out. I think you'll love it.
 
     private init() {
         // Load settings from UserDefaults
+        var needsSave = false
         if let data = userDefaults.data(forKey: settingsKey),
            let decoded = try? JSONDecoder().decode(TeleprompterSettings.self, from: data) {
-            self.settings = decoded
+            var normalizedSettings = decoded
+            if !normalizedSettings.autoScroll {
+                normalizedSettings.autoScroll = true
+                needsSave = true
+            }
+            self.settings = normalizedSettings
         } else {
             self.settings = .default
+            needsSave = true
         }
 
         // Load notes from UserDefaults
@@ -291,10 +298,15 @@ Try it out. I think you'll love it.
         }
 
         // Notes start empty - users can add sample text via the button
+        if needsSave {
+            saveSettings()
+        }
     }
 
     private func saveSettings() {
-        if let encoded = try? JSONEncoder().encode(settings) {
+        var normalizedSettings = settings
+        normalizedSettings.autoScroll = true
+        if let encoded = try? JSONEncoder().encode(normalizedSettings) {
             userDefaults.set(encoded, forKey: settingsKey)
         }
     }

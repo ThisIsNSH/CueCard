@@ -31,8 +31,6 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -148,38 +146,15 @@ fun SettingsScreen(
 
                 // Teleprompter Section
                 SettingsSection(title = "Teleprompter", isDark = isDark) {
-                    // Highlight Words Toggle
-                    SettingsRow(
-                        title = "Highlight Words",
+                    WpmSlider(
+                        value = settings.wordsPerMinute,
+                        onValueChange = { newValue ->
+                            scope.launch {
+                                settingsService.updateWordsPerMinute(newValue)
+                            }
+                        },
                         isDark = isDark
-                    ) {
-                        Switch(
-                            checked = settings.autoScroll,
-                            onCheckedChange = { enabled ->
-                                scope.launch {
-                                    settingsService.updateAutoScroll(enabled)
-                                }
-                            },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = AppColors.green(isDark),
-                                checkedTrackColor = AppColors.green(isDark).copy(alpha = 0.5f)
-                            )
-                        )
-                    }
-
-                    // Highlight Speed (only when auto scroll is enabled)
-                    if (settings.autoScroll) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        WpmSlider(
-                            value = settings.wordsPerMinute,
-                            onValueChange = { newValue ->
-                                scope.launch {
-                                    settingsService.updateWordsPerMinute(newValue)
-                                }
-                            },
-                            isDark = isDark
-                        )
-                    }
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -531,26 +506,6 @@ private fun SettingsSection(
         ) {
             content()
         }
-    }
-}
-
-@Composable
-private fun SettingsRow(
-    title: String,
-    isDark: Boolean,
-    trailing: @Composable () -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = title,
-            fontSize = 16.sp,
-            color = AppColors.textPrimary(isDark)
-        )
-        trailing()
     }
 }
 
