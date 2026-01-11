@@ -299,39 +299,50 @@ body {
 
 .welcome-action {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  justify-content: center;
   padding: 14px 16px;
-  width: 220px;
-  max-width: 100%;
   border-radius: 14px;
   background: linear-gradient(160deg, var(--welcome-surface-strong), var(--welcome-surface));
   border: 1px solid var(--welcome-border);
   color: var(--text-primary);
   text-decoration: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
   transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
 .welcome-action:hover {
   transform: translateY(-1px);
-  background: linear-gradient(160deg, var(--welcome-surface-strong), var(--welcome-surface));
-  border-color: var(--text-secondary);
 }
 
-.welcome-action.action-primary {
+/* New Note Button - Square with + icon */
+.welcome-action.action-new {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 12px;
+}
+
+.welcome-action.action-new:hover {
+  border-color: var(--color-pink);
+  background: linear-gradient(160deg, var(--welcome-accent-3), var(--welcome-surface));
+}
+
+/* Load Notes Button */
+.welcome-action.action-load:hover {
   border-color: var(--color-green);
   background: linear-gradient(160deg, var(--welcome-accent-2), var(--welcome-surface));
 }
 
-.welcome-action.action-primary:hover {
-  background: linear-gradient(160deg, rgba(25, 195, 50, 0.32), var(--welcome-surface-strong));
-  border-color: var(--color-green);
-}
-
+/* Sync Google Slides Button */
 .welcome-action.action-slides:hover {
   border-color: var(--color-yellow);
   background: linear-gradient(160deg, rgba(254, 188, 46, 0.3), var(--welcome-surface-strong));
 }
+
 .action-title {
   font-size: 15px;
   font-weight: 600;

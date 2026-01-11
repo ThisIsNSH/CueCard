@@ -383,12 +383,33 @@ async function saveNoteToList() {
 
   const savedNotes = await getSavedNotes();
 
+  // Check if we're updating an existing note
+  if (currentNoteId) {
+    const existingIndex = savedNotes.findIndex(n => n.id === currentNoteId);
+    if (existingIndex !== -1) {
+      // Update existing note
+      savedNotes[existingIndex].content = content;
+      savedNotes[existingIndex].updatedAt = now;
+
+      // Move to beginning of list (most recently updated)
+      const updatedNote = savedNotes.splice(existingIndex, 1)[0];
+      savedNotes.unshift(updatedNote);
+
+      await setStoredValue(STORAGE_KEYS.SAVED_NOTES, savedNotes);
+      console.log("Note updated in list");
+      return;
+    }
+  }
+
   // Create new note object with unique id
   const newNote = {
     id: Date.now().toString(),
     content: content,
     updatedAt: now
   };
+
+  // Set the current note ID to the new note
+  currentNoteId = newNote.id;
 
   // Add to beginning of list (most recent first)
   savedNotes.unshift(newNote);
@@ -405,6 +426,9 @@ async function loadNoteFromList(noteId) {
   if (noteIndex === -1) return;
 
   const note = savedNotes[noteIndex];
+
+  // Set current note ID for future updates
+  currentNoteId = note.id;
 
   // Update the updatedAt time
   note.updatedAt = new Date().toISOString();
@@ -459,19 +483,29 @@ async function deleteNoteFromList(noteId) {
 function getFirstLinePreview(content) {
   if (!content) return '';
 
-  // Split by newlines and get first non-empty line
+  // Split by newlines and find first non-empty line after stripping tags
   const lines = content.split(/\r?\n/);
   for (const line of lines) {
     const trimmed = line.trim();
     if (trimmed) {
       // Remove any [time] or [note] tags for cleaner preview
-      return trimmed
+      const cleaned = trimmed
         .replace(/\[time\s+\d{1,2}:\d{2}\]/gi, '')
         .replace(/\[note\s+[^\]]+\]/gi, '')
-        .trim() || trimmed;
+        .trim();
+      // If line has actual content after stripping tags, use it
+      if (cleaned) {
+        return cleaned;
+      }
+      // Otherwise continue to next line
     }
   }
-  return content.substring(0, 50);
+  // Fallback: strip tags from entire content and take first 50 chars
+  const fallback = content
+    .replace(/\[time\s+\d{1,2}:\d{2}\]/gi, '')
+    .replace(/\[note\s+[^\]]+\]/gi, '')
+    .trim();
+  return fallback.substring(0, 50) || 'Untitled Note';
 }
 
 // Format date for display
@@ -537,31 +571,6 @@ async function renderSavedNotesList() {
   });
 }
 
-// Setup saved notes button handlers
-function setupSavedNotesButtons() {
-  if (saveNoteBtn) {
-    saveNoteBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      await saveNoteToList();
-      // Show brief feedback
-      const originalText = saveNoteBtn.textContent;
-      saveNoteBtn.textContent = 'Saved!';
-      setTimeout(() => {
-        saveNoteBtn.textContent = originalText;
-      }, 1000);
-    });
-  }
-
-  if (savedNotesBtn) {
-    savedNotesBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      showView('saved-notes');
-    });
-  }
-}
-
 // Check if a specific scope is granted (backend handles scope tracking)
 async function hasScope(scopeType) {
   if (!invoke) return false;
@@ -601,7 +610,7 @@ let editNoteBtn;
 let notesInputWrapper;
 let ghostModeIndicator;
 let headerTimer;
-let savedNotesList, savedNotesEmpty, saveNoteBtn, savedNotesBtn;
+let savedNotesList, savedNotesEmpty;
 
 // State
 let isAuthenticated = false;
@@ -630,6 +639,7 @@ let notesHasTimeTags = false;
 
 // Edit Mode State
 let isEditMode = false; // false = done mode (readonly, highlighted), true = edit mode (editable, not highlighted)
+let currentNoteId = null; // Track the ID of the currently loaded note for updates
 
 // Analytics State
 let sessionTracked = false; // Prevent duplicate session tracking
@@ -697,8 +707,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   headerTimer = document.getElementById("header-timer");
   savedNotesList = document.getElementById("saved-notes-list");
   savedNotesEmpty = document.getElementById("saved-notes-empty");
-  saveNoteBtn = document.getElementById("save-note-btn");
-  savedNotesBtn = document.getElementById("saved-notes-btn");
 
   // Set up navigation handlers
   setupNavigation();
@@ -729,9 +737,6 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   // Set up edit note button
   setupEditNoteButton();
-
-  // Set up saved notes buttons
-  setupSavedNotesButtons();
 
   // Set up auto-scroll hover listeners
   setupAutoScrollHoverListeners();
@@ -823,7 +828,7 @@ function setupNavigation() {
     }
 
     if (currentView === 'saved-notes') {
-      showView('add-notes');
+      showView('initial');
       return;
     }
 
@@ -853,6 +858,9 @@ function resetAllStates() {
   // Reset slide data
   currentSlideData = null;
   manualNotes = '';
+
+  // Reset current note ID
+  currentNoteId = null;
 
   // Stop and reset all timers
   stopAllTimers();
@@ -889,7 +897,7 @@ function setupAuth() {
   }
 }
 
-// Welcome Actions (Paste Notes / Slides)
+// Welcome Actions (New Note / Load Note / Slides)
 function setupWelcomeActions() {
   const pasteNotesLink = document.getElementById('paste-notes-link');
   if (pasteNotesLink) {
@@ -897,8 +905,43 @@ function setupWelcomeActions() {
       e.preventDefault();
       e.stopPropagation();
       trackNotesPaste();
+      // Clear current note ID for new note
+      currentNoteId = null;
+      // Clear any existing notes for a fresh start
+      if (notesInput) {
+        notesInput.value = '';
+        if (notesInputHighlight) {
+          notesInputHighlight.innerHTML = '';
+        }
+      }
+      // Clear stored notes
+      setStoredValue(STORAGE_KEYS.ADD_NOTES_CONTENT, '');
+      // Reset timer state for new note
+      stopAllTimers();
+      timerState = 'stopped';
+      totalTimeSeconds = 0;
+      remainingTimeSeconds = 0;
+      if (headerTimer) {
+        headerTimer.textContent = '00:00';
+        headerTimer.classList.remove('time-warning', 'time-overtime');
+        headerTimer.classList.add('time-countup');
+      }
       showView('add-notes');
+      // Start in edit mode for new note
+      isEditMode = true;
+      notesInputWrapper.classList.add('edit-mode');
+      notesInput.readOnly = false;
+      editNoteBtn.textContent = 'Done';
       notesInput.focus();
+    });
+  }
+
+  const loadNotesLink = document.getElementById('load-notes-link');
+  if (loadNotesLink) {
+    loadNotesLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      showView('saved-notes');
     });
   }
 
@@ -1331,7 +1374,7 @@ function setupEditNoteButton() {
 }
 
 // Toggle between edit and done modes
-function toggleEditMode() {
+async function toggleEditMode() {
   isEditMode = !isEditMode;
 
   if (isEditMode) {
@@ -1347,10 +1390,12 @@ function toggleEditMode() {
     notesInputWrapper.classList.remove('edit-mode');
     notesInput.readOnly = true;
     editNoteBtn.textContent = 'Edit Note';
-  }
 
-  // Update saved notes button visibility
-  updateSavedNotesButtonVisibility();
+    // Auto-save note when Done is pressed
+    if (notesInput && notesInput.value.trim()) {
+      await saveNoteToList();
+    }
+  }
 
   // Reset timer when toggling edit/done
   resetTimerCountdown();
@@ -1389,34 +1434,9 @@ function updateEditNoteButtonVisibility() {
     }
   }
 
-  // Show/hide save and saved notes buttons
-  updateSavedNotesButtonVisibility();
-
   updateFooterSeparators();
 }
 
-// Update save and saved notes button visibility
-function updateSavedNotesButtonVisibility() {
-  const hasContent = notesInput && notesInput.value.trim();
-
-  // Show save button in add-notes view when there's content and not in edit mode
-  if (saveNoteBtn) {
-    if (currentView === 'add-notes' && hasContent && !isEditMode) {
-      saveNoteBtn.classList.remove('hidden');
-    } else {
-      saveNoteBtn.classList.add('hidden');
-    }
-  }
-
-  // Show saved notes button in add-notes view (always visible in this view)
-  if (savedNotesBtn) {
-    if (currentView === 'add-notes') {
-      savedNotesBtn.classList.remove('hidden');
-    } else {
-      savedNotesBtn.classList.add('hidden');
-    }
-  }
-}
 
 function trimSpacesPreserveNewlines(text) {
   return text.replace(/^[ \t]+|[ \t]+$/g, '');
@@ -1602,7 +1622,7 @@ function updateAuthUI(authenticated, name = '') {
     welcomeHeading.innerHTML = `${greeting}, ${firstName}!${versionHTML ? '\n' + versionHTML : ''}`;
 
     // Update subtext and show quick actions
-    welcomeSubtext.innerHTML = 'Load your notes and start speaking confidently.';
+    welcomeSubtext.innerHTML = 'Create or open notes and speak with confidence.';
     if (welcomeActions) {
       welcomeActions.classList.remove('hidden');
     }
@@ -1617,7 +1637,7 @@ function updateAuthUI(authenticated, name = '') {
     }
 
     // Reset welcome heading to default
-    welcomeHeading.innerHTML = 'CueCard\n<span class="version-text">1.3.1</span>';
+    welcomeHeading.innerHTML = 'CueCard\n<span class="version-text">1.4.1</span>';
 
     // Reset subtext
     welcomeSubtext.innerHTML = 'Speaker notes visible only to you during screen sharing — for <span class="highlight-presentations">presentations</span>, <span class="highlight-meetings">meetings</span>, or <span class="highlight-demos">live demos</span>.';
