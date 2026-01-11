@@ -9,7 +9,7 @@
 [![macOS](https://img.shields.io/badge/macOS-11%2B-000000?logo=apple&logoColor=white)](https://cuecard.dev/#download)
 [![Windows](https://img.shields.io/badge/Windows-10%2B-0078D6?logo=windows&logoColor=white)](https://cuecard.dev/#download)
 
-![iOS Coming Soon](https://img.shields.io/badge/iOS-Coming_Soon-000000?logo=apple&logoColor=white)
+[![iOS](https://img.shields.io/badge/iOS-17%2B-000000?logo=apple&logoColor=white)](https://apps.apple.com/app/cuecard-teleprompter/id6757321325)
 ![Android Coming Soon](https://img.shields.io/badge/Android-Coming_Soon-3DDC84?logo=android&logoColor=white)
 
 [![Website](https://img.shields.io/badge/Website-cuecard.dev-blue)](https://cuecard.dev)
@@ -53,7 +53,7 @@ CueCard is a **lightweight cross-platform desktop teleprompter** (macOS & Window
 
 ### 📱 Mobile Apps
 
-![iOS Coming Soon](https://img.shields.io/badge/iOS-Coming_Soon-000000?style=for-the-badge&logo=apple&logoColor=white)
+[![Download for iOS](https://img.shields.io/badge/Download-iOS-000000?style=for-the-badge&logo=apple&logoColor=white)](https://apps.apple.com/app/cuecard-teleprompter/id6757321325)
 ![Android Coming Soon](https://img.shields.io/badge/Android-Coming_Soon-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 
 **All downloads and installation instructions are available at [cuecard.dev](https://cuecard.dev/#download)**
