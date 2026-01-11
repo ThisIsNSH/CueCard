@@ -24,6 +24,12 @@ class AuthenticationService: ObservableObject {
     private var currentNonce: String?
 
     private init() {
+        // Check current user synchronously to prevent login screen flash
+        if let currentUser = Auth.auth().currentUser {
+            self.user = currentUser
+            self.isAuthenticated = true
+        }
+
         // Listen for auth state changes
         Auth.auth().addStateDidChangeListener { [weak self] _, user in
             self?.user = user
