@@ -312,9 +312,9 @@ class TeleprompterPiPManager: NSObject, ObservableObject {
         let timerText = isCountingDown ? TeleprompterParser.formatTime(countdownValue) : TeleprompterParser.formatTime(remainingTime)
 
         let wordsPerSecond = Double(settings.wordsPerMinute) / 60.0
-        let highlightProgress = settings.autoScroll
-            ? ((elapsedTime == 0 && !isPlaying) ? -Double.greatestFiniteMagnitude : (elapsedTime * wordsPerSecond))
-            : Double.greatestFiniteMagnitude
+        let highlightProgress = (elapsedTime == 0 && !isPlaying)
+            ? -Double.greatestFiniteMagnitude
+            : (elapsedTime * wordsPerSecond)
 
         teleprompterContentView?.update(
             text: text,
@@ -325,7 +325,6 @@ class TeleprompterPiPManager: NSObject, ObservableObject {
             remainingTime: remainingTime,
             currentWordIndex: currentWordIndex,
             highlightProgress: highlightProgress,
-            autoScroll: settings.autoScroll,
             isCountingDown: isCountingDown
         )
 
@@ -338,7 +337,6 @@ class TeleprompterPiPManager: NSObject, ObservableObject {
             remainingTime: remainingTime,
             currentWordIndex: currentWordIndex,
             highlightProgress: highlightProgress,
-            autoScroll: settings.autoScroll,
             isCountingDown: isCountingDown
         )
     }
@@ -523,7 +521,6 @@ private class TeleprompterPiPContentView: UIView {
         remainingTime: Int,
         currentWordIndex: Int,
         highlightProgress: Double,
-        autoScroll: Bool,
         isCountingDown: Bool = false
     ) {
         let contentId = text
@@ -552,7 +549,7 @@ private class TeleprompterPiPContentView: UIView {
             lastProgressBucket = progressBucket
         }
 
-        if autoScroll && currentWordIndex > 0 {
+        if currentWordIndex > 0 {
             let wordRanges = getWordRanges(from: text)
             if currentWordIndex < wordRanges.count {
                 let range = wordRanges[currentWordIndex]

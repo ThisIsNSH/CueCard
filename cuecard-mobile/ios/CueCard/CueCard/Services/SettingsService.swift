@@ -67,7 +67,6 @@ struct TeleprompterSettings: Codable, Equatable {
     var linesPerMinute: Int
     var timerMinutes: Int
     var timerSeconds: Int
-    var autoScroll: Bool
     var themePreference: ThemePreference
     var countdownSeconds: Int
 
@@ -90,7 +89,6 @@ struct TeleprompterSettings: Codable, Equatable {
         linesPerMinute: 10,
         timerMinutes: 1,
         timerSeconds: 0,
-        autoScroll: true,
         themePreference: .system,
         countdownSeconds: 5
     )
@@ -118,7 +116,6 @@ struct TeleprompterSettings: Codable, Equatable {
         case linesPerMinute
         case timerMinutes
         case timerSeconds
-        case autoScroll
         case themePreference
         case countdownSeconds
     }
@@ -132,7 +129,6 @@ struct TeleprompterSettings: Codable, Equatable {
         linesPerMinute: Int,
         timerMinutes: Int,
         timerSeconds: Int,
-        autoScroll: Bool,
         themePreference: ThemePreference,
         countdownSeconds: Int
     ) {
@@ -144,7 +140,6 @@ struct TeleprompterSettings: Codable, Equatable {
         self.linesPerMinute = linesPerMinute
         self.timerMinutes = timerMinutes
         self.timerSeconds = timerSeconds
-        self.autoScroll = autoScroll
         self.themePreference = themePreference
         self.countdownSeconds = countdownSeconds
     }
@@ -159,7 +154,6 @@ struct TeleprompterSettings: Codable, Equatable {
         linesPerMinute = try container.decode(Int.self, forKey: .linesPerMinute)
         timerMinutes = try container.decode(Int.self, forKey: .timerMinutes)
         timerSeconds = try container.decode(Int.self, forKey: .timerSeconds)
-        autoScroll = try container.decode(Bool.self, forKey: .autoScroll)
         themePreference = try container.decode(ThemePreference.self, forKey: .themePreference)
         countdownSeconds = try container.decodeIfPresent(Int.self, forKey: .countdownSeconds) ?? 5
     }
@@ -174,7 +168,6 @@ struct TeleprompterSettings: Codable, Equatable {
         try container.encode(linesPerMinute, forKey: .linesPerMinute)
         try container.encode(timerMinutes, forKey: .timerMinutes)
         try container.encode(timerSeconds, forKey: .timerSeconds)
-        try container.encode(autoScroll, forKey: .autoScroll)
         try container.encode(themePreference, forKey: .themePreference)
         try container.encode(countdownSeconds, forKey: .countdownSeconds)
     }
@@ -272,10 +265,6 @@ Try it out. I think you'll love it.
         if let data = userDefaults.data(forKey: settingsKey),
            let decoded = try? JSONDecoder().decode(TeleprompterSettings.self, from: data) {
             var normalizedSettings = decoded
-            if !normalizedSettings.autoScroll {
-                normalizedSettings.autoScroll = true
-                needsSave = true
-            }
             self.settings = normalizedSettings
         } else {
             self.settings = .default
@@ -304,9 +293,7 @@ Try it out. I think you'll love it.
     }
 
     private func saveSettings() {
-        var normalizedSettings = settings
-        normalizedSettings.autoScroll = true
-        if let encoded = try? JSONEncoder().encode(normalizedSettings) {
+        if let encoded = try? JSONEncoder().encode(settings) {
             userDefaults.set(encoded, forKey: settingsKey)
         }
     }

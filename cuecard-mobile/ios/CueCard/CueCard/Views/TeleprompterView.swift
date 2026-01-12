@@ -72,9 +72,9 @@ struct TeleprompterView: View {
 
                     // Teleprompter content with attributed text
                     let wordsPerSecond = Double(settings.wordsPerMinute) / 60.0
-                    let highlightProgress = settings.autoScroll
-                        ? ((elapsedTime == 0 && !isPlaying) ? -Double.greatestFiniteMagnitude : (elapsedTime * wordsPerSecond))
-                        : Double.greatestFiniteMagnitude
+                    let highlightProgress = (elapsedTime == 0 && !isPlaying)
+                        ? -Double.greatestFiniteMagnitude
+                        : (elapsedTime * wordsPerSecond)
 
                     AttributedTextView(
                         content: content,
@@ -82,7 +82,6 @@ struct TeleprompterView: View {
                         currentWordIndex: currentWordIndex,
                         highlightProgress: highlightProgress,
                         colorScheme: colorScheme,
-                        autoScroll: settings.autoScroll,
                         topPadding: geometry.size.height * 0.4,
                         bottomPadding: geometry.size.height * 0.6,
                         onTap: {
@@ -374,14 +373,6 @@ struct TeleprompterView: View {
     }
 
     private func play() {
-        guard settings.autoScroll else {
-            isPlaying = true
-            startTimer()
-            pipManager.updateState(elapsedTime: elapsedTime, isPlaying: true, currentWordIndex: currentWordIndex)
-            Analytics.logEvent("teleprompter_play", parameters: nil)
-            resetControlsTimer()
-            return
-        }
         isPlaying = true
         startTimer()
         pipManager.updateState(elapsedTime: elapsedTime, isPlaying: true, currentWordIndex: currentWordIndex)
@@ -504,7 +495,6 @@ struct AttributedTextView: UIViewRepresentable {
     let currentWordIndex: Int
     let highlightProgress: Double
     let colorScheme: ColorScheme
-    let autoScroll: Bool
     let topPadding: CGFloat
     let bottomPadding: CGFloat
     let onTap: (() -> Void)?
@@ -575,7 +565,7 @@ struct AttributedTextView: UIViewRepresentable {
         }
 
         // Auto-scroll to current word
-        if autoScroll && currentWordIndex > 0 {
+        if currentWordIndex > 0 {
             let wordRanges = getWordRanges()
             if currentWordIndex < wordRanges.count {
                 let range = wordRanges[currentWordIndex]
