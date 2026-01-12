@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
@@ -139,27 +140,6 @@ fun HomeScreen(
                             onDismissRequest = { showMenuDropdown = false },
                             modifier = Modifier.background(AppColors.background(isDark))
                         ) {
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        text = "Saved Notes",
-                                        color = AppColors.textPrimary(isDark)
-                                    )
-                                },
-                                onClick = {
-                                    Firebase.analytics.logEvent("button_click") {
-                                        param("button_name", "saved_notes")
-                                        param("screen", "home")
-                                    }
-                                    onNavigateToSavedNotes()
-                                    showMenuDropdown = false
-                                }
-                            )
-
-                            HorizontalDivider(
-                                color = AppColors.textSecondary(isDark).copy(alpha = 0.2f)
-                            )
-
                             // Save option (only show if editing existing note with changes)
                             if (currentNoteId != null && hasUnsavedChanges) {
                                 DropdownMenuItem(
@@ -229,6 +209,21 @@ fun HomeScreen(
                                 }
                             )
                         }
+                    }
+
+                    // Saved Notes button
+                    IconButton(onClick = {
+                        Firebase.analytics.logEvent("button_click") {
+                            param("button_name", "saved_notes")
+                            param("screen", "home")
+                        }
+                        onNavigateToSavedNotes()
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Folder,
+                            contentDescription = "Saved Notes",
+                            tint = AppColors.textPrimary(isDark)
+                        )
                     }
 
                     IconButton(onClick = onNavigateToSettings) {

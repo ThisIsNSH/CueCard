@@ -638,6 +638,7 @@ private fun TeleprompterFullText(
     }
     val displayText = displayResult.text
     val noteRanges = displayResult.noteRanges
+    val emptyLineIndices = displayResult.emptyLineIndices
     val wordsPerSecond = wordsPerMinute / 60.0
     val highlightProgress = if (autoScroll) {
         if (elapsedTime == 0.0 && !isPlaying) -1_000_000.0 else elapsedTime * wordsPerSecond
@@ -645,7 +646,7 @@ private fun TeleprompterFullText(
         Double.MAX_VALUE
     }
     val progressBucket = if (autoScroll) (highlightProgress * 10).roundToInt() else 0
-    val lineHeight = (fontSize * 1.18f).sp
+    val emptyLineFontSize = (fontSize * 0.3f).sp
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
     val density = LocalDensity.current
     val topPaddingPx = with(density) { topPadding.toPx() }
@@ -657,6 +658,9 @@ private fun TeleprompterFullText(
             letterSpacing = (fontSize * 0.05f).sp,
             fontFamily = FontFamily.SansSerif
         )
+    }
+    val emptyLineStyle = remember(emptyLineFontSize) {
+        SpanStyle(fontSize = emptyLineFontSize)
     }
 
     fun smoothstep(edge0: Double, edge1: Double, x: Double): Double {
@@ -670,12 +674,17 @@ private fun TeleprompterFullText(
         return (0.3f + blend.toFloat() * 0.7f)
     }
 
-    val annotatedText = remember(displayText, fontSize, textColor, noteStyle, progressBucket, autoScroll, noteRanges) {
+    val annotatedText = remember(displayText, fontSize, textColor, noteStyle, emptyLineStyle, progressBucket, autoScroll, noteRanges, emptyLineIndices) {
         buildAnnotatedString {
             append(displayText)
             noteRanges.forEach { range ->
                 if (range.first < range.last + 1) {
                     addStyle(noteStyle, range.first, range.last + 1)
+                }
+            }
+            emptyLineIndices.forEach { index ->
+                if (index >= 0 && index < displayText.length) {
+                    addStyle(emptyLineStyle, index, index + 1)
                 }
             }
             content.words.forEachIndexed { index, word ->
@@ -729,7 +738,6 @@ private fun TeleprompterFullText(
             ),
         color = textColor,
         style = TextStyle(
-            lineHeight = lineHeight,
             fontFamily = FontFamily.SansSerif
         ),
         onTextLayout = { textLayoutResult = it }
@@ -759,6 +767,7 @@ private fun TeleprompterPiPText(
     }
     val displayText = displayResult.text
     val noteRanges = displayResult.noteRanges
+    val emptyLineIndices = displayResult.emptyLineIndices
     val wordsPerSecond = wordsPerMinute / 60.0
     val highlightProgress = if (autoScroll) {
         if (elapsedTime == 0.0 && !isPlaying) -1_000_000.0 else elapsedTime * wordsPerSecond
@@ -766,7 +775,7 @@ private fun TeleprompterPiPText(
         Double.MAX_VALUE
     }
     val progressBucket = if (autoScroll) (highlightProgress * 10).roundToInt() else 0
-    val lineHeight = (fontSize * 1.0f).sp
+    val emptyLineFontSize = (fontSize * 0.25f).sp
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
     val density = LocalDensity.current
     val topPaddingPx = with(density) { topPadding.toPx() }
@@ -778,6 +787,9 @@ private fun TeleprompterPiPText(
             letterSpacing = (-fontSize * 0.01f).sp,
             fontFamily = FontFamily.SansSerif
         )
+    }
+    val emptyLineStyle = remember(emptyLineFontSize) {
+        SpanStyle(fontSize = emptyLineFontSize)
     }
 
     fun smoothstep(edge0: Double, edge1: Double, x: Double): Double {
@@ -791,12 +803,17 @@ private fun TeleprompterPiPText(
         return (0.3f + blend.toFloat() * 0.7f)
     }
 
-    val annotatedText = remember(displayText, fontSize, textColor, noteStyle, progressBucket, autoScroll, noteRanges) {
+    val annotatedText = remember(displayText, fontSize, textColor, noteStyle, emptyLineStyle, progressBucket, autoScroll, noteRanges, emptyLineIndices) {
         buildAnnotatedString {
             append(displayText)
             noteRanges.forEach { range ->
                 if (range.first < range.last + 1) {
                     addStyle(noteStyle, range.first, range.last + 1)
+                }
+            }
+            emptyLineIndices.forEach { index ->
+                if (index >= 0 && index < displayText.length) {
+                    addStyle(emptyLineStyle, index, index + 1)
                 }
             }
             content.words.forEachIndexed { index, word ->
@@ -850,7 +867,6 @@ private fun TeleprompterPiPText(
             ),
         color = textColor,
         style = TextStyle(
-            lineHeight = lineHeight,
             lineHeightStyle = LineHeightStyle(
                 alignment = LineHeightStyle.Alignment.Center,
                 trim = LineHeightStyle.Trim.Both

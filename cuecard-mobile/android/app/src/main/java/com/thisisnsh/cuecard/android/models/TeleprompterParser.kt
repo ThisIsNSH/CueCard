@@ -13,33 +13,71 @@ object TeleprompterParser {
 
     data class DisplayTextResult(
         val text: String,
-        val noteRanges: List<IntRange>
+        val noteRanges: List<IntRange>,
+        val emptyLineIndices: List<Int> = emptyList()
     )
 
     /**
      * Build display text with [note] tags replaced by their content.
-     * Returns the display text and note ranges in display text indices.
+     * Returns the display text, note ranges, and empty line indices.
+     * Empty lines get a space character that can be styled with smaller font.
      */
     fun buildDisplayText(text: String): DisplayTextResult {
-        val matcher = NOTE_PATTERN.matcher(text)
-        val builder = StringBuilder()
-        val ranges = mutableListOf<IntRange>()
+        // Step 1: Insert space before each empty line (consecutive newlines)
+        val step1Builder = StringBuilder()
+        val rawEmptyLineIndices = mutableListOf<Int>()
+        var i = 0
+        while (i < text.length) {
+            if (text[i] == '\n') {
+                step1Builder.append('\n')
+                i++
+                // For each following \n, insert a space (empty line marker)
+                while (i < text.length && text[i] == '\n') {
+                    rawEmptyLineIndices.add(step1Builder.length)
+                    step1Builder.append(' ')
+                    step1Builder.append('\n')
+                    i++
+                }
+            } else {
+                step1Builder.append(text[i])
+                i++
+            }
+        }
+        val step1Text = step1Builder.toString()
+
+        // Step 2: Process [note] tags on the transformed text
+        val matcher = NOTE_PATTERN.matcher(step1Text)
+        val step2Builder = StringBuilder()
+        val noteRanges = mutableListOf<IntRange>()
+        val replacements = mutableListOf<Triple<Int, Int, Int>>() // (matchEnd, matchLen, contentLen)
         var lastIndex = 0
 
         while (matcher.find()) {
-            builder.append(text.substring(lastIndex, matcher.start()))
+            step2Builder.append(step1Text.substring(lastIndex, matcher.start()))
             val content = matcher.group(1) ?: ""
-            val start = builder.length
-            builder.append(content)
-            val end = builder.length
+            val start = step2Builder.length
+            step2Builder.append(content)
+            val end = step2Builder.length
             if (start < end) {
-                ranges.add(start until end)
+                noteRanges.add(start until end)
             }
+            replacements.add(Triple(matcher.end(), matcher.group().length, content.length))
             lastIndex = matcher.end()
         }
+        step2Builder.append(step1Text.substring(lastIndex))
 
-        builder.append(text.substring(lastIndex))
-        return DisplayTextResult(builder.toString(), ranges)
+        // Step 3: Adjust emptyLineIndices for [note] replacements
+        val emptyLineIndices = rawEmptyLineIndices.map { rawIdx ->
+            var adjustment = 0
+            for ((matchEnd, matchLen, contentLen) in replacements) {
+                if (matchEnd <= rawIdx) {
+                    adjustment += (contentLen - matchLen)
+                }
+            }
+            rawIdx + adjustment
+        }
+
+        return DisplayTextResult(step2Builder.toString(), noteRanges, emptyLineIndices)
     }
 
     /**
