@@ -51,9 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.firebase.analytics.ktx.analytics
-import com.google.firebase.analytics.logEvent
-import com.google.firebase.ktx.Firebase
+import com.thisisnsh.cuecard.android.AnalyticsEvents
 import com.thisisnsh.cuecard.android.models.SavedNote
 import com.thisisnsh.cuecard.android.services.SettingsService
 import com.thisisnsh.cuecard.android.ui.theme.AppColors
@@ -78,9 +76,7 @@ fun SavedNotesScreen(
 
     // Log screen view
     LaunchedEffect(Unit) {
-        Firebase.analytics.logEvent("screen_view") {
-            param("screen_name", "saved_notes")
-        }
+        AnalyticsEvents.logScreenView("saved_notes")
     }
 
     Box(
@@ -101,7 +97,10 @@ fun SavedNotesScreen(
                     )
                 },
                 actions = {
-                    TextButton(onClick = onDismiss) {
+                    TextButton(onClick = {
+                        AnalyticsEvents.logButtonClick("done", "saved_notes")
+                        onDismiss()
+                    }) {
                         Text(
                             text = "Done",
                             color = AppColors.green(isDark),
@@ -156,31 +155,31 @@ fun SavedNotesScreen(
                             note = note,
                             isDark = isDark,
                             onClick = {
-                                Firebase.analytics.logEvent("button_click") {
-                                    param("button_name", "load_note")
-                                    param("screen", "saved_notes")
-                                    param("note_id", note.id)
-                                }
+                                AnalyticsEvents.logButtonClick(
+                                    "load_note",
+                                    "saved_notes",
+                                    mapOf("note_id" to note.id)
+                                )
                                 scope.launch {
                                     settingsService.loadNote(note)
                                     onNoteSelected()
                                 }
                             },
                             onRename = {
-                                Firebase.analytics.logEvent("button_click") {
-                                    param("button_name", "rename_note")
-                                    param("screen", "saved_notes")
-                                    param("note_id", note.id)
-                                }
+                                AnalyticsEvents.logButtonClick(
+                                    "rename_note",
+                                    "saved_notes",
+                                    mapOf("note_id" to note.id)
+                                )
                                 renameTitle = note.title
                                 noteToRename = note
                             },
                             onDelete = {
-                                Firebase.analytics.logEvent("button_click") {
-                                    param("button_name", "delete_note")
-                                    param("screen", "saved_notes")
-                                    param("note_id", note.id)
-                                }
+                                AnalyticsEvents.logButtonClick(
+                                    "delete_note",
+                                    "saved_notes",
+                                    mapOf("note_id" to note.id)
+                                )
                                 scope.launch {
                                     settingsService.deleteNote(note.id)
                                 }

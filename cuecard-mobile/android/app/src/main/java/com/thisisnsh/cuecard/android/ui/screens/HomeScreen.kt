@@ -62,9 +62,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.google.firebase.analytics.ktx.analytics
-import com.google.firebase.analytics.logEvent
-import com.google.firebase.ktx.Firebase
+import com.thisisnsh.cuecard.android.AnalyticsEvents
 import com.thisisnsh.cuecard.android.services.SettingsService
 import com.thisisnsh.cuecard.android.ui.components.glassEffect
 import com.thisisnsh.cuecard.android.ui.theme.AppColors
@@ -99,9 +97,7 @@ fun HomeScreen(
 
     // Log screen view
     LaunchedEffect(Unit) {
-        Firebase.analytics.logEvent("screen_view") {
-            param("screen_name", "home")
-        }
+        AnalyticsEvents.logScreenView("home")
         settingsService.loadSettings()
     }
 
@@ -150,10 +146,7 @@ fun HomeScreen(
                                         )
                                     },
                                     onClick = {
-                                        Firebase.analytics.logEvent("button_click") {
-                                            param("button_name", "save_note")
-                                            param("screen", "home")
-                                        }
+                                        AnalyticsEvents.logButtonClick("save_note", "home")
                                         scope.launch {
                                             settingsService.saveChangesToCurrentNote()
                                         }
@@ -173,10 +166,7 @@ fun HomeScreen(
                                 },
                                 onClick = {
                                     if (hasNotes) {
-                                        Firebase.analytics.logEvent("button_click") {
-                                            param("button_name", "save_as_new")
-                                            param("screen", "home")
-                                        }
+                                        AnalyticsEvents.logButtonClick("save_as_new", "home")
                                         saveNoteTitle = ""
                                         showSaveDialog = true
                                         showMenuDropdown = false
@@ -198,10 +188,7 @@ fun HomeScreen(
                                     )
                                 },
                                 onClick = {
-                                    Firebase.analytics.logEvent("button_click") {
-                                        param("button_name", "new_note")
-                                        param("screen", "home")
-                                    }
+                                    AnalyticsEvents.logButtonClick("new_note", "home")
                                     scope.launch {
                                         settingsService.createNewNote()
                                     }
@@ -213,10 +200,7 @@ fun HomeScreen(
 
                     // Saved Notes button
                     IconButton(onClick = {
-                        Firebase.analytics.logEvent("button_click") {
-                            param("button_name", "saved_notes")
-                            param("screen", "home")
-                        }
+                        AnalyticsEvents.logButtonClick("saved_notes", "home")
                         onNavigateToSavedNotes()
                     }) {
                         Icon(
@@ -226,7 +210,10 @@ fun HomeScreen(
                         )
                     }
 
-                    IconButton(onClick = onNavigateToSettings) {
+                    IconButton(onClick = {
+                        AnalyticsEvents.logButtonClick("settings", "home")
+                        onNavigateToSettings()
+                    }) {
                         Icon(
                             imageVector = Icons.Default.Settings,
                             contentDescription = "Settings",
@@ -319,7 +306,10 @@ fun HomeScreen(
                                 color = AppColors.textPrimary(isDark)
                             )
                             IconButton(
-                                onClick = { showTimerPicker = false },
+                                onClick = {
+                                    AnalyticsEvents.logButtonClick("close_timer_picker", "home")
+                                    showTimerPicker = false
+                                },
                                 modifier = Modifier
                                     .size(28.dp)
                                     .clip(CircleShape)
@@ -398,8 +388,13 @@ fun HomeScreen(
                             .glassEffect(isDark = isDark)
                             .clickable {
                                 if (hasNotes || showTimerPicker) {
+                                    AnalyticsEvents.logButtonClick(
+                                        if (showTimerPicker) "timer_done" else "set_timer",
+                                        "home"
+                                    )
                                     showTimerPicker = !showTimerPicker
                                 } else {
+                                    AnalyticsEvents.logButtonClick("add_sample_text", "home")
                                     scope.launch {
                                         settingsService.addSampleText()
                                     }
@@ -433,6 +428,7 @@ fun HomeScreen(
                             )
                             .glassEffect(shape = CircleShape, isDark = isDark)
                             .clickable(enabled = hasNotes) {
+                                AnalyticsEvents.logButtonClick("start_teleprompter", "home")
                                 focusManager.clearFocus()
                                 onNavigateToTeleprompter()
                             },

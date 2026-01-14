@@ -1,6 +1,10 @@
 # Firebase
 -keepattributes Signature
 -keepattributes *Annotation*
+-keepattributes SourceFile,LineNumberTable
+
+# Firebase Crashlytics
+-keep public class * extends java.lang.Exception
 
 # Google Sign-In
 -keep class com.google.android.gms.** { *; }

@@ -49,10 +49,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.firebase.analytics.ktx.analytics
-import com.google.firebase.analytics.logEvent
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.ktx.Firebase
+import com.thisisnsh.cuecard.android.AnalyticsEvents
 import com.thisisnsh.cuecard.android.models.FontSizePreset
 import com.thisisnsh.cuecard.android.models.OverlayAspectRatio
 import com.thisisnsh.cuecard.android.models.TeleprompterSettings
@@ -81,9 +79,7 @@ fun SettingsScreen(
 
     // Log screen view
     LaunchedEffect(Unit) {
-        Firebase.analytics.logEvent("screen_view") {
-            param("screen_name", "settings")
-        }
+        AnalyticsEvents.logScreenView("settings")
     }
 
     Box(
@@ -104,7 +100,10 @@ fun SettingsScreen(
                     )
                 },
                 actions = {
-                    TextButton(onClick = onDismiss) {
+                    TextButton(onClick = {
+                        AnalyticsEvents.logButtonClick("done", "settings")
+                        onDismiss()
+                    }) {
                         Text(
                             text = "Done",
                             color = AppColors.green(isDark),
@@ -254,6 +253,7 @@ fun SettingsScreen(
                 SettingsSection(title = "", isDark = isDark) {
                     TextButton(
                         onClick = {
+                            AnalyticsEvents.logButtonClick("reset_to_defaults", "settings")
                             scope.launch {
                                 settingsService.resetSettings()
                             }
@@ -274,10 +274,7 @@ fun SettingsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                Firebase.analytics.logEvent("button_click") {
-                                    param("button_name", "sign_out")
-                                    param("screen", "settings")
-                                }
+                                AnalyticsEvents.logButtonClick("sign_out", "settings")
                                 authService.signOut()
                                 onDismiss()
                             }
@@ -307,10 +304,7 @@ fun SettingsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable(enabled = !isDeletingAccount) {
-                                Firebase.analytics.logEvent("button_click") {
-                                    param("button_name", "delete_account")
-                                    param("screen", "settings")
-                                }
+                                AnalyticsEvents.logButtonClick("delete_account", "settings")
                                 showDeleteConfirmation = true
                             }
                             .padding(vertical = 12.dp),

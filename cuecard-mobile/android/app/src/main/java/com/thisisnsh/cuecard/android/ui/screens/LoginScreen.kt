@@ -20,6 +20,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -33,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.thisisnsh.cuecard.android.AnalyticsEvents
 import com.thisisnsh.cuecard.android.R
 import com.thisisnsh.cuecard.android.services.AuthenticationService
 import com.thisisnsh.cuecard.android.ui.theme.AppColors
@@ -46,6 +48,11 @@ fun LoginScreen(
     val error by authService.error.collectAsState()
     val scope = rememberCoroutineScope()
     val isDark = isSystemInDarkTheme()
+
+    // Log screen view
+    LaunchedEffect(Unit) {
+        AnalyticsEvents.logScreenView("login")
+    }
 
     Box(
         modifier = Modifier
@@ -118,6 +125,7 @@ fun LoginScreen(
                 // Google Sign-In Button
                 Button(
                     onClick = {
+                        AnalyticsEvents.logButtonClick("sign_in_with_google", "login")
                         scope.launch {
                             // Replace with your actual Web Client ID from Firebase Console
                             authService.signInWithGoogle("829544425796-a38eavf0pphc2l2p1rc60dg8d5tpddg3.apps.googleusercontent.com")

@@ -75,6 +75,7 @@ import androidx.compose.ui.unit.sp
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.analytics.logEvent
 import com.google.firebase.ktx.Firebase
+import com.thisisnsh.cuecard.android.AnalyticsEvents
 import com.thisisnsh.cuecard.android.models.TeleprompterContent
 import com.thisisnsh.cuecard.android.models.TeleprompterParser
 import com.thisisnsh.cuecard.android.models.TeleprompterSettings
@@ -351,7 +352,10 @@ fun TeleprompterScreen(
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = onDismiss) {
+                        IconButton(onClick = {
+                            AnalyticsEvents.logButtonClick("close", "teleprompter")
+                            onDismiss()
+                        }) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Close",
@@ -515,7 +519,10 @@ fun TeleprompterScreen(
                         .size(48.dp)
                         .clip(CircleShape)
                         .glassEffect(shape = CircleShape, isDark = isDark)
-                        .clickable { seekBackward() },
+                        .clickable {
+                            AnalyticsEvents.logButtonClick("seek_backward", "teleprompter")
+                            seekBackward()
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -536,6 +543,7 @@ fun TeleprompterScreen(
                             .clip(CircleShape)
                             .glassEffect(shape = CircleShape, isDark = isDark)
                             .clickable {
+                                AnalyticsEvents.logButtonClick("pip_enter", "teleprompter")
                                 activity?.let { act ->
                                     if (pipManager.enterPiP(act)) {
                                         Firebase.analytics.logEvent("teleprompter_pip_started", null)
@@ -562,7 +570,13 @@ fun TeleprompterScreen(
                         .clip(CircleShape)
                         .background(AppColors.green(isDark))
                         .glassEffect(shape = CircleShape, isDark = isDark)
-                        .clickable { togglePlayPause() },
+                        .clickable {
+                            AnalyticsEvents.logButtonClick(
+                                if (isPlaying || isCountingDown) "pause" else "play",
+                                "teleprompter"
+                            )
+                            togglePlayPause()
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -581,7 +595,10 @@ fun TeleprompterScreen(
                         .size(52.dp)
                         .clip(CircleShape)
                         .glassEffect(shape = CircleShape, isDark = isDark)
-                        .clickable { restart() },
+                        .clickable {
+                            AnalyticsEvents.logButtonClick("restart", "teleprompter")
+                            restart()
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -600,7 +617,10 @@ fun TeleprompterScreen(
                         .size(48.dp)
                         .clip(CircleShape)
                         .glassEffect(shape = CircleShape, isDark = isDark)
-                        .clickable { seekForward() },
+                        .clickable {
+                            AnalyticsEvents.logButtonClick("seek_forward", "teleprompter")
+                            seekForward()
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
