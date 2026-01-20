@@ -11,3 +11,7 @@ RewriteRule ^ https://cuecard.dev%{REQUEST_URI} [R=301,L]
 # Strip ref query parameter to avoid duplicate URLs
 RewriteCond %{QUERY_STRING} (^|&)ref= [NC]
 RewriteRule ^ https://cuecard.dev%{REQUEST_URI} [R=301,L,QSD]
+
+# App Store redirects
+Redirect 302 /ios https://apps.apple.com/app/cuecard-teleprompter/id6757321325
+Redirect 302 /android https://play.google.com/apps/testing/com.thisisnsh.cuecard.android
